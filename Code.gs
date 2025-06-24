@@ -757,3 +757,37 @@ function testFlujoInteligente() {
   const ultimas = hojaHist.getRange(Math.max(2, hojaHist.getLastRow() - 9), 1, 10, hojaHist.getLastColumn()).getValues();
   Logger.log('📝 Últimos 10 registros en Historial:\n' + JSON.stringify(ultimas));
 }
+
+/**
+ * Busca artículos en la hoja "Articulos" por Clave (Col A) o por Descripcion (Col B).
+ * @param {string} textoBusqueda El texto parcial para buscar (ej. "cem" o "010a").
+ * @returns {string[]} Un array con las descripciones de los hasta 5 mejores resultados.
+ */
+function buscarArticulo(textoBusqueda) {
+  if (!textoBusqueda || textoBusqueda.trim().length < 2) {
+    return [];
+  }
+  
+  try {
+    const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Articulos");
+    if (!hoja) return ["Error: Hoja 'Articulos' no encontrada."];
+
+    // Leemos ambas columnas, A y B, al mismo tiempo.
+    const rangoDatos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 2).getValues();
+    const busquedaMinusculas = textoBusqueda.toLowerCase();
+    
+    const coincidencias = rangoDatos
+      .filter(fila => {
+        const clave = fila[0].toString().toLowerCase();
+        const descripcion = fila[1].toString().toLowerCase();
+        // Devuelve la fila si la búsqueda coincide con la clave O con la descripción
+        return clave.includes(busquedaMinusculas) || descripcion.includes(busquedaMinusculas);
+      })
+      .map(fila => fila[1]); // Devuelve solo la descripción (Columna B) para mostrarla al usuario
+      
+    return coincidencias.slice(0, 5);
+  } catch (e) {
+    Logger.log("Error en buscarArticulo: " + e.toString());
+    return ["Error al buscar."];
+  }
+}
