@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma Conversacional Interna</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Estilos personalizados */
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+        #chat-window::-webkit-scrollbar { width: 6px; }
+        #chat-window::-webkit-scrollbar-track { background: #1e293b; }
+        #chat-window::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .message-bubble { opacity: 0; transform: translateY(20px); animation: slide-up 0.4s ease-out forwards; }
+        @keyframes slide-up { to { opacity: 1; transform: translateY(0); } }
+        .typing-dot { width: 8px; height: 8px; background-color: #94a3b8; border-radius: 50%; display: inline-block; animation: bounce 1.4s infinite ease-in-out both; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+        .quick-starter-btn { background-color: transparent; border: 1px solid #475569; color: #94a3b8; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s ease-in-out; }
+        .quick-starter-btn:hover { background-color: #1e293b; color: #e2e8f0; border-color: #64748b; }
+    </style>
+</head>
+<body class="bg-slate-900 text-white flex items-center justify-center min-h-screen p-4">
+
+    <!-- Pantalla de login -->
+    <div id="login-card" class="w-full max-w-sm">
+        <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl text-center">
+            <h1 class="text-2xl mb-2 font-bold">Acceso a Plataforma</h1>
+            <p class="text-slate-400 mb-6 text-sm">Ferretería Flores</p>
+            <div class="mb-4">
+                <input id="inputID" type="text" placeholder="Ingresa tu ID (ej. U001)"
+                       class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 text-center" />
+            </div>
+            <button id="btnLogin" class="w-full bg-emerald-500 hover:bg-emerald-600 px-6 py-2.5 rounded-lg text-white font-semibold transition duration-300 disabled:bg-slate-600">
+                Entrar
+            </button>
+            <p id="loginMsg" class="mt-4 text-red-400 text-xs h-4"></p>
+        </div>
+    </div>
+
+
+    <!-- Contenedor principal del chat (oculto inicialmente) -->
+    <div id="chat-wrapper" class="w-full max-w-3xl h-[90vh] max-h-[800px] bg-slate-800 rounded-2xl shadow-2xl flex-col hidden">
+        <header class="p-4 border-b border-slate-700 flex justify-between items-center flex-shrink-0">
+            <div>
+                <h1 class="text-lg font-bold text-white">Plataforma Conversacional Interna</h1>
+                <p class="text-xs text-slate-400">Ferretería Flores</p>
+            </div>
+            <div class="text-right">
+                 <p id="user-status" class="text-sm font-medium text-emerald-400">Conectando...</p>
+                 <p id="user-id-display" class="text-xs text-slate-400 font-mono"></p>
+            </div>
+        </header>
+
+        <main id="chat-window" class="flex-1 p-6 overflow-y-auto space-y-6">
+            <!-- Mensajes del chat -->
+        </main>
+
+        <div id="admin-summary-panel" class="hidden px-4">
+          <h2 class="text-sm text-slate-400 font-semibold mb-2 mt-2">Resumen del día</h2>
+          <button onclick="verResumenAdministrador()" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg px-4 py-1.5 text-sm mb-2">
+            Ver Resumen Diario
+          </button>
+          <pre id="resumen-admin" class="text-sm text-white bg-slate-700 p-3 rounded-md whitespace-pre-wrap"></pre>
+        </div>
+
+        <div id="quick-starters" class="p-4 border-t border-slate-700 flex-shrink-0">
+            <p class="text-xs text-slate-400 mb-2 font-semibold">Iniciadores rápidos:</p>
+            <div class="flex flex-wrap gap-2">
+                <button class="quick-starter-btn">Registrar problema</button>
+                <button class="quick-starter-btn">Hacer conteo de inventario</button>
+                <button class="quick-starter-btn">Dejar una sugerencia</button>
+            </div>
+        </div>
+
+        <!-- Panel de Herramientas del Administrador -->
+<div id="admin-tools" class="hidden p-4 border-t border-slate-700 text-sm space-y-4">
+
+  <!-- Botón de resumen diario -->
+  <div>
+    <button onclick="verResumenAdministrador()" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2 rounded-lg">
+      Ver resumen diario
+    </button>
+    <pre id="resumen-admin" class="mt-3 bg-slate-100 text-slate-800 p-3 rounded-lg whitespace-pre-wrap"></pre>
+  </div>
+
+  <!-- Mensajes para administrador -->
+  <div>
+    <h3 class="text-slate-300 font-semibold mb-1">📥 Mensajes recibidos</h3>
+    <div id="mensajes-admin" class="bg-slate-700 rounded-lg p-3 space-y-2 text-white text-sm max-h-40 overflow-y-auto">
+      <p class="text-slate-400 text-xs">No hay mensajes nuevos aún.</p>
+    </div>
+  </div>
+</div>
+
+
+        <footer class="p-4 border-t border-slate-700 flex-shrink-0">
+            <form id="chat-form" class="flex items-center gap-3">
+                <input type="text" id="message-input" placeholder="Escribe tu mensaje o reporte aquí..." class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off">
+                <button type="submit" id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg p-2.5 transition disabled:bg-slate-600 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </form>
+        </footer>
+    </div>
+
+    <script>
+        const loginCard = document.getElementById('login-card');
+        const chatWrapper = document.getElementById('chat-wrapper');
+        const btnLogin = document.getElementById('btnLogin');
+        const inputID = document.getElementById('inputID');
+        const loginMsg = document.getElementById('loginMsg');
+        
+        const chatWindow = document.getElementById('chat-window');
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const quickStartersContainer = document.getElementById('quick-starters');
+        
+        let currentUserId = '';
+        let currentSessionId = '';
+
+        // --- LÓGICA DE LOGIN ---
+        btnLogin.addEventListener('click', () => {
+          const id = inputID.value.trim();
+          if (!id) return;
+
+          loginMsg.textContent = "Validando…";
+          btnLogin.disabled = true;
+
+          google.script.run
+            .withSuccessHandler(handleValidation)
+            .withFailureHandler(handleError)
+            .validarUsuario(id);
+        });
+        
+        function handleValidation(resp) {
+            if (!resp.ok) {
+                loginMsg.textContent = resp.msg;
+                btnLogin.disabled = false;
+                return;
+            }
+            // Validación exitosa, guardar perfil e iniciar sesión de chat
+            sessionStorage.setItem('perfil', JSON.stringify(resp.perfil));
+            currentUserId = resp.perfil.usuarioID;
+            loginMsg.textContent = "Iniciando sesión...";
+
+            google.script.run
+                .withSuccessHandler(handleSessionStart)
+                .withFailureHandler(handleError)
+                .iniciarSesion(currentUserId);
+        }
+
+        function handleSessionStart(sessionId) {
+            currentSessionId = sessionId;
+            const perfil = JSON.parse(sessionStorage.getItem('perfil'));
+            
+            loginCard.classList.add('hidden');
+            chatWrapper.classList.remove('hidden');
+            chatWrapper.classList.add('flex');
+            
+            initializeChat(perfil);
+        }
+
+        function handleError(err) {
+            loginMsg.textContent = `Error: ${err.message || 'Error desconocido del servidor.'}`;
+            btnLogin.disabled = false;
+        }
+        
+        // Auto-login si ya existe un perfil en sessionStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            const storedProfile = sessionStorage.getItem('perfil');
+            if (storedProfile) {
+                inputID.value = JSON.parse(storedProfile).usuarioID;
+                btnLogin.click();
+            }
+        });
+
+        // --- LÓGICA DE CHAT ---
+        function initializeChat(perfil) {
+            const userStatus = document.getElementById('user-status');
+            const userIdDisplay = document.getElementById('user-id-display');
+
+
+            
+            userStatus.textContent = `Activo: ${perfil.nombre}`;
+            userIdDisplay.textContent = `Sucursal: ${perfil.sucursal} | Rol: ${perfil.rol}`;
+            if (perfil.rol === "Administrador") {
+  document.getElementById("admin-tools").classList.remove("hidden");
+
+  // (Opcional) podés precargar el resumen diario automáticamente
+  verResumenAdministrador();
+
+  // (Opcional) cargar mensajes pendientes al iniciar
+  cargarMensajesAdministrador();
+}
+
+            
+getAIResponse("__inicio");
+        }
+
+        function addMessage(text, sender) {
+            const messageContainer = document.createElement('div');
+            messageContainer.className = `flex message-bubble ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+
+            let bubbleClasses = 'max-w-md lg:max-w-xl rounded-2xl px-4 py-2.5 text-sm shadow-md ';
+            let bubbleContent = '';
+
+            switch (sender) {
+                case 'user':
+                    bubbleClasses += 'bg-blue-600 text-white rounded-br-lg';
+                    bubbleContent = `<p>${text}</p>`;
+                    break;
+                case 'ai':
+                    bubbleClasses += 'bg-slate-700 text-slate-200 rounded-bl-lg';
+                    bubbleContent = `<p>${text}</p>`;
+                    break;
+                case 'system':
+                    bubbleClasses += 'bg-yellow-900/50 border border-yellow-600/50 text-yellow-300 w-full rounded-lg';
+                    bubbleContent = `<div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg><p class="font-mono text-xs">${text}</p></div>`;
+                    break;
+            }
+
+            messageContainer.innerHTML = `<div class="${bubbleClasses}">${bubbleContent}</div>`;
+            chatWindow.appendChild(messageContainer);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+        
+        function showTypingIndicator() {
+            if (document.getElementById('typing-indicator')) return;
+            const typingIndicator = document.createElement('div');
+            typingIndicator.id = 'typing-indicator';
+            typingIndicator.className = 'flex justify-start message-bubble';
+            typingIndicator.innerHTML = `<div class="bg-slate-700 text-slate-200 rounded-2xl rounded-bl-lg px-4 py-2.5 shadow-md"><div class="flex items-center gap-1.5"><span class="typing-dot"></span><span class="typing-dot" style="animation-delay: 0.2s;"></span><span class="typing-dot" style="animation-delay: 0.4s;"></span></div></div>`;
+            chatWindow.appendChild(typingIndicator);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        function getAIResponse(userInput) {
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+            showTypingIndicator();
+
+            google.script.run
+                .withSuccessHandler(handleAIResponse)
+                .withFailureHandler(handleAIError)
+                .enviarAOpenAI(currentSessionId, currentUserId, userInput, 'supervisor');
+        }
+
+        function handleAIResponse(data) {
+            hideTypingIndicator();
+            if (data.content) {
+                addMessage(data.content, 'ai');
+            }
+
+            if (data.function_call) {
+                const funcName = data.function_call.name;
+                const funcArgs = data.function_call.arguments;
+                const systemMessage = `Función invocada: ${funcName}(${funcArgs})`;
+                setTimeout(() => addMessage(systemMessage, 'system'), 500);
+            }
+
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.focus();
+        }
+
+        function handleAIError(error) {
+            hideTypingIndicator();
+            addMessage(`Ocurrió un error al procesar tu solicitud: ${error.message}.`, 'system');
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.focus();
+        }
+
+        function verResumenAdministrador() {
+    const usuario = getPerfilActual(); // Asegúrate de que esta función devuelva { nombre, rol, ... }
+
+    if (!usuario || usuario.rol !== "Administrador") {
+      alert("Solo disponible para el rol Administrador");
+      return;
+    }
+
+    google.script.run.withSuccessHandler(function(resumen) {
+      document.getElementById("resumen-admin").innerText = resumen;
+    }).generarResumenAdmin();
+  }
+
+  function cargarMensajesAdministrador() {
+  google.script.run.withSuccessHandler((mensajes) => {
+    const contenedor = document.getElementById("mensajes-admin");
+    contenedor.innerHTML = '';
+
+    if (!mensajes || mensajes.length === 0) {
+      contenedor.innerHTML = '<p class="text-slate-400 text-xs">No hay mensajes nuevos aún.</p>';
+      return;
+    }
+
+    mensajes.forEach((msg, index) => {
+      const bloque = document.createElement("div");
+      bloque.className = "border-b border-slate-600 pb-3";
+
+      bloque.innerHTML = `
+        <p><strong>${msg.usuario}</strong> dijo:</p>
+        <p class="text-slate-200 mb-2">${msg.texto}</p>
+        <textarea id="respuesta-${index}" class="w-full p-2 rounded text-slate-900 text-sm mb-1" placeholder="Escribí tu respuesta..."></textarea>
+        <button onclick="enviarRespuestaAdministrador('${msg.usuario}', '${msg.sesionId}', 'respuesta-${index}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+          Enviar respuesta
+        </button>
+      `;
+
+      contenedor.appendChild(bloque);
+    });
+  }).cargarMensajesParaAdministrador();
+}
+
+function enviarRespuestaAdministrador(destinoUsuario, destinoSesion, inputId) {
+  const contenido = document.getElementById(inputId).value.trim();
+  if (!contenido) return alert("Escribí algo primero.");
+
+  google.script.run.withSuccessHandler(() => {
+    alert("Mensaje enviado correctamente.");
+    document.getElementById(inputId).value = '';
+  }).enviarMensajeAdministrador(destinoSesion, destinoUsuario, contenido);
+}
+
+
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const userInput = messageInput.value.trim();
+            if (userInput) {
+                addMessage(userInput, 'user');
+                getAIResponse(userInput);
+                messageInput.value = '';
+            }
+        });
+
+        quickStartersContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('quick-starter-btn')) {
+                const text = e.target.textContent;
+                addMessage(text, 'user');
+                getAIResponse(text);
+                messageInput.value = '';
+                messageInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>
