@@ -190,10 +190,20 @@ function handleSessionStart(resultado) { // Ahora recibe un objeto 'resultado'
   
   // --- ¡NUEVA LÓGICA! ---
   // 1. Verificamos si el objeto resultado contiene un mensaje de anuncio
-  if (resultado.mensajeAnuncio) {
-    // Si lo hay, lo mostramos en el chat con un estilo de "sistema"
-    addMessage(resultado.mensajeAnuncio, 'system');
-  }
+if (resultado.mensajeAnuncio && Array.isArray(resultado.mensajeAnuncio)) {
+  let delay = 500; // Pausa inicial de medio segundo
+  
+  // Recorremos cada mensaje en la lista que nos envió el backend
+  resultado.mensajeAnuncio.forEach(mensaje => {
+    // Usamos setTimeout para crear un efecto de escritura con pausas
+    setTimeout(() => {
+      addMessage(mensaje, 'system');
+    }, delay);
+    
+    // Aumentamos la pausa para el siguiente mensaje
+    delay += 1200; // 1.2 segundos de pausa entre mensajes (puedes ajustar este valor)
+  });
+}
 
   // 2. El resto del flujo de inicialización continúa normalmente
   initializeChat(perfil);

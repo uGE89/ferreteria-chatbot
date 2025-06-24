@@ -15,6 +15,10 @@ const NOMBRE_HISTORIAL = 'HistorialConversaciones';
 const NOMBRE_CONFIG = 'Configuración';
 const NOMBRE_FUNCIONES = 'Funciones';
 const NOMBRE_LOGCOSTES = 'LogCostes';
+const NOMBRE_ANUNCIOS = 'Anuncios'; // <-- AÑADE ESTA LÍNEA
+const NOMBRE_ARTICULOS = 'Articulos'; // <-- AÑADE ESTA TAMBIÉN
+const NOMBRE_TAREAS = 'Tareas'; // <-- AÑADE ESTA TAMBIÉN
+
 
 
 
@@ -796,7 +800,7 @@ function buscarArticulo(textoBusqueda) {
   }
   
   try {
-    const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Articulos");
+    const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRE_ARTICULOS); 
     if (!hoja) return ["Error: Hoja 'Articulos' no encontrada."];
 
     // Leemos ambas columnas, A y B, al mismo tiempo.
@@ -844,6 +848,12 @@ function obtenerUltimoAnuncioActivo() {
  * @param {string} usuarioId El ID del usuario.
  * @returns {string|null} El mensaje del anuncio formateado o null.
  */
+/**
+ * Verifica si hay un anuncio nuevo para un usuario y lo devuelve
+ * como un array de mensajes si no lo ha visto.
+ * @param {string} usuarioId El ID del usuario.
+ * @returns {string[]|null} Un array con los mensajes del anuncio o null.
+ */
 function verificarYObtenerAnuncioParaUsuario(usuarioId) {
   const anuncio = obtenerUltimoAnuncioActivo();
   if (!anuncio) return null;
@@ -852,15 +862,20 @@ function verificarYObtenerAnuncioParaUsuario(usuarioId) {
   const propertyKey = 'anuncio_visto_' + anuncio.id;
   const yaVisto = userProperties.getProperty(propertyKey);
 
-  // Si el usuario aún no ha visto este anuncio
   if (!yaVisto) {
-    // Marcamos el anuncio como visto para este usuario para siempre
     userProperties.setProperty(propertyKey, 'true');
     
-    // Formateamos el mensaje para que se vea bien en el chat
-    const mensajeFormateado = `📢 **Novedades del Día: ${anuncio.titulo}**\n\n${anuncio.mensaje}`;
-    return mensajeFormateado;
+    // --- ¡CAMBIO CLAVE AQUÍ! ---
+    // 1. Unimos el título y el mensaje en un solo bloque.
+    const textoCompleto = `📢 **${anuncio.titulo}**\n\n${anuncio.mensaje}`;
+
+    // 2. Dividimos el texto completo usando el doble salto de línea como separador.
+    // Esto crea un array de strings.
+    const mensajesSeparados = textoCompleto.split('\n\n');
+
+    // 3. Devolvemos el array de mensajes.
+    return mensajesSeparados;
   }
   
-  return null; // El usuario ya vio este anuncio
+  return null;
 }
