@@ -74,25 +74,52 @@ function getPerfilActual() {
  * @param {string} usuarioId
  * @return {string} sessionId existente o nuevo
  */
+/**
+ * Inicia una sesión diaria única por usuario y verifica si hay
+ * anuncios nuevos que mostrarle.
+ * @param {string} usuarioId El ID del usuario.
+ * @returns {object} Un objeto que contiene el ID de la sesión y un posible mensaje de anuncio.
+ */
 function iniciarSesion(usuarioId) {
   const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRE_SESIONES);
   const datos = hoja.getDataRange().getValues();
   const hoy = new Date();
   const hoyStr = hoy.toISOString().substring(0, 10);
 
+  // 1. Usaremos una variable para guardar el ID de sesión
+  let sessionId = null;
+
+  // Busca una sesión existente para el día de hoy
   for (let i = 1; i < datos.length; i++) {
     const fila = datos[i];
     const sesionUsuario = fila[1];
     const fechaInicio = new Date(fila[2]);
     const fechaStr = fechaInicio.toISOString().substring(0, 10);
+
     if (sesionUsuario === usuarioId && fechaStr === hoyStr) {
-      return fila[0]; // Retorna sesión existente para hoy
+      sessionId = fila[0]; // Se encontró la sesión, se guarda en la variable
+      break; // Salimos del bucle, ya no necesitamos seguir buscando
     }
   }
 
-  const sessionId = "S" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-  hoja.appendRow([sessionId, usuarioId, hoy.toISOString(), hoy.toISOString(), 'Activa', '']);
-  return sessionId;
+  // Si no se encontró ninguna sesión, creamos una nueva
+  if (!sessionId) {
+    sessionId = "S" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+    hoja.appendRow([sessionId, usuarioId, hoy.toISOString(), hoy.toISOString(), 'Activa', '']);
+  }
+  
+  // --- INICIO DE LA MODIFICACIÓN ---
+
+  // 2. Ahora que ya tenemos el sessionId, verificamos si hay un anuncio
+  const mensajeAnuncio = verificarYObtenerAnuncioParaUsuario(usuarioId);
+
+  // 3. Devolvemos un OBJETO con ambos datos, listo para el frontend
+  return { 
+    sessionId: sessionId, 
+    mensajeAnuncio: mensajeAnuncio 
+  };
+  
+  // --- FIN DE LA MODIFICACIÓN ---
 }
 
 function generarSessionId() {
@@ -790,4 +817,50 @@ function buscarArticulo(textoBusqueda) {
     Logger.log("Error en buscarArticulo: " + e.toString());
     return ["Error al buscar."];
   }
+}
+
+/**
+ * Obtiene el anuncio más reciente que esté marcado como "Activo".
+ * @returns {object|null} Un objeto con los datos del anuncio o null si no hay ninguno.
+ */
+function obtenerUltimoAnuncioActivo() {
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Anuncios");
+  if (!hoja) return null;
+
+  const datos = hoja.getDataRange().getValues();
+  // Recorremos desde el final hacia el principio para encontrar el último activo
+  for (let i = datos.length - 1; i >= 1; i--) {
+    const [id, fecha, titulo, mensaje, activo] = datos[i];
+    if (activo === true || activo.toString().toUpperCase() === 'TRUE') {
+      return { id, fecha, titulo, mensaje };
+    }
+  }
+  return null;
+}
+
+/**
+ * Verifica si hay un anuncio nuevo para un usuario y lo devuelve si no lo ha visto.
+ * Usa PropertiesService para recordar qué anuncios ha visto cada usuario.
+ * @param {string} usuarioId El ID del usuario.
+ * @returns {string|null} El mensaje del anuncio formateado o null.
+ */
+function verificarYObtenerAnuncioParaUsuario(usuarioId) {
+  const anuncio = obtenerUltimoAnuncioActivo();
+  if (!anuncio) return null;
+
+  const userProperties = PropertiesService.getUserProperties();
+  const propertyKey = 'anuncio_visto_' + anuncio.id;
+  const yaVisto = userProperties.getProperty(propertyKey);
+
+  // Si el usuario aún no ha visto este anuncio
+  if (!yaVisto) {
+    // Marcamos el anuncio como visto para este usuario para siempre
+    userProperties.setProperty(propertyKey, 'true');
+    
+    // Formateamos el mensaje para que se vea bien en el chat
+    const mensajeFormateado = `📢 **Novedades del Día: ${anuncio.titulo}**\n\n${anuncio.mensaje}`;
+    return mensajeFormateado;
+  }
+  
+  return null; // El usuario ya vio este anuncio
 }
