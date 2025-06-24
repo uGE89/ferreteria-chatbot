@@ -180,16 +180,24 @@
                 .iniciarSesion(currentUserId);
         }
 
-        function handleSessionStart(sessionId) {
-            currentSessionId = sessionId;
-            const perfil = JSON.parse(sessionStorage.getItem('perfil'));
-            
-            loginCard.classList.add('hidden');
-            chatWrapper.classList.remove('hidden');
-            chatWrapper.classList.add('flex');
-            
-            initializeChat(perfil);
-        }
+function handleSessionStart(resultado) { // Ahora recibe un objeto 'resultado'
+  currentSessionId = resultado.sessionId;
+  const perfil = JSON.parse(sessionStorage.getItem('perfil'));
+  
+  loginCard.classList.add('hidden');
+  chatWrapper.classList.remove('hidden');
+  chatWrapper.classList.add('flex');
+  
+  // --- ¡NUEVA LÓGICA! ---
+  // 1. Verificamos si el objeto resultado contiene un mensaje de anuncio
+  if (resultado.mensajeAnuncio) {
+    // Si lo hay, lo mostramos en el chat con un estilo de "sistema"
+    addMessage(resultado.mensajeAnuncio, 'system');
+  }
+
+  // 2. El resto del flujo de inicialización continúa normalmente
+  initializeChat(perfil);
+}
 
         function handleError(err) {
             loginMsg.textContent = `Error: ${err.message || 'Error desconocido del servidor.'}`;
