@@ -879,3 +879,57 @@ function verificarYObtenerAnuncioParaUsuario(usuarioId) {
   
   return null;
 }
+
+function abrirModalDeConteo() {
+  return HtmlService.createHtmlOutputFromFile('conteo-modal').getContent();
+}
+
+/**
+ * Busca artículos filtrando por múltiples palabras clave.
+ * @param {string} textoBusqueda El string de búsqueda, ej: "cem 42".
+ * @returns {object[]} Un array de objetos {clave, desc}.
+ */
+function buscarArticulosAvanzado(textoBusqueda) {
+  const terminos = textoBusqueda.toLowerCase().split(' ').filter(Boolean); // Divide "cem 42" en ['cem', '42']
+  if (terminos.length === 0) return [];
+
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Articulos");
+  if (!hoja) return [];
+
+  const rangoDatos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 2).getValues();
+  
+  const coincidencias = rangoDatos
+    .map(fila => ({ clave: fila[0].toString(), desc: fila[1].toString() }))
+    .filter(item => {
+      const descripcionMinusculas = item.desc.toLowerCase();
+      // Devuelve true solo si la descripción contiene TODOS los términos de búsqueda
+      return terminos.every(termino => descripcionMinusculas.includes(termino));
+    });
+      
+  return coincidencias.slice(0, 50); // Devolvemos hasta 50 resultados para la tabla
+}
+
+/**
+ * Recibe un array de conteos y los registra en la hoja "Conteos".
+ * @param {object[]} conteosArray El array de objetos de conteo.
+ * @returns {string} Un mensaje de confirmación con el número de registros guardados.
+ */
+function registrarMultiplesConteos(conteosArray) {
+  if (!conteosArray || conteosArray.length === 0) {
+    return "No se recibieron datos para registrar.";
+  }
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Conteos");
+  const usuarioId = Session.getActiveUser().getEmail(); // Obtenemos el usuario actual
+  const ahora = new Date();
+
+  const filasParaAñadir = conteosArray.map(conteo => {
+    const diferencia = Number(conteo.fisico) - Number(conteo.sistema);
+    const id = "C" + Date.now() + Math.random().toString(36).substring(2, 6);
+    return [ id, ahora, usuarioId, conteo.clave, conteo.producto, Number(conteo.sistema), Number(conteo.fisico), diferencia, true, 'Registro masivo' ];
+  });
+
+  // Usamos setValues para añadir todas las filas en una sola operación (mucho más rápido)
+  hoja.getRange(hoja.getLastRow() + 1, 1, filasParaAñadir.length, filasParaAñadir[0].length).setValues(filasParaAñadir);
+  
+  return `${filasParaAñadir.length} conteos registrados exitosamente.`;
+}

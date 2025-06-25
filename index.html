@@ -387,15 +387,23 @@ function enviarRespuestaAdministrador(destinoUsuario, destinoSesion, inputId) {
             }
         });
 
-        quickStartersContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('quick-starter-btn')) {
-                const text = e.target.textContent;
-                addMessage(text, 'user');
-                getAIResponse(text);
-                messageInput.value = '';
-                messageInput.focus();
-            }
-        });
+              quickStartersContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('quick-starter-btn')) {
+                  const text = e.target.textContent;
+
+                  // --- ¡CAMBIO IMPORTANTE AQUÍ! ---
+                  if (text === 'Hacer conteo de inventario') {
+                    abrirModal(); // SI ES EL BOTÓN DE CONTEO, LLAMA A LA FUNCIÓN PARA ABRIR EL MODAL
+                  } else {
+                    // Para los otros botones, mantenemos el comportamiento de chat
+                    addMessage(text, 'user');
+                    // Asegúrate de enviar el payload como objeto, como lo hace el formulario principal
+                    getAIResponse({ texto: text, claveProducto: null });
+                    messageInput.value = '';
+                    messageInput.focus();
+                  }
+                }
+              });
 
 
 
@@ -459,6 +467,34 @@ function selectSuggestion(suggestion) {
 }
 
 // --- FIN DE LA LÓGICA DEL BUSCADOR @ ---
+
+
+// --- INICIO DE LA LÓGICA DEL MODAL ---
+
+const modalContainer = document.getElementById('modal-container');
+
+// Función para abrir la ventana modal
+function abrirModal() {
+  // Muestra un mensaje de carga mientras se obtiene el HTML
+  modalContainer.innerHTML = '<div class="text-white text-lg">Cargando interfaz de conteo...</div>';
+  modalContainer.classList.remove('hidden');
+  modalContainer.classList.add('flex');
+
+  google.script.run.withSuccessHandler(html => {
+    // Cuando el backend nos da el HTML del modal, lo inyectamos en un iframe
+    // Usar un iframe es la mejor práctica para evitar conflictos de estilos y scripts
+    modalContainer.innerHTML = `<iframe style="width:100%; height:95%; max-width: 900px; border:0; border-radius: 12px;" srcdoc="${html.replace(/"/g, '&quot;')}"></iframe>`;
+  }).abrirModalDeConteo();
+}
+
+// Función para cerrar la ventana modal (será llamada desde el iframe)
+function cerrarModal() {
+    modalContainer.classList.add('hidden');
+    modalContainer.classList.remove('flex');
+    modalContainer.innerHTML = ''; // Limpiamos el contenido al cerrar
+}
     </script>
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50"></div>
+
 </body>
 </html>
