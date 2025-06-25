@@ -29,6 +29,47 @@ const NOMBRE_TAREAS = 'Tareas'; // <-- AÑADE ESTA TAMBIÉN
  * @param {string} id El ID del usuario a validar.
  * @returns {object} Un objeto con {ok: boolean, perfil?: object, msg?: string}.
  */
+
+/**
+ * Función maestra que se encarga de recopilar todos los datos 
+ * necesarios para la carga inicial de la aplicación.
+ * @param {string} usuarioId El ID del usuario que está iniciando sesión.
+ * @returns {object} Un objeto con todos los datos necesarios para el frontend.
+ */
+function cargarDatosIniciales(usuarioId) {
+  try {
+    // 1. Validar al usuario (este es el primer paso crítico)
+    const validacion = validarUsuario(usuarioId);
+    if (!validacion.ok) {
+      // Si la validación falla, no continuamos y devolvemos el error.
+      return { ok: false, msg: validacion.msg };
+    }
+
+    // 2. Si la validación es exitosa, obtenemos el resto de los datos
+    const perfil = validacion.perfil;
+    const sesion = iniciarSesion(usuarioId);
+    const mensajesAdmin = cargarMensajesParaAdministrador(); // Carga los mensajes para el admin
+    const resumenDiario = generarResumenAdmin(); // Genera el resumen del día
+
+    // 3. Devolvemos todo en un solo objeto
+    return {
+      ok: true,
+      perfil: perfil,
+      sesionId: sesion.sessionId,
+      anuncio: sesion.mensajeAnuncio,
+      mensajesParaAdmin: mensajesAdmin,
+      resumenDiario: resumenDiario
+    };
+
+  } catch (e) {
+    Logger.log("Error en cargarDatosIniciales: " + e.toString());
+    return { ok: false, msg: "Ocurrió un error inesperado al cargar la aplicación." };
+  }
+}
+
+
+
+
 function validarUsuario(id) {
   try {
     const ss = SpreadsheetApp.openById(ID_HOJA_USUARIOS);
@@ -136,6 +177,8 @@ function doGet() {
 }
 
 function registrarMensaje(sesionId, usuarioId, emisor, contenido, functionCall = false, funcion = '', argsJson = '', paraAdmin = false) {
+    Logger.log(`[registrarMensaje] SesionID: ${sesionId}, UsuarioID: ${usuarioId}, Emisor: ${emisor}, Contenido: ${contenido}`);
+
   const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRE_HISTORIAL);
   // Asegúrate que el orden coincida con tus columnas
   hoja.appendRow(['', new Date(), usuarioId, sesionId, emisor, contenido, functionCall, funcion, argsJson, paraAdmin]); 
@@ -147,26 +190,31 @@ function getHistorialParaOpenAI(sesionId) {
   const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRE_HISTORIAL);
   const datos = hoja.getDataRange().getValues();
   const messages = [];
+
   for (let i = 1; i < datos.length; i++) {
     const row = datos[i];
+
     if (row[3] === sesionId) {
       const emisor = row[4];
-      const role = (emisor === 'user' || emisor === 'assistant') ? emisor : 'function';
+      const esFunctionCall = String(row[6]).toUpperCase() === 'TRUE';
+      const role = esFunctionCall ? 'function' : (emisor === 'user' || emisor === 'assistant' ? emisor : 'system');
       const msg = { role };
-      if (role !== 'function') {
-        msg.content = String(row[5] || '');
-      }
-      if (String(row[6]).toUpperCase() === 'TRUE') {
-        msg.name = row[7];
+
+      if (esFunctionCall) {
+        msg.name = row[7] || 'funcion_no_definida';
         try {
           msg.arguments = JSON.parse(row[8] || '{}');
         } catch (e) {
           msg.arguments = {};
         }
+      } else {
+        msg.content = String(row[5] || '');
       }
+
       messages.push(msg);
     }
   }
+
   return messages;
 }
 
@@ -203,28 +251,45 @@ function detectarTipoFuncion(mensaje) {
  * a OpenAI, y procesa la respuesta, incluyendo el flujo de 2 pasos para function calling
  * que permite al asistente analizar resultados y hacer preguntas de seguimiento.
  */
+/**
+ * Orquesta la lógica de la conversación: maneja tareas, prepara y envía solicitudes
+ * a OpenAI, y procesa la respuesta, incluyendo el flujo de 2 pasos para function calling.
+ */
 function enviarAOpenAI(sesionId, usuarioId, payload, tipoFuncion = '') {
-  // --- INICIALIZACIÓN Y MANEJO DEL PAYLOAD ---
-  const textoUsuario = payload.texto;
+    Logger.log(`[enviarAOpenAI - START] SesionId recibido: ${sesionId}`);
+  Logger.log(`[enviarAOpenAI - START] UsuarioId recibido: ${usuarioId}`);
+  Logger.log(`[enviarAOpenAI - START] Payload recibido: ${JSON.stringify(payload)}`);
+
+  // --- 1. INICIALIZACIÓN Y MANEJO DEL PAYLOAD ---
+  const textoUsuario = payload.texto || ''; // Asegurarse de que no sea null
+    Logger.log(`[enviarAOpenAI - START] textoUsuario después de || '': ${textoUsuario}`);
+
   const claveProducto = payload.claveProducto;
-  let mensaje = textoUsuario;
+  let mensajeParaRegistrar = textoUsuario;
+    Logger.log(`[enviarAOpenAI - START] mensajeParaRegistrar (inicial): ${mensajeParaRegistrar}`);
 
-  if (mensaje === "__inicio") {
-    mensaje = "Inicio de sesión del trabajador.";
+
+  // --- 2. LÓGICA PRE-OPENAI (SOBRE EL TEXTO ORIGINAL DEL USUARIO) ---
+  
+  // Caso especial: El mensaje es una instrucción de inicio de sesión
+  if (mensajeParaRegistrar === "__inicio") {
+    mensajeParaRegistrar = "Acabas de iniciar sesión. Salúdame amablemente por mi nombre y pregúntame en qué puedo ayudarte hoy.";
   }
-  // Registramos el mensaje original del usuario en el historial
-  registrarMensaje(sesionId, usuarioId, 'user', mensaje);
 
-  // --- LÓGICA PRE-OPENAI (TAREAS PENDIENTES) ---
+  // Detectar confirmación de tarea pendiente
   const pendiente = CacheService.getUserCache().get(`tareaPendiente-${sesionId}`);
-  if (pendiente && mensaje.match(/^(sí|si|dale|ok|correcto|de acuerdo)/i)) {
+  if (pendiente && textoUsuario.match(/^(sí|si|dale|ok|correcto|de acuerdo)/i)) {
     const args = JSON.parse(pendiente);
     const resultadoTarea = registrarEntrada(args, "Tarea", sesionId, usuarioId);
     CacheService.getUserCache().remove(`tareaPendiente-${sesionId}`);
-    return { content: resultadoTarea.mensaje }; // Devuelve solo el mensaje de la tarea creada
+    // No necesitamos devolver resultadoTarea.mensaje, la función ya lo registra. 
+    // La respuesta final la dará OpenAI en el siguiente paso.
+    // Devolvemos el objeto de respuesta de la función para que el front lo muestre.
+    return { content: resultadoTarea }; 
   }
 
-  const posibleTarea = detectaTareaPendiente(mensaje);
+  // Detectar si el mensaje actual podría ser una nueva tarea
+  const posibleTarea = detectaTareaPendiente(textoUsuario);
   if (posibleTarea) {
     const aviso = `Detecté que esto podría ser una tarea (“${posibleTarea.autoDescripcion}”). ¿La creo como pendiente?`;
     CacheService.getUserCache().put(`tareaPendiente-${sesionId}`, JSON.stringify(posibleTarea), 3600);
@@ -232,32 +297,36 @@ function enviarAOpenAI(sesionId, usuarioId, payload, tipoFuncion = '') {
     return { content: aviso };
   }
   
-  // --- PREPARACIÓN PARA LLAMADA #1 A OPENAI ---
-  if (!tipoFuncion || tipoFuncion.trim() === '') {
-    tipoFuncion = detectarTipoFuncion(mensaje);
+  // --- 3. PREPARACIÓN FINAL DEL MENSAJE Y LLAMADA A OPENAI ---
+
+  // Inyectamos la clave de producto al mensaje que verá OpenAI, si existe
+  if (claveProducto) {
+    mensajeParaRegistrar = `[CLAVE DE PRODUCTO: ${claveProducto}] ${mensajeParaRegistrar}`;
   }
 
-  let systemPrompt = obtenerPromptSistema(tipoFuncion);
+  // Registramos el mensaje del usuario (ya procesado) UNA SOLA VEZ
+  registrarMensaje(sesionId, usuarioId, 'user', mensajeParaRegistrar);
+
+  // Determinar el tipo de función a usar (si no se forzó uno)
+  if (!tipoFuncion || tipoFuncion.trim() === '') {
+    tipoFuncion = detectarTipoFuncion(textoUsuario); // Usar el texto original para la detección
+  }
+  
   const perfil = getPerfilActual();
+  let systemPrompt = obtenerPromptSistema(tipoFuncion);
 
   if (perfil) {
     const perfilContexto = `Contexto del usuario:\n- ID: ${perfil.usuarioID}\n- Nombre: ${perfil.nombre}\n- Sucursal: ${perfil.sucursal}\n- Rol: ${perfil.rol}\nYa conocés la sucursal y el rol del trabajador. No vuelvas a preguntar por ellos. Respondé siempre en español con tono directo, estilo WhatsApp, como Carlos E. Flores.`;
     systemPrompt.content = perfilContexto + "\n\n---\n\n" + systemPrompt.content;
   }
   
-  // Inyectamos la clave si existe, para que OpenAI la use al llamar a la función
-  if (claveProducto) {
-    mensaje = `[CLAVE DE PRODUCTO: ${claveProducto}] ${mensaje}`;
-  }
-
   const historial = getHistorialParaOpenAI(sesionId);
-  // Re-registramos el mensaje del usuario, esta vez con la posible clave inyectada para la IA
-  historial[historial.length -1].content = mensaje; 
-  
   const messages = [systemPrompt].concat(historial);
   const config = leerConfiguracion();
   const functionsDefs = leerFunciones();
 
+  // ELIMINAMOS COMPLETAMENTE la sobrescritura del historial. Ya no es necesaria.
+  
   const payloadAPI = {
     model: config.modelo_default,
     messages: messages,
@@ -274,11 +343,18 @@ function enviarAOpenAI(sesionId, usuarioId, payload, tipoFuncion = '') {
     payload: JSON.stringify(payloadAPI)
   };
   
-  // --- 🧠 LLAMADA #1 A OPENAI ---
+  // --- 4. LLAMADAS A API Y MANEJO DE RESPUESTAS (Sin cambios en esta sección) ---
   const response = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', options);
-  const data = JSON.parse(response.getContentText()).choices[0].message;
+  const responseText = response.getContentText();
+  const jsonResponse = JSON.parse(responseText);
 
-  // --- MANEJO DE RESPUESTA ---
+  // Verificar si hay un error en la respuesta de OpenAI
+  if (jsonResponse.error) {
+    Logger.log("Error de OpenAI: " + responseText);
+    return { content: "Hubo un error al contactar al asistente. Por favor, intenta de nuevo." };
+  }
+
+  const data = jsonResponse.choices[0].message;
 
   // CASO A: LA IA PIDE LLAMAR A UNA FUNCIÓN (FLUJO DE 2 PASOS)
   if (data.function_call) {
@@ -299,25 +375,21 @@ function enviarAOpenAI(sesionId, usuarioId, payload, tipoFuncion = '') {
         resultadoFuncion = registrarEntrada(args, "Sugerencia", sesionId, usuarioId);
         break;
       case "anotarRegistro":
-         resultadoFuncion = anotarRegistro(args);
-         break;
+        resultadoFuncion = anotarRegistro(args);
+        break;
       default:
         resultadoFuncion = JSON.stringify({ status: "error", message: `Función desconocida: ${nombreFuncion}` });
     }
 
-    // AÑADIMOS EL RESULTADO DE LA FUNCIÓN AL HISTORIAL PARA LA SEGUNDA LLAMADA
-    messages.push(data); // El mensaje de la IA que decidió llamar a la función
+    messages.push(data);
     messages.push({ role: "function", name: nombreFuncion, content: resultadoFuncion });
 
-    // Preparamos la segunda llamada
     const payloadPaso2 = { model: config.modelo_default, messages: messages, temperature: parseFloat(config.temperatura), max_tokens: parseInt(config.max_tokens, 10) };
     const optionsPaso2 = { ...options, payload: JSON.stringify(payloadPaso2) };
 
-    // --- 🧠 LLAMADA #2 A OPENAI ---
     const responsePaso2 = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', optionsPaso2);
     const dataPaso2 = JSON.parse(responsePaso2.getContentText()).choices[0].message;
 
-    // Esta es la respuesta final, conversacional e inteligente
     registrarMensaje(sesionId, usuarioId, 'assistant', dataPaso2.content || '');
     return dataPaso2;
   }
@@ -683,7 +755,6 @@ function cargarMensajesParaAdministrador() {
         usuario: usuarioID,
         texto: contenido,
         fecha: fecha,
-        sesionId: sesionId
       });
     }
   }
@@ -692,57 +763,91 @@ function cargarMensajesParaAdministrador() {
 }
 
 
+/**
+ * ESTA ES LA VERSIÓN FINAL Y CORREGIDA
+ * Genera un resumen diario y maneja de forma segura el caso de que el historial esté vacío.
+ */
+/**
+ * ESTA ES LA VERSIÓN FINAL Y CORREGIDA
+ * Genera un resumen diario y maneja de forma segura el caso de que el historial esté vacío.
+ */
 function generarResumenAdmin(fechaReferencia) {
   const hojaHistorial = SpreadsheetApp.openById(ID_HOJA).getSheetByName(NOMBRE_HISTORIAL);
   const datos = hojaHistorial.getDataRange().getValues();
-  const encabezados = datos[0];
-  const idxFecha = encabezados.indexOf("Fecha");
-  const idxRol = encabezados.indexOf("Rol");
-  const idxContenido = encabezados.indexOf("Contenido");
-  const idxSucursal = encabezados.indexOf("Sucursal");
-  const idxUsuario = encabezados.indexOf("Nombre");
 
-  const fechaFiltro = fechaReferencia || Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd");
-  const resumen = {
-    conteos: [],
-    problemas: [],
-    tareas: [],
-    otras: []
-  };
+  if (datos.length <= 1) return "No hay historial para generar un resumen.";
 
+  /* 1. Mapeo seguro de encabezados */
+  const encabezados = datos[0].map(h => String(h).toLowerCase());
+
+  const idxFecha     = encabezados.indexOf('fechahora');
+  const idxRol       = encabezados.indexOf('emisor');
+  const idxContenido = encabezados.indexOf('contenido');
+  const idxUsuario   = encabezados.indexOf('usuarioid');
+  const idxNombre    = encabezados.indexOf('nombre');
+
+  if (idxFecha === -1 || idxRol === -1 || idxContenido === -1) {
+    return 'Faltan columnas obligatorias (FechaHora / Emisor / Contenido) en HistorialConversaciones.';
+  }
+
+  /* 2. Prepara caché de perfiles para obtener sucursal si la necesitás */
+  const cache = CacheService.getUserCache();
+
+  const fechaFiltro = fechaReferencia ||
+        Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+
+  const resumen = { conteos: [], problemas: [], tareas: [], otras: [] };
+
+  /* 3. Recorremos las filas de conversación */
   for (let i = 1; i < datos.length; i++) {
     const fila = datos[i];
-    const fecha = fila[idxFecha].toString().split("T")[0];
-    const rol = fila[idxRol];
-    const contenido = fila[idxContenido];
-    const sucursal = fila[idxSucursal];
-    const nombre = fila[idxUsuario];
 
-    if (fecha !== fechaFiltro || rol === "Administrador") continue;
+    const fechaCell = fila[idxFecha];
+    if (!fechaCell) continue;
+    const fechaFila = Utilities.formatDate(new Date(fechaCell), Session.getScriptTimeZone(), "yyyy-MM-dd");
+    if (fechaFila !== fechaFiltro) continue;
+
+    const rol       = fila[idxRol];
+    if (rol === 'Administrador') continue;  // omite mensajes del admin
+
+    const contenido = String(fila[idxContenido] || '');
+    const usuarioId = fila[idxUsuario];
+    const nombre    = fila[idxNombre] || usuarioId;
+
+    /* Obtener sucursal — si existe en caché */
+    let sucursal = 'SinSucursal';
+    const perfilStr = cache.get(usuarioId);
+    if (perfilStr) {
+      try {
+        const p = JSON.parse(perfilStr);
+        sucursal = p.sucursal || sucursal;
+      } catch (_) {}
+    }
 
     const item = `- ${sucursal}: ${contenido} (${nombre})`;
 
-    if (contenido.includes("conteo") || contenido.includes("sistema hay")) {
+    if (/conteo|sistema hay/i.test(contenido)) {
       resumen.conteos.push(item);
-    } else if (contenido.includes("problema") || contenido.includes("queja")) {
+    } else if (/problema|queja/i.test(contenido)) {
       resumen.problemas.push(item);
-    } else if (contenido.includes("dejalo como pendiente") || contenido.includes("tarea creada")) {
+    } else if (/dejalo como pendiente|tarea creada/i.test(contenido)) {
       resumen.tareas.push(item);
     } else {
       resumen.otras.push(item);
     }
   }
 
+  /* 4. Formatear salida */
   const salida = [
-    `📝 Resumen Diario – Ferretería Flores`,
+    "📝 Resumen Diario – Ferretería Flores",
     `📅 Fecha: ${fechaFiltro}`,
-    ``,
+    "",
     `🔢 Conteos registrados:\n${resumen.conteos.join("\n") || "- Sin registros"}`,
-    ``,
+    "",
     `⚠️ Problemas reportados:\n${resumen.problemas.join("\n") || "- Ninguno"}`,
-    ``,
+    "",
     `🕒 Tareas pendientes:\n${resumen.tareas.join("\n") || "- Ninguna"}`,
-    ``,
+    "",
     `📌 Otras notas:\n${resumen.otras.join("\n") || "- Sin información adicional"}`
   ].join("\n");
 
@@ -752,29 +857,33 @@ function generarResumenAdmin(fechaReferencia) {
 
 
 
+
 function testFlujoInteligente() {
   const usuarioId = 'U001';
-  const sesion = iniciarSesion(usuarioId);
-  Logger.log('🟢 Sesión iniciada: ' + sesion);
+  const sesionObj = iniciarSesion(usuarioId); // Renombrado para mayor claridad
+  const sessionId = sesionObj.sessionId; // Extraer el ID de la sesión
+  Logger.log('🟢 Sesión iniciada: ' + sessionId);
+  if (sesionObj.mensajeAnuncio) {
+      Logger.log('📢 Anuncio: ' + sesionObj.mensajeAnuncio.join('\n'));
+  }
 
-  // Lista de entradas simuladas
   const mensajesDePrueba = [
-    "quiero hacer mi reporte del día",
-    "tuve problemas con un vendedor que pasa en el celular",
-    "también conté 10 sacos de cemento hoy",
-    "tengo una idea para mejorar cómo despachamos los pedidos"
+    { texto: "quiero hacer mi reporte del día" },
+    { texto: "tuve problemas con un vendedor que pasa en el celular" },
+    { texto: "también conté 10 sacos de cemento hoy" },
+    { texto: "tengo una idea para mejorar cómo despachamos los pedidos" }
   ];
 
   for (let i = 0; i < mensajesDePrueba.length; i++) {
-    const mensaje = mensajesDePrueba[i];
-    const tipoFuncion = detectarTipoFuncion(mensaje);
-    Logger.log(`📩 Mensaje: "${mensaje}"`);
+    const payload = mensajesDePrueba[i]; // 'payload' ahora es un objeto
+    const tipoFuncion = detectarTipoFuncion(payload.texto);
+    Logger.log(`📩 Mensaje: "${payload.texto}"`);
     Logger.log(`🔍 Función detectada: ${tipoFuncion || "ninguna (respuesta general)"}`);
 
-    const respuesta = enviarAOpenAI(sesion, usuarioId, mensaje, tipoFuncion);
+    // LLAMADA CORRECTA
+    const respuesta = enviarAOpenAI(sessionId, usuarioId, payload, tipoFuncion);
     Logger.log(`🤖 Respuesta GPT:\n${JSON.stringify(respuesta, null, 2)}`);
   }
-
   // Ver las últimas líneas del historial
   const hojaHist = SpreadsheetApp.openById(ID_HOJA).getSheetByName(NOMBRE_HISTORIAL);
   const ultimas = hojaHist.getRange(Math.max(2, hojaHist.getLastRow() - 9), 1, 10, hojaHist.getLastColumn()).getValues();
@@ -906,21 +1015,47 @@ function buscarArticulosAvanzado(textoBusqueda) {
  * @param {object[]} conteosArray El array de objetos de conteo.
  * @returns {string} Un mensaje de confirmación con el número de registros guardados.
  */
-function registrarMultiplesConteos(conteosArray) {
+/**
+ * ESTA ES LA VERSIÓN CORRECTA Y VALIDADA
+ * Recibe un array de conteos del modal y los registra en la hoja "Conteos",
+ * asegurando que el formato y el orden de las columnas sean correctos.
+ * @param {object[]} conteosArray El array de objetos de conteo.
+ * @returns {string} Un mensaje de confirmación.
+ */
+function registrarMultiplesConteos(conteosArray, usuarioId) {
   if (!conteosArray || conteosArray.length === 0) {
     return "No se recibieron datos para registrar.";
   }
+  
   const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Conteos");
-  const usuarioId = Session.getActiveUser().getEmail(); // Obtenemos el usuario actual
+  if (!hoja) {
+    return "Error: No se encontró la hoja 'Conteos'.";
+  }
+
   const ahora = new Date();
 
+  // Mapeamos el array de conteos para que cada uno se convierta en una fila para la hoja
   const filasParaAñadir = conteosArray.map(conteo => {
-    const diferencia = Number(conteo.fisico) - Number(conteo.sistema);
-    const id = "C" + Date.now() + Math.random().toString(36).substring(2, 6);
-    return [ id, ahora, usuarioId, conteo.clave, conteo.producto, Number(conteo.sistema), Number(conteo.fisico), diferencia, true, 'Registro masivo' ];
+    // Nos aseguramos de que las cantidades sean números para poder calcular
+    const sistema = Number(conteo.sistema);
+    const fisico = Number(conteo.fisico);
+    const diferencia = fisico - sistema;
+    
+    // El array ahora tiene 9 elementos que coinciden con tus 9 columnas
+    return [
+      ahora,                      // Columna A: Fecha
+      usuarioId,                  // Columna B: UsuarioID
+      conteo.clave,               // Columna C: Clave producto
+      conteo.producto,            // Columna D: Producto
+      sistema,                    // Columna E: Cantidad Sistema
+      fisico,                     // Columna F: Cantidad Físico
+      diferencia,                 // Columna G: Diferencia
+      false,                      // Columna H: Confirmado (lo ponemos en 'false' por defecto)
+      'Registro masivo'           // Columna I: Observación
+    ];
   });
 
-  // Usamos setValues para añadir todas las filas en una sola operación (mucho más rápido)
+  // Usamos setValues para escribir todas las filas de una sola vez (es más eficiente)
   hoja.getRange(hoja.getLastRow() + 1, 1, filasParaAñadir.length, filasParaAñadir[0].length).setValues(filasParaAñadir);
   
   return `${filasParaAñadir.length} conteos registrados exitosamente.`;
@@ -932,38 +1067,46 @@ function registrarMultiplesConteos(conteosArray) {
  * @param {string} mensaje El texto enviado por el usuario.
  * @return {string} La respuesta del chatbot.
  */
-function responder(mensaje) {
-  // --- Verificación de seguridad para evitar errores ---
-  if (!mensaje || typeof mensaje !== 'string') {
-    log("Se recibió un mensaje inválido o vacío.");
-    return "Ocurrió un error (mensaje inválido). Inténtalo de nuevo.";
+function testRegistroHistorial() {
+  const usuarioId = "U001"; // <- Ajustá aquí si querés probar con otro
+  const hojaHistorial = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRE_HISTORIAL);
+  const hojaSesiones = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRE_SESIONES);
+
+  Logger.log("🔍 Iniciando test de flujo completo...");
+
+  // 1. Iniciar sesión
+  const sesionInfo = iniciarSesion(usuarioId);
+  const sessionId = sesionInfo.sessionId;
+  Logger.log(`🆔 Sesión iniciada: ${sessionId}`);
+
+  // 2. Enviar un mensaje de prueba
+  const mensajePrueba = "Hola, quiero hacer un conteo de inventario hoy.";
+  const payload = { texto: mensajePrueba, claveProducto: null };
+
+  // 3. Enviar a OpenAI y registrar todo el flujo
+  const respuesta = enviarAOpenAI(sessionId, usuarioId, payload);
+
+  // 4. Buscar el último registro en el historial
+  const datosHistorial = hojaHistorial.getDataRange().getValues();
+  const ultFila = datosHistorial[datosHistorial.length - 1];
+
+  const sesionRegistrada = ultFila[3];
+  const emisor = ultFila[4];
+  const contenido = ultFila[5];
+
+  Logger.log("📝 Último mensaje registrado:");
+  Logger.log("SesionID: " + sesionRegistrada);
+  Logger.log("Emisor: " + emisor);
+  Logger.log("Contenido: " + contenido);
+
+  // 5. Validar
+  if (sesionRegistrada === sessionId) {
+    Logger.log("✅ El SessionID se registró correctamente en la hoja HistorialConversaciones.");
+  } else {
+    Logger.log("❌ ERROR: El SessionID no coincide. Revisa si fue definido correctamente antes del envío.");
   }
-  // --- Fin de la verificación ---
 
-  var msj = mensaje.toLowerCase();
-  var ss = SpreadsheetApp.openById(spreadsheetId);
-  var sheet = ss.getSheetByName("BD");
-  var data = sheet.getDataRange().getValues();
-  var respuesta = "No entendi";
-
-  // Busca una coincidencia exacta primero
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0].toLowerCase() == msj) {
-      respuesta = data[i][1];
-      break;
-    }
-  }
-
-  // Si no hay coincidencia exacta, busca una coincidencia parcial
-  if (respuesta == "No entendi") {
-    for (var i = 1; i < data.length; i++) {
-      if (msj.includes(data[i][0].toLowerCase())) {
-        respuesta = data[i][1];
-        break;
-      }
-    }
-  }
-
-  log(respuesta);
-  return respuesta;
+  // 6. Mostrar respuesta del asistente
+  Logger.log("🤖 Respuesta del asistente:");
+  Logger.log(JSON.stringify(respuesta, null, 2));
 }

@@ -73,6 +73,10 @@
             <div class="text-right">
                  <p id="user-status" class="text-sm font-medium text-emerald-400">Conectando...</p>
                  <p id="user-id-display" class="text-xs text-slate-400 font-mono"></p>
+                 <button id="logoutBtn"
+            class="mt-2 px-3 py-1 rounded text-xs text-slate-400 border border-slate-600 hover:text-red-400 hover:border-red-400 transition">
+        Cerrar sesión
+    </button>
             </div>
         </header>
 
@@ -133,405 +137,574 @@
     </footer>
     </div>
 
-    <script>
-        const loginCard = document.getElementById('login-card');
-        const chatWrapper = document.getElementById('chat-wrapper');
-        const btnLogin = document.getElementById('btnLogin');
-        const inputID = document.getElementById('inputID');
-        const loginMsg = document.getElementById('loginMsg');
-        
-        const chatWindow = document.getElementById('chat-window');
-        const chatForm = document.getElementById('chat-form');
-        const messageInput = document.getElementById('message-input');
-        const sendButton = document.getElementById('send-button');
-        const quickStartersContainer = document.getElementById('quick-starters');
-        
-        let currentUserId = '';
-        let currentSessionId = '';
+<script>
+    const loginCard = document.getElementById('login-card');
+    const chatWrapper = document.getElementById('chat-wrapper');
+    const btnLogin = document.getElementById('btnLogin');
+    const inputID = document.getElementById('inputID');
+    const loginMsg = document.getElementById('loginMsg');
 
-        // --- LÓGICA DE LOGIN ---
-        btnLogin.addEventListener('click', () => {
-          const id = inputID.value.trim();
-          if (!id) return;
+    const chatWindow = document.getElementById('chat-window');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const quickStartersContainer = document.getElementById('quick-starters');
 
-          loginMsg.textContent = "Validando…";
-          btnLogin.disabled = true;
-
-          google.script.run
-            .withSuccessHandler(handleValidation)
-            .withFailureHandler(handleError)
-            .validarUsuario(id);
-        });
-        
-        function handleValidation(resp) {
-            if (!resp.ok) {
-                loginMsg.textContent = resp.msg;
-                btnLogin.disabled = false;
-                return;
-            }
-            // Validación exitosa, guardar perfil e iniciar sesión de chat
-            sessionStorage.setItem('perfil', JSON.stringify(resp.perfil));
-            currentUserId = resp.perfil.usuarioID;
-            loginMsg.textContent = "Iniciando sesión...";
-
-            google.script.run
-                .withSuccessHandler(handleSessionStart)
-                .withFailureHandler(handleError)
-                .iniciarSesion(currentUserId);
-        }
-
-function handleSessionStart(resultado) { // Ahora recibe un objeto 'resultado'
-  currentSessionId = resultado.sessionId;
-  const perfil = JSON.parse(sessionStorage.getItem('perfil'));
-  
-  loginCard.classList.add('hidden');
-  chatWrapper.classList.remove('hidden');
-  chatWrapper.classList.add('flex');
-  
-  // --- ¡NUEVA LÓGICA! ---
-  // 1. Verificamos si el objeto resultado contiene un mensaje de anuncio
-if (resultado.mensajeAnuncio && Array.isArray(resultado.mensajeAnuncio)) {
-  let delay = 500; // Pausa inicial de medio segundo
-  
-  // Recorremos cada mensaje en la lista que nos envió el backend
-  resultado.mensajeAnuncio.forEach(mensaje => {
-    // Usamos setTimeout para crear un efecto de escritura con pausas
-    setTimeout(() => {
-      addMessage(mensaje, 'system');
-    }, delay);
-    
-    // Aumentamos la pausa para el siguiente mensaje
-    delay += 1200; // 1.2 segundos de pausa entre mensajes (puedes ajustar este valor)
-  });
-}
-
-  // 2. El resto del flujo de inicialización continúa normalmente
-  initializeChat(perfil);
-}
-
-        function handleError(err) {
-            loginMsg.textContent = `Error: ${err.message || 'Error desconocido del servidor.'}`;
-            btnLogin.disabled = false;
-        }
-        
-        // Auto-login si ya existe un perfil en sessionStorage
-        document.addEventListener('DOMContentLoaded', () => {
-            const storedProfile = sessionStorage.getItem('perfil');
-            if (storedProfile) {
-                inputID.value = JSON.parse(storedProfile).usuarioID;
-                btnLogin.click();
-            }
-        });
-
-        // --- LÓGICA DE CHAT ---
-        function initializeChat(perfil) {
-            const userStatus = document.getElementById('user-status');
-            const userIdDisplay = document.getElementById('user-id-display');
+    let currentUserId = '';
+    let currentSessionId = '';
+    let perfilActual = null; // Mantenemos esta variable global para acceder al perfil
 
 
-            
-            userStatus.textContent = `Activo: ${perfil.nombre}`;
-            userIdDisplay.textContent = `Sucursal: ${perfil.sucursal} | Rol: ${perfil.rol}`;
-            if (perfil.rol === "Administrador") {
-  document.getElementById("admin-tools").classList.remove("hidden");
+    // --- BOTÓN CERRAR SESIÓN ---
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  // Opcional: confirmar
+  if (!confirm("¿Seguro que querés cerrar sesión?")) return;
 
-  // (Opcional) podés precargar el resumen diario automáticamente
-  verResumenAdministrador();
+  // 1. Limpia el almacenamiento local
+  sessionStorage.clear();
 
-  // (Opcional) cargar mensajes pendientes al iniciar
-  cargarMensajesAdministrador();
-}
+  // 2. Podrías llamar a tu backend para marcar la sesión como cerrada
+  // google.script.run.cerrarSesion(currentSessionId);  // (si tuvieras esa función)
 
-            
-  getAIResponse({ texto: "__inicio", claveProducto: null });
-        }
-
-        function addMessage(text, sender) {
-            const messageContainer = document.createElement('div');
-            messageContainer.className = `flex message-bubble ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
-
-            let bubbleClasses = 'max-w-md lg:max-w-xl rounded-2xl px-4 py-2.5 text-sm shadow-md ';
-            let bubbleContent = '';
-
-            switch (sender) {
-                case 'user':
-                    bubbleClasses += 'bg-blue-600 text-white rounded-br-lg';
-                    bubbleContent = `<p>${text}</p>`;
-                    break;
-                case 'ai':
-                    bubbleClasses += 'bg-slate-700 text-slate-200 rounded-bl-lg';
-                    bubbleContent = `<p>${text}</p>`;
-                    break;
-                case 'system':
-                    bubbleClasses += 'bg-yellow-900/50 border border-yellow-600/50 text-yellow-300 w-full rounded-lg';
-                    bubbleContent = `<div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg><p class="font-mono text-xs">${text}</p></div>`;
-                    break;
-            }
-
-            messageContainer.innerHTML = `<div class="${bubbleClasses}">${bubbleContent}</div>`;
-            chatWindow.appendChild(messageContainer);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-        }
-        
-        function showTypingIndicator() {
-            if (document.getElementById('typing-indicator')) return;
-            const typingIndicator = document.createElement('div');
-            typingIndicator.id = 'typing-indicator';
-            typingIndicator.className = 'flex justify-start message-bubble';
-            typingIndicator.innerHTML = `<div class="bg-slate-700 text-slate-200 rounded-2xl rounded-bl-lg px-4 py-2.5 shadow-md"><div class="flex items-center gap-1.5"><span class="typing-dot"></span><span class="typing-dot" style="animation-delay: 0.2s;"></span><span class="typing-dot" style="animation-delay: 0.4s;"></span></div></div>`;
-            chatWindow.appendChild(typingIndicator);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-        }
-
-        function hideTypingIndicator() {
-            const indicator = document.getElementById('typing-indicator');
-            if (indicator) indicator.remove();
-        }
-
-        function getAIResponse(payload) { // <-- AHORA RECIBE EL OBJETO 'payload'
-          messageInput.disabled = true;
-          sendButton.disabled = true;
-          showTypingIndicator();
-
-          google.script.run
-              .withSuccessHandler(handleAIResponse)
-              .withFailureHandler(handleAIError)
-              // AHORA PASAMOS EL OBJETO 'payload' COMPLETO AL BACKEND
-              .enviarAOpenAI(currentSessionId, currentUserId, payload, '');
-        }
-
-        function handleAIResponse(data) {
-            hideTypingIndicator();
-            if (data.content) {
-                addMessage(data.content, 'ai');
-            }
-
-            if (data.function_call) {
-                const funcName = data.function_call.name;
-                const funcArgs = data.function_call.arguments;
-                const systemMessage = `Función invocada: ${funcName}(${funcArgs})`;
-                setTimeout(() => addMessage(systemMessage, 'system'), 500);
-            }
-
-            messageInput.disabled = false;
-            sendButton.disabled = false;
-            messageInput.focus();
-        }
-
-        function handleAIError(error) {
-            hideTypingIndicator();
-            addMessage(`Ocurrió un error al procesar tu solicitud: ${error.message}.`, 'system');
-            messageInput.disabled = false;
-            sendButton.disabled = false;
-            messageInput.focus();
-        }
-
-
-       let perfilActual = null;
-
-// --- AÑADE ESTA FUNCIÓN AQUÍ ---
-function getPerfilActual() {
-  return perfilActual;
-} 
-
-        function verResumenAdministrador() {
-    const usuario = getPerfilActual(); // Asegúrate de que esta función devuelva { nombre, rol, ... }
-
-    if (!usuario || usuario.rol !== "Administrador") {
-      alert("Solo disponible para el rol Administrador");
-      return;
-    }
-
-    google.script.run.withSuccessHandler(function(resumen) {
-      document.getElementById("resumen-admin").innerText = resumen;
-    }).generarResumenAdmin();
-  }
-
-  function cargarMensajesAdministrador() {
-  google.script.run.withSuccessHandler((mensajes) => {
-    const contenedor = document.getElementById("mensajes-admin");
-    contenedor.innerHTML = '';
-
-    if (!mensajes || mensajes.length === 0) {
-      contenedor.innerHTML = '<p class="text-slate-400 text-xs">No hay mensajes nuevos aún.</p>';
-      return;
-    }
-
-    mensajes.forEach((msg, index) => {
-      const bloque = document.createElement("div");
-      bloque.className = "border-b border-slate-600 pb-3";
-
-      bloque.innerHTML = `
-        <p><strong>${msg.usuario}</strong> dijo:</p>
-        <p class="text-slate-200 mb-2">${msg.texto}</p>
-        <textarea id="respuesta-${index}" class="w-full p-2 rounded text-slate-900 text-sm mb-1" placeholder="Escribí tu respuesta..."></textarea>
-        <button onclick="enviarRespuestaAdministrador('${msg.usuario}', '${msg.sesionId}', 'respuesta-${index}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
-          Enviar respuesta
-        </button>
-      `;
-
-      contenedor.appendChild(bloque);
-    });
-  }).cargarMensajesParaAdministrador();
-}
-
-function enviarRespuestaAdministrador(destinoUsuario, destinoSesion, inputId) {
-  const contenido = document.getElementById(inputId).value.trim();
-  if (!contenido) return alert("Escribí algo primero.");
-
-  google.script.run.withSuccessHandler(() => {
-    alert("Mensaje enviado correctamente.");
-    document.getElementById(inputId).value = '';
-  }).enviarMensajeAdministrador(destinoSesion, destinoUsuario, contenido);
-}
-
-
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const userInput = messageInput.value.trim();
-            if (userInput) {
-                addMessage(userInput, 'user');
-                getAIResponse(userInput);
-                messageInput.value = '';
-            }
-        });
-
-              quickStartersContainer.addEventListener('click', (e) => {
-                if (e.target.classList.contains('quick-starter-btn')) {
-                  const text = e.target.textContent;
-
-                  // --- ¡CAMBIO IMPORTANTE AQUÍ! ---
-                  if (text === 'Hacer conteo de inventario') {
-                    abrirModal(); // SI ES EL BOTÓN DE CONTEO, LLAMA A LA FUNCIÓN PARA ABRIR EL MODAL
-                  } else {
-                    // Para los otros botones, mantenemos el comportamiento de chat
-                    addMessage(text, 'user');
-                    // Asegúrate de enviar el payload como objeto, como lo hace el formulario principal
-                    getAIResponse({ texto: text, claveProducto: null });
-                    messageInput.value = '';
-                    messageInput.focus();
-                  }
-                }
-              });
-
-
-
-        // ... todo tu código de chatForm.addEventListener ... etc. ...
-
-// --- INICIO DE LA LÓGICA DEL BUSCADOR @ ---
-
-const suggestionsContainer = document.getElementById('suggestions-container');
-
-// 1. Escuchamos cada vez que el usuario escribe en el input
-messageInput.addEventListener('input', () => {
-  const text = messageInput.value;
-  const atIndex = text.lastIndexOf('@');
-
-  if (atIndex !== -1) {
-    const query = text.substring(atIndex + 1);
-    
-    // Solo buscamos si ha escrito al menos 2 letras después del @
-    if (query.length >= 2) {
-      google.script.run
-        .withSuccessHandler(displaySuggestions)
-        .buscarArticulo(query);
-    } else {
-      suggestionsContainer.innerHTML = ''; // Limpia si borra el texto de búsqueda
-    }
-  } else {
-    suggestionsContainer.innerHTML = ''; // Limpia si borra el @
-  }
+  // 3. Recarga la página para mostrar la pantalla de login
+  location.reload();
 });
 
-// 2. Función que se ejecuta cuando el backend devuelve las sugerencias
-function displaySuggestions(suggestions) {
-  suggestionsContainer.innerHTML = ''; // Limpia sugerencias anteriores
-  if (suggestions && suggestions.length > 0) {
-    suggestions.forEach(suggestion => {
-      const item = document.createElement('button');
-      item.type = 'button'; // Para que no envíe el formulario
-      item.className = 'suggestion-item';
-      item.textContent = suggestion;
-      
-      // 3. Acción al hacer clic en una sugerencia
-      item.onclick = () => {
-        selectSuggestion(suggestion);
-      };
-      suggestionsContainer.appendChild(item);
+
+    // --- LÓGICA DE LOGIN ---
+    btnLogin.addEventListener('click', () => {
+        const id = inputID.value.trim();
+        if (!id) return;
+
+        loginMsg.textContent = "Validando e iniciando sesión…";
+        btnLogin.disabled = true;
+
+        // CAMBIO PRINCIPAL: Una sola llamada para cargar todos los datos iniciales
+        google.script.run
+            .withSuccessHandler(procesarDatosIniciales) // Llama a la nueva función
+            .withFailureHandler(mostrarErrorGeneral)    // Maneja errores generales
+            .cargarDatosIniciales(id); // Envía el ID del usuario
     });
-  }
-}
 
-// 4. Función para insertar la sugerencia seleccionada en el input
-function selectSuggestion(suggestion) {
-  const text = messageInput.value;
-  const atIndex = text.lastIndexOf('@');
-  
-  // Reemplaza "@busqueda" por el nombre completo del producto
-  const newText = text.substring(0, atIndex) + suggestion + ' ';
-  messageInput.value = newText;
-  
-  suggestionsContainer.innerHTML = ''; // Limpia las sugerencias
-  messageInput.focus(); // Devuelve el foco al input
-}
+    /**
+     * Esta función recibe el paquete de datos del servidor después de cargarDatosIniciales.
+     * @param {object} datos - El objeto devuelto por cargarDatosIniciales.
+     */
+    function procesarDatosIniciales(datos) {
+      console.log("📦 datos recibidos:", datos);
+        if (!datos.ok) {
+            // Si la validación u otro paso falló, muestra el mensaje de error
+            loginMsg.textContent = datos.msg;
+            btnLogin.disabled = false;
+            return;
+        }
 
-// --- FIN DE LA LÓGICA DEL BUSCADOR @ ---
+        // 1. Guardar el perfil y el ID de usuario actual
+        sessionStorage.setItem('perfil', JSON.stringify(datos.perfil));
+        perfilActual = datos.perfil; // Actualiza la variable global perfilActual
+        currentUserId = datos.perfil.usuarioID;
+        currentSessionId = datos.sesionId; // Guardar el ID de sesión
+        sessionStorage.setItem('sessionId', currentSessionId);
+        console.log("✅ sessionId guardado:", currentSessionId);
 
 
-// --- INICIO DE LA LÓGICA DEL MODAL ---
+        // 2. Transición de la interfaz
+        loginCard.classList.add('hidden');
+        chatWrapper.classList.remove('hidden');
+        chatWrapper.classList.add('flex');
 
-const modalContainer = document.getElementById('modal-container');
+        // 3. Procesar el anuncio inicial (si existe)
+        if (datos.mensajeAnuncio && Array.isArray(datos.mensajeAnuncio)) {
+            let delay = 500;
+            datos.mensajeAnuncio.forEach(mensaje => {
+                setTimeout(() => {
+                    addMessage(mensaje, 'system');
+                }, delay);
+                delay += 1200;
+            });
+        }
 
-// Función para abrir la ventana modal
-function abrirModal(contenidoHTML) {
-  // 1. Inyecta el HTML del modal en el placeholder
-  document.getElementById("modal-placeholder").innerHTML = contenidoHTML;
+        // 4. Inicializar la interfaz del chat con los datos del perfil
+        initializeChat(datos.perfil);
 
-  // 2. Ahora que el modal existe en el DOM, hazlo visible
-  const modal = document.getElementById("conteo-modal");
-  if (modal) {
-    modal.style.display = 'flex';
-  }
+        // 5. Manejar datos específicos del administrador (si el rol lo permite)
+        if (datos.perfil.rol === "Administrador") {
+            document.getElementById("admin-tools").classList.remove("hidden");
+            // Mostrar resumen si viene en los datos iniciales
+            if (datos.resumenDiario) {
+                document.getElementById("resumen-admin").innerText = datos.resumenDiario;
+            }
+            // Cargar mensajes pendientes si vienen en los datos iniciales
+            if (datos.mensajesParaAdmin) {
+                renderizarMensajesAdmin(datos.mensajesParaAdmin);
+            }
+        }
+        
+        // 6. Cargar los quick starters del AI si vienen en los datos iniciales
+        if (datos.quickStarters && Array.isArray(datos.quickStarters)) {
+            renderQuickStarters(datos.quickStarters);
+        }
 
-  // 3. AÑADE LOS LISTENERS AQUÍ, DESPUÉS DE CREAR LOS BOTONES
+        // Una vez cargado todo, habilitar el input y el botón de enviar
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+        messageInput.focus();
+    }
 
-  // Listener para el botón de CERRAR
-  const btnCerrar = document.getElementById("btn-cerrar-modal");
-  if (btnCerrar) {
-    btnCerrar.addEventListener("click", function() {
-      if (modal) {
-        modal.style.display = 'none';
-      }
+    function mostrarErrorGeneral(err) {
+        loginMsg.textContent = `Error de comunicación con el servidor: ${err.message || 'Error desconocido.'}`;
+        btnLogin.disabled = false;
+        hideTypingIndicator(); // Asegurarse de ocultar si hay un error durante la carga
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+    }
+
+    // Auto-login si ya existe un perfil en sessionStorage
+document.addEventListener('DOMContentLoaded', () => {
+    const storedProfile = sessionStorage.getItem('perfil');
+    const storedSession = sessionStorage.getItem('sessionId');
+
+    if (storedProfile && storedSession) {
+        const perfil = JSON.parse(storedProfile);
+        inputID.value = perfil.usuarioID;
+        currentSessionId = storedSession;
+        currentUserId = perfil.usuarioID;
+
+        // Opcional: mostrar al usuario que está cargando sesión
+        document.getElementById('user-status').textContent = `Recuperando sesión...`;
+
+        // Disparamos login visual y funcional
+        btnLogin.click(); // esto llamará a procesarDatosIniciales()
+    } else {
+        // Si no hay sesión, asegurate de limpiar todo
+        sessionStorage.removeItem('perfil');
+        sessionStorage.removeItem('sessionId');
+    }
+});
+
+
+
+    // --- LÓGICA DE CHAT ---
+    function initializeChat(perfil) {
+        const userStatus = document.getElementById('user-status');
+        const userIdDisplay = document.getElementById('user-id-display');
+
+        userStatus.textContent = `Activo: ${perfil.nombre}`;
+        userIdDisplay.textContent = `Sucursal: ${perfil.sucursal} | Rol: ${perfil.rol}`;
+
+        // Ya no es necesario llamar a getAIResponse("__inicio") aquí,
+        // porque el mensaje de bienvenida y quick starters se manejan en procesarDatosIniciales
+        // si vienen del backend.
+    }
+
+    function addMessage(text, sender) {
+        const messageContainer = document.createElement('div');
+        messageContainer.className = `flex message-bubble ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+
+        let bubbleClasses = 'max-w-md lg:max-w-xl rounded-2xl px-4 py-2.5 text-sm shadow-md ';
+        let bubbleContent = '';
+
+        switch (sender) {
+            case 'user':
+                bubbleClasses += 'bg-blue-600 text-white rounded-br-lg';
+                bubbleContent = `<p>${text}</p>`;
+                break;
+            case 'ai':
+                bubbleClasses += 'bg-slate-700 text-slate-200 rounded-bl-lg';
+                bubbleContent = `<p>${text}</p>`;
+                break;
+            case 'system':
+                bubbleClasses += 'bg-yellow-900/50 border border-yellow-600/50 text-yellow-300 w-full rounded-lg';
+                bubbleContent = `<div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg><p class="font-mono text-xs">${text}</p></div>`;
+                break;
+        }
+
+        messageContainer.innerHTML = `<div class="${bubbleClasses}">${bubbleContent}</div>`;
+        chatWindow.appendChild(messageContainer);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+        if (document.getElementById('typing-indicator')) return;
+        const typingIndicator = document.createElement('div');
+        typingIndicator.id = 'typing-indicator';
+        typingIndicator.className = 'flex justify-start message-bubble';
+        typingIndicator.innerHTML = `<div class="bg-slate-700 text-slate-200 rounded-2xl rounded-bl-lg px-4 py-2.5 shadow-md"><div class="flex items-center gap-1.5"><span class="typing-dot"></span><span class="typing-dot" style="animation-delay: 0.2s;"></span><span class="typing-dot" style="animation-delay: 0.4s;"></span></div></div>`;
+        chatWindow.appendChild(typingIndicator);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) indicator.remove();
+    }
+
+    function getAIResponse(payload) { // <-- AHORA RECIBE EL OBJETO 'payload'
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+        showTypingIndicator();
+
+        google.script.run
+            .withSuccessHandler(handleAIResponse)
+            .withFailureHandler(handleAIError)
+            // AHORA PASAMOS EL OBJETO 'payload' COMPLETO AL BACKEND
+            .enviarAOpenAI(currentSessionId, currentUserId, payload, '');
+    }
+
+    function handleAIResponse(data) {
+        hideTypingIndicator();
+        if (data.content) {
+            addMessage(data.content, 'ai');
+        }
+
+        if (data.function_call) {
+            const funcName = data.function_call.name;
+            const funcArgs = data.function_call.arguments;
+            const systemMessage = `Función invocada: ${funcName}(${funcArgs})`;
+            setTimeout(() => addMessage(systemMessage, 'system'), 500);
+        }
+
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+        messageInput.focus();
+    }
+
+    function handleAIError(error) {
+        hideTypingIndicator();
+        addMessage(`Ocurrió un error al procesar tu solicitud: ${error.message}.`, 'system');
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+        messageInput.focus();
+    }
+
+    // --- FUNCIONES DE ADMINISTRADOR ---
+
+    // Añade esta función aquí
+    function getPerfilActual() {
+        return perfilActual;
+    }
+
+    function verResumenAdministrador() {
+        const usuario = getPerfilActual();
+        if (!usuario || usuario.rol !== "Administrador") {
+            alert("Solo disponible para el rol Administrador");
+            return;
+        }
+
+        google.script.run.withSuccessHandler(function(resumen) {
+            document.getElementById("resumen-admin").innerText = resumen;
+        }).generarResumenAdmin();
+    }
+
+    function cargarMensajesAdministrador() {
+        google.script.run.withSuccessHandler((mensajes) => {
+            renderizarMensajesAdmin(mensajes);
+        }).cargarMensajesParaAdministrador();
+    }
+
+    // Función auxiliar para renderizar los mensajes del administrador (llamada desde procesarDatosIniciales y cargarMensajesAdministrador)
+    function renderizarMensajesAdmin(mensajes) {
+        const contenedor = document.getElementById("mensajes-admin");
+        contenedor.innerHTML = '';
+
+        if (!mensajes || mensajes.length === 0) {
+            contenedor.innerHTML = '<p class="text-slate-400 text-xs">No hay mensajes nuevos aún.</p>';
+            return;
+        }
+
+        mensajes.forEach((msg, index) => {
+            const bloque = document.createElement("div");
+            bloque.className = "border-b border-slate-600 pb-3";
+
+            bloque.innerHTML = `
+                <p><strong>${msg.usuario}</strong> dijo:</p>
+                <p class="text-slate-200 mb-2">${msg.texto}</p>
+                <textarea id="respuesta-${index}" class="w-full p-2 rounded text-slate-900 text-sm mb-1" placeholder="Escribí tu respuesta..."></textarea>
+                <button onclick="enviarRespuestaAdministrador('${msg.usuario}', '${msg.sesionId}', 'respuesta-${index}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+                    Enviar respuesta
+                </button>
+            `;
+            contenedor.appendChild(bloque);
+        });
+    }
+
+    function enviarRespuestaAdministrador(destinoUsuario, destinoSesion, inputId) {
+        const contenido = document.getElementById(inputId).value.trim();
+        if (!contenido) return alert("Escribí algo primero.");
+
+        google.script.run.withSuccessHandler(() => {
+            alert("Mensaje enviado correctamente.");
+            document.getElementById(inputId).value = '';
+            cargarMensajesAdministrador(); // Refrescar los mensajes después de enviar
+        }).enviarMensajeAdministrador(destinoSesion, destinoUsuario, contenido);
+    }
+
+    // --- EVENTOS DEL CHAT ---
+chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+  console.log("📤 intento de enviar. userId:", currentUserId, " sessionId:", currentSessionId);
+
+    if (!currentSessionId || !currentUserId) {
+        alert("⚠️ No se ha iniciado la sesión correctamente. Por favor, reiniciá el login.");
+        return;
+    }
+
+    const userInput = messageInput.value.trim();
+    if (userInput) {
+        addMessage(userInput, 'user');
+        getAIResponse({ texto: userInput, claveProducto: null });
+        messageInput.value = '';
+    }
+});
+
+
+    quickStartersContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('quick-starter-btn')) {
+            const text = e.target.textContent;
+
+            if (text === 'Hacer conteo de inventario') {
+                gestionarAperturaModal();
+            } else {
+                addMessage(text, 'user');
+                getAIResponse({ texto: text, claveProducto: null });
+                messageInput.value = '';
+                messageInput.focus();
+            }
+        }
     });
-  }
 
-  // Listener para el botón de REGISTRAR CONTEO
-  const btnRegistrar = document.getElementById("btn-registrar-conteo");
-  if (btnRegistrar) {
-    btnRegistrar.addEventListener("click", function() {
-      const datos = {
-        producto: document.getElementById("producto").value,
-        cantidad: document.getElementById("cantidad-actual").value,
-        // ... captura los otros campos si los necesitas
-      };
-      console.log("Registrando conteo:", datos);
-      google.script.run.procesarConteoInventario(datos);
-      if (modal) {
-        modal.style.display = 'none'; // Cierra el modal después de registrar
-      }
+    // Función auxiliar para renderizar los quick starters (llamada desde procesarDatosIniciales)
+    function renderQuickStarters(starters) {
+        quickStartersContainer.innerHTML = ''; // Limpiar cualquier botón previo
+        starters.forEach(starterText => {
+            const button = document.createElement('button');
+            button.className = 'quick-starter-btn bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-full text-sm transition duration-200 ease-in-out';
+            button.textContent = starterText;
+            quickStartersContainer.appendChild(button);
+        });
+    }
+
+
+    // --- INICIO DE LA LÓGICA DEL BUSCADOR @ ---
+
+    const suggestionsContainer = document.getElementById('suggestions-container');
+
+    // 1. Escuchamos cada vez que el usuario escribe en el input
+    messageInput.addEventListener('input', () => {
+        const text = messageInput.value;
+        const atIndex = text.lastIndexOf('@');
+
+        if (atIndex !== -1) {
+            const query = text.substring(atIndex + 1);
+
+            // Solo buscamos si ha escrito al menos 2 letras después del @
+            if (query.length >= 2) {
+                google.script.run
+                    .withSuccessHandler(displaySuggestions)
+                    .buscarArticulo(query);
+            } else {
+                suggestionsContainer.innerHTML = ''; // Limpia si borra el texto de búsqueda
+            }
+        } else {
+            suggestionsContainer.innerHTML = ''; // Limpia si borra el @
+        }
     });
-  }
-}
 
-// Función para cerrar la ventana modal (será llamada desde el iframe)
-function cerrarModal() {
-    modalContainer.classList.add('hidden');
-    modalContainer.classList.remove('flex');
-    modalContainer.innerHTML = ''; // Limpiamos el contenido al cerrar
-}
-    </script>
-    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50"></div>
+    // 2. Función que se ejecuta cuando el backend devuelve las sugerencias
+    function displaySuggestions(suggestions) {
+        suggestionsContainer.innerHTML = ''; // Limpia sugerencias anteriores
+        if (suggestions && suggestions.length > 0) {
+            suggestions.forEach(suggestion => {
+                const item = document.createElement('button');
+                item.type = 'button'; // Para que no envíe el formulario
+                item.className = 'suggestion-item';
+                item.textContent = suggestion;
 
+                // 3. Acción al hacer clic en una sugerencia
+                item.onclick = () => {
+                    selectSuggestion(suggestion);
+                };
+                suggestionsContainer.appendChild(item);
+            });
+        }
+    }
+
+    // 4. Función para insertar la sugerencia seleccionada en el input
+    function selectSuggestion(suggestion) {
+        const text = messageInput.value;
+        const atIndex = text.lastIndexOf('@');
+
+        // Reemplaza "@busqueda" por el nombre completo del producto
+        const newText = text.substring(0, atIndex) + suggestion + ' ';
+        messageInput.value = newText;
+
+        suggestionsContainer.innerHTML = ''; // Limpia las sugerencias
+        messageInput.focus(); // Devuelve el foco al input
+    }
+
+    // --- FIN DE LA LÓGICA DEL BUSCADOR @ ---
+
+
+    // --- INICIO DE LA LÓGICA DEL MODAL ---
+
+    const modalContainer = document.getElementById('modal-container');
+
+    /**
+     * PASO 1: Esta función es la que debes llamar cuando el usuario hace clic
+     * en el botón "Hacer conteo de inventario". Se encarga de pedir el HTML
+     * del modal al servidor.
+     */
+    function gestionarAperturaModal() {
+        console.log("Solicitando HTML del modal de conteo al servidor...");
+        // Muestra un indicador de carga si lo deseas
+
+        google.script.run
+            .withSuccessHandler(construirModal) // Cuando el HTML llegue, llama a la función de construcción
+            .withFailureHandler(error => {
+                alert("Error al cargar el modal: " + error.message);
+            })
+            .abrirModalDeConteo(); // Esta es la función en tu Code.gs que devuelve el HTML
+    }
+
+
+    /**
+     * Esta es la función completa. Se encarga de:
+     * 1. Recibir e insertar el HTML del modal.
+     * 2. Mostrar el modal.
+     * 3. Buscar y renderizar la lista de artículos dentro del modal.
+     * 4. Conectar todos los botones (buscar, cerrar, registrar).
+     */
+    function construirModal(contenidoHTML) {
+        if (!contenidoHTML) {
+            alert("Error: El contenido del modal está vacío.");
+            return;
+        }
+
+        // --- PASO 1: USAR EL NUEVO CONTENEDOR ---
+        const modalContainer = document.getElementById("modal-container");
+        modalContainer.innerHTML = contenidoHTML;
+
+        // --- PASO 2: BUSCAR TODOS LOS ELEMENTOS DEL MODAL ---
+        const modal = document.getElementById("conteo-modal");
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('results-table-body');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnCerrar = document.getElementById("mi-boton-de-cerrar");
+
+        let todosLosArticulos = [];
+
+        // --- PASO 3: HACER VISIBLE EL MODAL ---
+        if (modalContainer) {
+            modalContainer.classList.remove('hidden');
+            modalContainer.classList.add('flex');
+        } else {
+            console.error("Error crítico: No se encontró el #modal-container en index.html.");
+            return;
+        }
+
+        // --- PASO 4: LÓGICA PARA CARGAR ARTÍCULOS ---
+        function renderizarTabla(articulos) {
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+            todosLosArticulos = articulos;
+            articulos.forEach((articulo, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-slate-700 hover:bg-slate-800';
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <div class="font-bold">${articulo.desc}</div>
+                        <div class="text-xs text-slate-400">${articulo.clave}</div>
+                    </td>
+                    <td class="p-2"><input type="number" data-index="${index}" name="sistema" class="w-full p-2 rounded bg-slate-700"></td>
+                    <td class="p-2"><input type="number" data-index="${index}" name="fisico" class="w-full p-2 rounded bg-slate-700"></td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function buscarArticulos(texto = "") {
+            google.script.run
+                .withSuccessHandler(renderizarTabla)
+                .buscarArticulosAvanzado(texto);
+        }
+
+        // --- PASO 5: CONECTAR EVENTOS Y CARGAR DATOS ---
+        buscarArticulos(); // Carga inicial
+
+        if (searchInput) {
+            searchInput.addEventListener('input', () => buscarArticulos(searchInput.value));
+        }
+
+        if (btnCerrar) {
+            btnCerrar.addEventListener("click", cerrarModal);
+        }
+
+        if (submitBtn) {
+            submitBtn.addEventListener('click', () => {
+                const conteosARegistrar = [];
+                const inputsSistema = document.querySelectorAll('input[name="sistema"]');
+                const inputsFisico = document.querySelectorAll('input[name="fisico"]');
+                inputsSistema.forEach((inputSistema, i) => {
+                    const inputFisico = inputsFisico[i];
+                    if (inputSistema.value && inputFisico.value) {
+                        const index = inputSistema.dataset.index;
+                        const articulo = todosLosArticulos[index];
+                        conteosARegistrar.push({
+                            clave: articulo.clave,
+                            producto: articulo.desc,
+                            sistema: parseFloat(inputSistema.value), // Convertir a número
+                            fisico: parseFloat(inputFisico.value)   // Convertir a número
+                        });
+                    }
+                });
+
+                if (conteosARegistrar.length > 0) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Registrando...';
+                    // Usar perfilActual.usuarioID que ya está disponible
+                    google.script.run
+                        .withSuccessHandler(resultado => {
+                            alert(resultado);
+                            cerrarModal();
+                        })
+                        .withFailureHandler(error => {
+                            alert(`Error al registrar conteos: ${error.message}`);
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Registrar Conteos';
+                        })
+                        .registrarMultiplesConteos(conteosARegistrar, perfilActual.usuarioID);
+                } else {
+                    alert('No hay conteos completos para registrar.');
+                }
+            });
+        }
+    }
+
+    function cerrarModal() {
+        let datosIngresados = false;
+        const inputs = document.querySelectorAll('#modal-container input[type="number"]');
+
+        inputs.forEach(input => {
+            if (input.value.trim() !== '') {
+                datosIngresados = true;
+            }
+        });
+
+        if (datosIngresados) {
+            if (!confirm("Has ingresado datos que no se han guardado. ¿Estás seguro de que quieres cerrar?")) {
+                return;
+            }
+        }
+
+        const modalContainer = document.getElementById('modal-container');
+        if (modalContainer) {
+            modalContainer.classList.add('hidden');
+            modalContainer.classList.remove('flex');
+            modalContainer.innerHTML = ''; // Limpiamos el contenido para el siguiente uso
+        }
+    }
+</script>
+<div id="modal-container" class="fixed inset-0 bg-slate-900 bg-opacity-75 hidden justify-center items-center p-4 z-50">
+    </div>
 </body>
 </html>
-
