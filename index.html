@@ -288,15 +288,16 @@ getAIResponse("__inicio");
             if (indicator) indicator.remove();
         }
 
-        function getAIResponse(userInput) {
-            messageInput.disabled = true;
-            sendButton.disabled = true;
-            showTypingIndicator();
+        function getAIResponse(payload) { // <-- AHORA RECIBE EL OBJETO 'payload'
+          messageInput.disabled = true;
+          sendButton.disabled = true;
+          showTypingIndicator();
 
-            google.script.run
-                .withSuccessHandler(handleAIResponse)
-                .withFailureHandler(handleAIError)
-                .enviarAOpenAI(currentSessionId, currentUserId, userInput, 'supervisor');
+          google.script.run
+              .withSuccessHandler(handleAIResponse)
+              .withFailureHandler(handleAIError)
+              // AHORA PASAMOS EL OBJETO 'payload' COMPLETO AL BACKEND
+              .enviarAOpenAI(currentSessionId, currentUserId, payload, '');
         }
 
         function handleAIResponse(data) {
