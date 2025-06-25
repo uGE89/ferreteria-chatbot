@@ -925,3 +925,45 @@ function registrarMultiplesConteos(conteosArray) {
   
   return `${filasParaAñadir.length} conteos registrados exitosamente.`;
 }
+
+/**
+ * Procesa el mensaje del usuario, lo busca en la base de datos de la hoja de cálculo
+ * y devuelve una respuesta.
+ * @param {string} mensaje El texto enviado por el usuario.
+ * @return {string} La respuesta del chatbot.
+ */
+function responder(mensaje) {
+  // --- Verificación de seguridad para evitar errores ---
+  if (!mensaje || typeof mensaje !== 'string') {
+    log("Se recibió un mensaje inválido o vacío.");
+    return "Ocurrió un error (mensaje inválido). Inténtalo de nuevo.";
+  }
+  // --- Fin de la verificación ---
+
+  var msj = mensaje.toLowerCase();
+  var ss = SpreadsheetApp.openById(spreadsheetId);
+  var sheet = ss.getSheetByName("BD");
+  var data = sheet.getDataRange().getValues();
+  var respuesta = "No entendi";
+
+  // Busca una coincidencia exacta primero
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toLowerCase() == msj) {
+      respuesta = data[i][1];
+      break;
+    }
+  }
+
+  // Si no hay coincidencia exacta, busca una coincidencia parcial
+  if (respuesta == "No entendi") {
+    for (var i = 1; i < data.length; i++) {
+      if (msj.includes(data[i][0].toLowerCase())) {
+        respuesta = data[i][1];
+        break;
+      }
+    }
+  }
+
+  log(respuesta);
+  return respuesta;
+}

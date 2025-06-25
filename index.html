@@ -326,6 +326,14 @@ if (resultado.mensajeAnuncio && Array.isArray(resultado.mensajeAnuncio)) {
             messageInput.focus();
         }
 
+
+       let perfilActual = null;
+
+// --- AÑADE ESTA FUNCIÓN AQUÍ ---
+function getPerfilActual() {
+  return perfilActual;
+} 
+
         function verResumenAdministrador() {
     const usuario = getPerfilActual(); // Asegúrate de que esta función devuelva { nombre, rol, ... }
 
@@ -475,17 +483,44 @@ function selectSuggestion(suggestion) {
 const modalContainer = document.getElementById('modal-container');
 
 // Función para abrir la ventana modal
-function abrirModal() {
-  // Muestra un mensaje de carga mientras se obtiene el HTML
-  modalContainer.innerHTML = '<div class="text-white text-lg">Cargando interfaz de conteo...</div>';
-  modalContainer.classList.remove('hidden');
-  modalContainer.classList.add('flex');
+function abrirModal(contenidoHTML) {
+  // 1. Inyecta el HTML del modal en el placeholder
+  document.getElementById("modal-placeholder").innerHTML = contenidoHTML;
 
-  google.script.run.withSuccessHandler(html => {
-    // Cuando el backend nos da el HTML del modal, lo inyectamos en un iframe
-    // Usar un iframe es la mejor práctica para evitar conflictos de estilos y scripts
-    modalContainer.innerHTML = `<iframe style="width:100%; height:95%; max-width: 900px; border:0; border-radius: 12px;" srcdoc="${html.replace(/"/g, '&quot;')}"></iframe>`;
-  }).abrirModalDeConteo();
+  // 2. Ahora que el modal existe en el DOM, hazlo visible
+  const modal = document.getElementById("conteo-modal");
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+
+  // 3. AÑADE LOS LISTENERS AQUÍ, DESPUÉS DE CREAR LOS BOTONES
+
+  // Listener para el botón de CERRAR
+  const btnCerrar = document.getElementById("btn-cerrar-modal");
+  if (btnCerrar) {
+    btnCerrar.addEventListener("click", function() {
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    });
+  }
+
+  // Listener para el botón de REGISTRAR CONTEO
+  const btnRegistrar = document.getElementById("btn-registrar-conteo");
+  if (btnRegistrar) {
+    btnRegistrar.addEventListener("click", function() {
+      const datos = {
+        producto: document.getElementById("producto").value,
+        cantidad: document.getElementById("cantidad-actual").value,
+        // ... captura los otros campos si los necesitas
+      };
+      console.log("Registrando conteo:", datos);
+      google.script.run.procesarConteoInventario(datos);
+      if (modal) {
+        modal.style.display = 'none'; // Cierra el modal después de registrar
+      }
+    });
+  }
 }
 
 // Función para cerrar la ventana modal (será llamada desde el iframe)
