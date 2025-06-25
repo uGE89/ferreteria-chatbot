@@ -256,6 +256,10 @@ function enviarAOpenAI(sesionId, usuarioId, textoUsuario, tipoFuncion = '') {
     const perfilContexto = `Contexto del usuario:\n- ID: ${perfil.usuarioID}\n- Nombre: ${perfil.nombre}\n- Sucursal: ${perfil.sucursal}\n- Rol: ${perfil.rol}\nYa conocés la sucursal y el rol del trabajador. No vuelvas a preguntar por ellos. Respondé siempre en español con tono directo, estilo WhatsApp, como Carlos E. Flores.`;
     systemPrompt.content = perfilContexto + "\n\n---\n\n" + systemPrompt.content;
   }
+    // Inyectamos la clave del producto en el mensaje si existe, para que OpenAI la vea
+  if (claveProducto) {
+    mensaje = `[CLAVE DE PRODUCTO: ${claveProducto}] ${mensaje}`;
+  }
 
   const historial = getHistorialParaOpenAI(sesionId);
   const messages = [systemPrompt].concat(historial);
