@@ -198,57 +198,45 @@ function detectarTipoFuncion(mensaje) {
  * @param {string} [tipoFuncion=''] Un tipo de función opcional para forzar un prompt específico.
  * @returns {object} Un objeto de respuesta para el frontend (ej. { content: "..." }).
  */
-function enviarAOpenAI(sesionId, usuarioId, textoUsuario, tipoFuncion = '') {
+/**
+ * Orquesta la lógica de la conversación: maneja tareas, prepara y envía solicitudes
+ * a OpenAI, y procesa la respuesta, incluyendo el flujo de 2 pasos para function calling
+ * que permite al asistente analizar resultados y hacer preguntas de seguimiento.
+ */
+function enviarAOpenAI(sesionId, usuarioId, payload, tipoFuncion = '') {
+  // --- INICIALIZACIÓN Y MANEJO DEL PAYLOAD ---
+  const textoUsuario = payload.texto;
+  const claveProducto = payload.claveProducto;
   let mensaje = textoUsuario;
 
-  // Interpretar "__inicio" como mensaje especial para activar prompt introductorio
   if (mensaje === "__inicio") {
     mensaje = "Inicio de sesión del trabajador.";
   }
-
-  // Registrar el mensaje del usuario en el historial
+  // Registramos el mensaje original del usuario en el historial
   registrarMensaje(sesionId, usuarioId, 'user', mensaje);
 
-
-  // --- INICIO DE LÓGICA PRE-OPENAI ---
-  // Se manejan las tareas pendientes aquí para evitar llamadas innecesarias a la API.
-
-  // 🟢 VERIFICACIÓN 1: ¿El usuario está CONFIRMANDO una tarea pendiente?
+  // --- LÓGICA PRE-OPENAI (TAREAS PENDIENTES) ---
   const pendiente = CacheService.getUserCache().get(`tareaPendiente-${sesionId}`);
   if (pendiente && mensaje.match(/^(sí|si|dale|ok|correcto|de acuerdo)/i)) {
     const args = JSON.parse(pendiente);
-    // Usamos nuestra nueva función genérica para crear la tarea
     const resultadoTarea = registrarEntrada(args, "Tarea", sesionId, usuarioId);
     CacheService.getUserCache().remove(`tareaPendiente-${sesionId}`);
-    
-    // Devolvemos la confirmación y terminamos la ejecución aquí.
-    return { content: resultadoTarea };
+    return { content: resultadoTarea.mensaje }; // Devuelve solo el mensaje de la tarea creada
   }
 
-  // 🟠 VERIFICACIÓN 2: ¿El mensaje del usuario DETONA una nueva tarea pendiente?
   const posibleTarea = detectaTareaPendiente(mensaje);
   if (posibleTarea) {
     const aviso = `Detecté que esto podría ser una tarea (“${posibleTarea.autoDescripcion}”). ¿La creo como pendiente?`;
-    
-    // Guardamos la posible tarea en el caché para la confirmación en el próximo turno.
     CacheService.getUserCache().put(`tareaPendiente-${sesionId}`, JSON.stringify(posibleTarea), 3600);
-    
-    // Registramos el aviso del asistente en el historial
     registrarMensaje(sesionId, usuarioId, 'assistant', aviso);
-
-    // Devolvemos el aviso al usuario y terminamos la ejecución aquí.
     return { content: aviso };
   }
   
-  // --- FIN DE LÓGICA PRE-OPENAI ---
-
-
-  // Si no se cumplió ninguna de las lógicas anteriores, procedemos a llamar a OpenAI.
+  // --- PREPARACIÓN PARA LLAMADA #1 A OPENAI ---
   if (!tipoFuncion || tipoFuncion.trim() === '') {
     tipoFuncion = detectarTipoFuncion(mensaje);
   }
 
-  // Preparamos el prompt y el historial para la API
   let systemPrompt = obtenerPromptSistema(tipoFuncion);
   const perfil = getPerfilActual();
 
@@ -256,85 +244,85 @@ function enviarAOpenAI(sesionId, usuarioId, textoUsuario, tipoFuncion = '') {
     const perfilContexto = `Contexto del usuario:\n- ID: ${perfil.usuarioID}\n- Nombre: ${perfil.nombre}\n- Sucursal: ${perfil.sucursal}\n- Rol: ${perfil.rol}\nYa conocés la sucursal y el rol del trabajador. No vuelvas a preguntar por ellos. Respondé siempre en español con tono directo, estilo WhatsApp, como Carlos E. Flores.`;
     systemPrompt.content = perfilContexto + "\n\n---\n\n" + systemPrompt.content;
   }
-    // Inyectamos la clave del producto en el mensaje si existe, para que OpenAI la vea
+  
+  // Inyectamos la clave si existe, para que OpenAI la use al llamar a la función
   if (claveProducto) {
     mensaje = `[CLAVE DE PRODUCTO: ${claveProducto}] ${mensaje}`;
   }
 
   const historial = getHistorialParaOpenAI(sesionId);
+  // Re-registramos el mensaje del usuario, esta vez con la posible clave inyectada para la IA
+  historial[historial.length -1].content = mensaje; 
+  
   const messages = [systemPrompt].concat(historial);
-
   const config = leerConfiguracion();
   const functionsDefs = leerFunciones();
 
-  // Construimos el payload para la API
-  const payload = {
+  const payloadAPI = {
     model: config.modelo_default,
     messages: messages,
     temperature: parseFloat(config.temperatura),
-    max_tokens: parseInt(config.max_tokens, 10)
+    max_tokens: parseInt(config.max_tokens, 10),
+    functions: functionsDefs.length > 0 ? functionsDefs : undefined,
+    function_call: functionsDefs.length > 0 ? "auto" : undefined,
   };
-
-  if (functionsDefs.length > 0) {
-    payload.functions = functionsDefs;
-    payload.function_call = "auto";
-  }
 
   const options = {
     method: 'post',
     muteHttpExceptions: true,
-    headers: {
-      'Authorization': 'Bearer ' + config.openai_api_key,
-      'Content-Type': 'application/json'
-    },
-    payload: JSON.stringify(payload)
+    headers: { 'Authorization': 'Bearer ' + config.openai_api_key, 'Content-Type': 'application/json' },
+    payload: JSON.stringify(payloadAPI)
   };
   
-  // 🧠 Envío a OpenAI
+  // --- 🧠 LLAMADA #1 A OPENAI ---
   const response = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', options);
   const data = JSON.parse(response.getContentText()).choices[0].message;
 
-  // Si OpenAI pide llamar a una función, la ejecutamos aquí mismo.
+  // --- MANEJO DE RESPUESTA ---
+
+  // CASO A: LA IA PIDE LLAMAR A UNA FUNCIÓN (FLUJO DE 2 PASOS)
   if (data.function_call) {
-    // 1. Registramos en el historial que se intentó llamar a una función
-    registrarMensaje(
-      sesionId,
-      usuarioId,
-      'assistant',
-      '', // Sin texto visible para esta entrada
-      true,
-      data.function_call.name,
-      data.function_call.arguments
-    );
+    registrarMensaje(sesionId, usuarioId, 'assistant', '', true, data.function_call.name, data.function_call.arguments);
     
-    // 2. Ejecutamos la función local correspondiente
     const nombreFuncion = data.function_call.name;
     const args = JSON.parse(data.function_call.arguments);
-    let mensajeFinal = '';
+    let resultadoFuncion;
 
     switch (nombreFuncion) {
       case "registrarConteo":
-        mensajeFinal = registrarConteo(args, sesionId, usuarioId);
+        resultadoFuncion = registrarConteo(args, sesionId, usuarioId);
         break;
       case "registrarProblema":
-        mensajeFinal = registrarEntrada(args, "Problema", sesionId, usuarioId);
+        resultadoFuncion = registrarEntrada(args, "Problema", sesionId, usuarioId);
         break;
       case "registrarSugerencia":
-        mensajeFinal = registrarEntrada(args, "Sugerencia", sesionId, usuarioId);
+        resultadoFuncion = registrarEntrada(args, "Sugerencia", sesionId, usuarioId);
         break;
-      case "registrarTarea":
-        mensajeFinal = registrarEntrada(args, "Tarea", sesionId, usuarioId);
-        break;
+      case "anotarRegistro":
+         resultadoFuncion = anotarRegistro(args);
+         break;
       default:
-        mensajeFinal = `Función ${nombreFuncion} reconocida pero no implementada.`;
-        registrarMensaje(sesionId, usuarioId, 'assistant', mensajeFinal);
+        resultadoFuncion = JSON.stringify({ status: "error", message: `Función desconocida: ${nombreFuncion}` });
     }
 
-    // 3. Devolvemos el mensaje de confirmación en el formato que el frontend espera
-    return { content: mensajeFinal };
+    // AÑADIMOS EL RESULTADO DE LA FUNCIÓN AL HISTORIAL PARA LA SEGUNDA LLAMADA
+    messages.push(data); // El mensaje de la IA que decidió llamar a la función
+    messages.push({ role: "function", name: nombreFuncion, content: resultadoFuncion });
+
+    // Preparamos la segunda llamada
+    const payloadPaso2 = { model: config.modelo_default, messages: messages, temperature: parseFloat(config.temperatura), max_tokens: parseInt(config.max_tokens, 10) };
+    const optionsPaso2 = { ...options, payload: JSON.stringify(payloadPaso2) };
+
+    // --- 🧠 LLAMADA #2 A OPENAI ---
+    const responsePaso2 = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', optionsPaso2);
+    const dataPaso2 = JSON.parse(responsePaso2.getContentText()).choices[0].message;
+
+    // Esta es la respuesta final, conversacional e inteligente
+    registrarMensaje(sesionId, usuarioId, 'assistant', dataPaso2.content || '');
+    return dataPaso2;
   }
 
-  // Si no hubo llamada a función, es una respuesta de texto normal.
+  // CASO B: LA IA DEVUELVE UNA RESPUESTA DE TEXTO NORMAL
   const contenido = data.content || '';
   registrarMensaje(sesionId, usuarioId, 'assistant', contenido);
   return data;
