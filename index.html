@@ -25,6 +25,23 @@
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
         .quick-starter-btn { background-color: transparent; border: 1px solid #475569; color: #94a3b8; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s ease-in-out; }
         .quick-starter-btn:hover { background-color: #1e293b; color: #e2e8f0; border-color: #64748b; }
+        /* ... tus otros estilos ... */
+.suggestion-item {
+  background-color: #334155; /* bg-slate-700 */
+  border: 1px solid #475569; /* border-slate-600 */
+  color: #e2e8f0; /* text-slate-200 */
+  padding: 8px 12px;
+  margin-top: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+  background-color: #475569; /* bg-slate-600 */
+}
     </style>
 </head>
 <body class="bg-slate-900 text-white flex items-center justify-center min-h-screen p-4">
@@ -101,14 +118,19 @@
 </div>
 
 
-        <footer class="p-4 border-t border-slate-700 flex-shrink-0">
-            <form id="chat-form" class="flex items-center gap-3">
-                <input type="text" id="message-input" placeholder="Escribe tu mensaje o reporte aquí..." class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off">
-                <button type="submit" id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg p-2.5 transition disabled:bg-slate-600 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                </button>
-            </form>
-        </footer>
+
+
+    <div id="suggestions-container" class="px-4 pb-2"></div>
+    
+
+    <footer class="p-4 border-t border-slate-700 flex-shrink-0">
+        <form id="chat-form" class="flex items-center gap-3">
+            <input type="text" id="message-input" placeholder="Escribe tu mensaje o reporte aquí..." class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off">
+            <button type="submit" id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg p-2.5 transition disabled:bg-slate-600 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </form>
+    </footer>
     </div>
 
     <script>
@@ -158,16 +180,34 @@
                 .iniciarSesion(currentUserId);
         }
 
-        function handleSessionStart(sessionId) {
-            currentSessionId = sessionId;
-            const perfil = JSON.parse(sessionStorage.getItem('perfil'));
-            
-            loginCard.classList.add('hidden');
-            chatWrapper.classList.remove('hidden');
-            chatWrapper.classList.add('flex');
-            
-            initializeChat(perfil);
-        }
+function handleSessionStart(resultado) { // Ahora recibe un objeto 'resultado'
+  currentSessionId = resultado.sessionId;
+  const perfil = JSON.parse(sessionStorage.getItem('perfil'));
+  
+  loginCard.classList.add('hidden');
+  chatWrapper.classList.remove('hidden');
+  chatWrapper.classList.add('flex');
+  
+  // --- ¡NUEVA LÓGICA! ---
+  // 1. Verificamos si el objeto resultado contiene un mensaje de anuncio
+if (resultado.mensajeAnuncio && Array.isArray(resultado.mensajeAnuncio)) {
+  let delay = 500; // Pausa inicial de medio segundo
+  
+  // Recorremos cada mensaje en la lista que nos envió el backend
+  resultado.mensajeAnuncio.forEach(mensaje => {
+    // Usamos setTimeout para crear un efecto de escritura con pausas
+    setTimeout(() => {
+      addMessage(mensaje, 'system');
+    }, delay);
+    
+    // Aumentamos la pausa para el siguiente mensaje
+    delay += 1200; // 1.2 segundos de pausa entre mensajes (puedes ajustar este valor)
+  });
+}
+
+  // 2. El resto del flujo de inicialización continúa normalmente
+  initializeChat(perfil);
+}
 
         function handleError(err) {
             loginMsg.textContent = `Error: ${err.message || 'Error desconocido del servidor.'}`;
@@ -203,7 +243,7 @@
 }
 
             
-getAIResponse("__inicio");
+  getAIResponse({ texto: "__inicio", claveProducto: null });
         }
 
         function addMessage(text, sender) {
@@ -248,15 +288,16 @@ getAIResponse("__inicio");
             if (indicator) indicator.remove();
         }
 
-        function getAIResponse(userInput) {
-            messageInput.disabled = true;
-            sendButton.disabled = true;
-            showTypingIndicator();
+        function getAIResponse(payload) { // <-- AHORA RECIBE EL OBJETO 'payload'
+          messageInput.disabled = true;
+          sendButton.disabled = true;
+          showTypingIndicator();
 
-            google.script.run
-                .withSuccessHandler(handleAIResponse)
-                .withFailureHandler(handleAIError)
-                .enviarAOpenAI(currentSessionId, currentUserId, userInput, 'supervisor');
+          google.script.run
+              .withSuccessHandler(handleAIResponse)
+              .withFailureHandler(handleAIError)
+              // AHORA PASAMOS EL OBJETO 'payload' COMPLETO AL BACKEND
+              .enviarAOpenAI(currentSessionId, currentUserId, payload, '');
         }
 
         function handleAIResponse(data) {
@@ -284,6 +325,14 @@ getAIResponse("__inicio");
             sendButton.disabled = false;
             messageInput.focus();
         }
+
+
+       let perfilActual = null;
+
+// --- AÑADE ESTA FUNCIÓN AQUÍ ---
+function getPerfilActual() {
+  return perfilActual;
+} 
 
         function verResumenAdministrador() {
     const usuario = getPerfilActual(); // Asegúrate de que esta función devuelva { nombre, rol, ... }
@@ -347,15 +396,142 @@ function enviarRespuestaAdministrador(destinoUsuario, destinoSesion, inputId) {
             }
         });
 
-        quickStartersContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('quick-starter-btn')) {
-                const text = e.target.textContent;
-                addMessage(text, 'user');
-                getAIResponse(text);
-                messageInput.value = '';
-                messageInput.focus();
-            }
-        });
+              quickStartersContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('quick-starter-btn')) {
+                  const text = e.target.textContent;
+
+                  // --- ¡CAMBIO IMPORTANTE AQUÍ! ---
+                  if (text === 'Hacer conteo de inventario') {
+                    abrirModal(); // SI ES EL BOTÓN DE CONTEO, LLAMA A LA FUNCIÓN PARA ABRIR EL MODAL
+                  } else {
+                    // Para los otros botones, mantenemos el comportamiento de chat
+                    addMessage(text, 'user');
+                    // Asegúrate de enviar el payload como objeto, como lo hace el formulario principal
+                    getAIResponse({ texto: text, claveProducto: null });
+                    messageInput.value = '';
+                    messageInput.focus();
+                  }
+                }
+              });
+
+
+
+        // ... todo tu código de chatForm.addEventListener ... etc. ...
+
+// --- INICIO DE LA LÓGICA DEL BUSCADOR @ ---
+
+const suggestionsContainer = document.getElementById('suggestions-container');
+
+// 1. Escuchamos cada vez que el usuario escribe en el input
+messageInput.addEventListener('input', () => {
+  const text = messageInput.value;
+  const atIndex = text.lastIndexOf('@');
+
+  if (atIndex !== -1) {
+    const query = text.substring(atIndex + 1);
+    
+    // Solo buscamos si ha escrito al menos 2 letras después del @
+    if (query.length >= 2) {
+      google.script.run
+        .withSuccessHandler(displaySuggestions)
+        .buscarArticulo(query);
+    } else {
+      suggestionsContainer.innerHTML = ''; // Limpia si borra el texto de búsqueda
+    }
+  } else {
+    suggestionsContainer.innerHTML = ''; // Limpia si borra el @
+  }
+});
+
+// 2. Función que se ejecuta cuando el backend devuelve las sugerencias
+function displaySuggestions(suggestions) {
+  suggestionsContainer.innerHTML = ''; // Limpia sugerencias anteriores
+  if (suggestions && suggestions.length > 0) {
+    suggestions.forEach(suggestion => {
+      const item = document.createElement('button');
+      item.type = 'button'; // Para que no envíe el formulario
+      item.className = 'suggestion-item';
+      item.textContent = suggestion;
+      
+      // 3. Acción al hacer clic en una sugerencia
+      item.onclick = () => {
+        selectSuggestion(suggestion);
+      };
+      suggestionsContainer.appendChild(item);
+    });
+  }
+}
+
+// 4. Función para insertar la sugerencia seleccionada en el input
+function selectSuggestion(suggestion) {
+  const text = messageInput.value;
+  const atIndex = text.lastIndexOf('@');
+  
+  // Reemplaza "@busqueda" por el nombre completo del producto
+  const newText = text.substring(0, atIndex) + suggestion + ' ';
+  messageInput.value = newText;
+  
+  suggestionsContainer.innerHTML = ''; // Limpia las sugerencias
+  messageInput.focus(); // Devuelve el foco al input
+}
+
+// --- FIN DE LA LÓGICA DEL BUSCADOR @ ---
+
+
+// --- INICIO DE LA LÓGICA DEL MODAL ---
+
+const modalContainer = document.getElementById('modal-container');
+
+// Función para abrir la ventana modal
+function abrirModal(contenidoHTML) {
+  // 1. Inyecta el HTML del modal en el placeholder
+  document.getElementById("modal-placeholder").innerHTML = contenidoHTML;
+
+  // 2. Ahora que el modal existe en el DOM, hazlo visible
+  const modal = document.getElementById("conteo-modal");
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+
+  // 3. AÑADE LOS LISTENERS AQUÍ, DESPUÉS DE CREAR LOS BOTONES
+
+  // Listener para el botón de CERRAR
+  const btnCerrar = document.getElementById("btn-cerrar-modal");
+  if (btnCerrar) {
+    btnCerrar.addEventListener("click", function() {
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    });
+  }
+
+  // Listener para el botón de REGISTRAR CONTEO
+  const btnRegistrar = document.getElementById("btn-registrar-conteo");
+  if (btnRegistrar) {
+    btnRegistrar.addEventListener("click", function() {
+      const datos = {
+        producto: document.getElementById("producto").value,
+        cantidad: document.getElementById("cantidad-actual").value,
+        // ... captura los otros campos si los necesitas
+      };
+      console.log("Registrando conteo:", datos);
+      google.script.run.procesarConteoInventario(datos);
+      if (modal) {
+        modal.style.display = 'none'; // Cierra el modal después de registrar
+      }
+    });
+  }
+}
+
+// Función para cerrar la ventana modal (será llamada desde el iframe)
+function cerrarModal() {
+    modalContainer.classList.add('hidden');
+    modalContainer.classList.remove('flex');
+    modalContainer.innerHTML = ''; // Limpiamos el contenido al cerrar
+}
     </script>
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center p-4 z-50"></div>
+
 </body>
 </html>
+
