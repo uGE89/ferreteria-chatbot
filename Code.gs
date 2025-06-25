@@ -15,6 +15,10 @@ const NOMBRE_HISTORIAL = 'HistorialConversaciones';
 const NOMBRE_CONFIG = 'Configuración';
 const NOMBRE_FUNCIONES = 'Funciones';
 const NOMBRE_LOGCOSTES = 'LogCostes';
+const NOMBRE_ANUNCIOS = 'Anuncios'; // <-- AÑADE ESTA LÍNEA
+const NOMBRE_ARTICULOS = 'Articulos'; // <-- AÑADE ESTA TAMBIÉN
+const NOMBRE_TAREAS = 'Tareas'; // <-- AÑADE ESTA TAMBIÉN
+
 
 
 
@@ -74,25 +78,52 @@ function getPerfilActual() {
  * @param {string} usuarioId
  * @return {string} sessionId existente o nuevo
  */
+/**
+ * Inicia una sesión diaria única por usuario y verifica si hay
+ * anuncios nuevos que mostrarle.
+ * @param {string} usuarioId El ID del usuario.
+ * @returns {object} Un objeto que contiene el ID de la sesión y un posible mensaje de anuncio.
+ */
 function iniciarSesion(usuarioId) {
   const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRE_SESIONES);
   const datos = hoja.getDataRange().getValues();
   const hoy = new Date();
   const hoyStr = hoy.toISOString().substring(0, 10);
 
+  // 1. Usaremos una variable para guardar el ID de sesión
+  let sessionId = null;
+
+  // Busca una sesión existente para el día de hoy
   for (let i = 1; i < datos.length; i++) {
     const fila = datos[i];
     const sesionUsuario = fila[1];
     const fechaInicio = new Date(fila[2]);
     const fechaStr = fechaInicio.toISOString().substring(0, 10);
+
     if (sesionUsuario === usuarioId && fechaStr === hoyStr) {
-      return fila[0]; // Retorna sesión existente para hoy
+      sessionId = fila[0]; // Se encontró la sesión, se guarda en la variable
+      break; // Salimos del bucle, ya no necesitamos seguir buscando
     }
   }
 
-  const sessionId = "S" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
-  hoja.appendRow([sessionId, usuarioId, hoy.toISOString(), hoy.toISOString(), 'Activa', '']);
-  return sessionId;
+  // Si no se encontró ninguna sesión, creamos una nueva
+  if (!sessionId) {
+    sessionId = "S" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+    hoja.appendRow([sessionId, usuarioId, hoy.toISOString(), hoy.toISOString(), 'Activa', '']);
+  }
+  
+  // --- INICIO DE LA MODIFICACIÓN ---
+
+  // 2. Ahora que ya tenemos el sessionId, verificamos si hay un anuncio
+  const mensajeAnuncio = verificarYObtenerAnuncioParaUsuario(usuarioId);
+
+  // 3. Devolvemos un OBJETO con ambos datos, listo para el frontend
+  return { 
+    sessionId: sessionId, 
+    mensajeAnuncio: mensajeAnuncio 
+  };
+  
+  // --- FIN DE LA MODIFICACIÓN ---
 }
 
 function generarSessionId() {
@@ -167,57 +198,45 @@ function detectarTipoFuncion(mensaje) {
  * @param {string} [tipoFuncion=''] Un tipo de función opcional para forzar un prompt específico.
  * @returns {object} Un objeto de respuesta para el frontend (ej. { content: "..." }).
  */
-function enviarAOpenAI(sesionId, usuarioId, textoUsuario, tipoFuncion = '') {
+/**
+ * Orquesta la lógica de la conversación: maneja tareas, prepara y envía solicitudes
+ * a OpenAI, y procesa la respuesta, incluyendo el flujo de 2 pasos para function calling
+ * que permite al asistente analizar resultados y hacer preguntas de seguimiento.
+ */
+function enviarAOpenAI(sesionId, usuarioId, payload, tipoFuncion = '') {
+  // --- INICIALIZACIÓN Y MANEJO DEL PAYLOAD ---
+  const textoUsuario = payload.texto;
+  const claveProducto = payload.claveProducto;
   let mensaje = textoUsuario;
 
-  // Interpretar "__inicio" como mensaje especial para activar prompt introductorio
   if (mensaje === "__inicio") {
     mensaje = "Inicio de sesión del trabajador.";
   }
-
-  // Registrar el mensaje del usuario en el historial
+  // Registramos el mensaje original del usuario en el historial
   registrarMensaje(sesionId, usuarioId, 'user', mensaje);
 
-
-  // --- INICIO DE LÓGICA PRE-OPENAI ---
-  // Se manejan las tareas pendientes aquí para evitar llamadas innecesarias a la API.
-
-  // 🟢 VERIFICACIÓN 1: ¿El usuario está CONFIRMANDO una tarea pendiente?
+  // --- LÓGICA PRE-OPENAI (TAREAS PENDIENTES) ---
   const pendiente = CacheService.getUserCache().get(`tareaPendiente-${sesionId}`);
   if (pendiente && mensaje.match(/^(sí|si|dale|ok|correcto|de acuerdo)/i)) {
     const args = JSON.parse(pendiente);
-    // Usamos nuestra nueva función genérica para crear la tarea
     const resultadoTarea = registrarEntrada(args, "Tarea", sesionId, usuarioId);
     CacheService.getUserCache().remove(`tareaPendiente-${sesionId}`);
-    
-    // Devolvemos la confirmación y terminamos la ejecución aquí.
-    return { content: resultadoTarea };
+    return { content: resultadoTarea.mensaje }; // Devuelve solo el mensaje de la tarea creada
   }
 
-  // 🟠 VERIFICACIÓN 2: ¿El mensaje del usuario DETONA una nueva tarea pendiente?
   const posibleTarea = detectaTareaPendiente(mensaje);
   if (posibleTarea) {
     const aviso = `Detecté que esto podría ser una tarea (“${posibleTarea.autoDescripcion}”). ¿La creo como pendiente?`;
-    
-    // Guardamos la posible tarea en el caché para la confirmación en el próximo turno.
     CacheService.getUserCache().put(`tareaPendiente-${sesionId}`, JSON.stringify(posibleTarea), 3600);
-    
-    // Registramos el aviso del asistente en el historial
     registrarMensaje(sesionId, usuarioId, 'assistant', aviso);
-
-    // Devolvemos el aviso al usuario y terminamos la ejecución aquí.
     return { content: aviso };
   }
   
-  // --- FIN DE LÓGICA PRE-OPENAI ---
-
-
-  // Si no se cumplió ninguna de las lógicas anteriores, procedemos a llamar a OpenAI.
+  // --- PREPARACIÓN PARA LLAMADA #1 A OPENAI ---
   if (!tipoFuncion || tipoFuncion.trim() === '') {
     tipoFuncion = detectarTipoFuncion(mensaje);
   }
 
-  // Preparamos el prompt y el historial para la API
   let systemPrompt = obtenerPromptSistema(tipoFuncion);
   const perfil = getPerfilActual();
 
@@ -225,81 +244,85 @@ function enviarAOpenAI(sesionId, usuarioId, textoUsuario, tipoFuncion = '') {
     const perfilContexto = `Contexto del usuario:\n- ID: ${perfil.usuarioID}\n- Nombre: ${perfil.nombre}\n- Sucursal: ${perfil.sucursal}\n- Rol: ${perfil.rol}\nYa conocés la sucursal y el rol del trabajador. No vuelvas a preguntar por ellos. Respondé siempre en español con tono directo, estilo WhatsApp, como Carlos E. Flores.`;
     systemPrompt.content = perfilContexto + "\n\n---\n\n" + systemPrompt.content;
   }
+  
+  // Inyectamos la clave si existe, para que OpenAI la use al llamar a la función
+  if (claveProducto) {
+    mensaje = `[CLAVE DE PRODUCTO: ${claveProducto}] ${mensaje}`;
+  }
 
   const historial = getHistorialParaOpenAI(sesionId);
+  // Re-registramos el mensaje del usuario, esta vez con la posible clave inyectada para la IA
+  historial[historial.length -1].content = mensaje; 
+  
   const messages = [systemPrompt].concat(historial);
-
   const config = leerConfiguracion();
   const functionsDefs = leerFunciones();
 
-  // Construimos el payload para la API
-  const payload = {
+  const payloadAPI = {
     model: config.modelo_default,
     messages: messages,
     temperature: parseFloat(config.temperatura),
-    max_tokens: parseInt(config.max_tokens, 10)
+    max_tokens: parseInt(config.max_tokens, 10),
+    functions: functionsDefs.length > 0 ? functionsDefs : undefined,
+    function_call: functionsDefs.length > 0 ? "auto" : undefined,
   };
-
-  if (functionsDefs.length > 0) {
-    payload.functions = functionsDefs;
-    payload.function_call = "auto";
-  }
 
   const options = {
     method: 'post',
     muteHttpExceptions: true,
-    headers: {
-      'Authorization': 'Bearer ' + config.openai_api_key,
-      'Content-Type': 'application/json'
-    },
-    payload: JSON.stringify(payload)
+    headers: { 'Authorization': 'Bearer ' + config.openai_api_key, 'Content-Type': 'application/json' },
+    payload: JSON.stringify(payloadAPI)
   };
   
-  // 🧠 Envío a OpenAI
+  // --- 🧠 LLAMADA #1 A OPENAI ---
   const response = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', options);
   const data = JSON.parse(response.getContentText()).choices[0].message;
 
-  // Si OpenAI pide llamar a una función, la ejecutamos aquí mismo.
+  // --- MANEJO DE RESPUESTA ---
+
+  // CASO A: LA IA PIDE LLAMAR A UNA FUNCIÓN (FLUJO DE 2 PASOS)
   if (data.function_call) {
-    // 1. Registramos en el historial que se intentó llamar a una función
-    registrarMensaje(
-      sesionId,
-      usuarioId,
-      'assistant',
-      '', // Sin texto visible para esta entrada
-      true,
-      data.function_call.name,
-      data.function_call.arguments
-    );
+    registrarMensaje(sesionId, usuarioId, 'assistant', '', true, data.function_call.name, data.function_call.arguments);
     
-    // 2. Ejecutamos la función local correspondiente
     const nombreFuncion = data.function_call.name;
     const args = JSON.parse(data.function_call.arguments);
-    let mensajeFinal = '';
+    let resultadoFuncion;
 
     switch (nombreFuncion) {
       case "registrarConteo":
-        mensajeFinal = registrarConteo(args, sesionId, usuarioId);
+        resultadoFuncion = registrarConteo(args, sesionId, usuarioId);
         break;
       case "registrarProblema":
-        mensajeFinal = registrarEntrada(args, "Problema", sesionId, usuarioId);
+        resultadoFuncion = registrarEntrada(args, "Problema", sesionId, usuarioId);
         break;
       case "registrarSugerencia":
-        mensajeFinal = registrarEntrada(args, "Sugerencia", sesionId, usuarioId);
+        resultadoFuncion = registrarEntrada(args, "Sugerencia", sesionId, usuarioId);
         break;
-      case "registrarTarea":
-        mensajeFinal = registrarEntrada(args, "Tarea", sesionId, usuarioId);
-        break;
+      case "anotarRegistro":
+         resultadoFuncion = anotarRegistro(args);
+         break;
       default:
-        mensajeFinal = `Función ${nombreFuncion} reconocida pero no implementada.`;
-        registrarMensaje(sesionId, usuarioId, 'assistant', mensajeFinal);
+        resultadoFuncion = JSON.stringify({ status: "error", message: `Función desconocida: ${nombreFuncion}` });
     }
 
-    // 3. Devolvemos el mensaje de confirmación en el formato que el frontend espera
-    return { content: mensajeFinal };
+    // AÑADIMOS EL RESULTADO DE LA FUNCIÓN AL HISTORIAL PARA LA SEGUNDA LLAMADA
+    messages.push(data); // El mensaje de la IA que decidió llamar a la función
+    messages.push({ role: "function", name: nombreFuncion, content: resultadoFuncion });
+
+    // Preparamos la segunda llamada
+    const payloadPaso2 = { model: config.modelo_default, messages: messages, temperature: parseFloat(config.temperatura), max_tokens: parseInt(config.max_tokens, 10) };
+    const optionsPaso2 = { ...options, payload: JSON.stringify(payloadPaso2) };
+
+    // --- 🧠 LLAMADA #2 A OPENAI ---
+    const responsePaso2 = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', optionsPaso2);
+    const dataPaso2 = JSON.parse(responsePaso2.getContentText()).choices[0].message;
+
+    // Esta es la respuesta final, conversacional e inteligente
+    registrarMensaje(sesionId, usuarioId, 'assistant', dataPaso2.content || '');
+    return dataPaso2;
   }
 
-  // Si no hubo llamada a función, es una respuesta de texto normal.
+  // CASO B: LA IA DEVUELVE UNA RESPUESTA DE TEXTO NORMAL
   const contenido = data.content || '';
   registrarMensaje(sesionId, usuarioId, 'assistant', contenido);
   return data;
@@ -769,7 +792,7 @@ function buscarArticulo(textoBusqueda) {
   }
   
   try {
-    const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Articulos");
+    const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(NOMBRE_ARTICULOS); 
     if (!hoja) return ["Error: Hoja 'Articulos' no encontrada."];
 
     // Leemos ambas columnas, A y B, al mismo tiempo.
@@ -790,4 +813,157 @@ function buscarArticulo(textoBusqueda) {
     Logger.log("Error en buscarArticulo: " + e.toString());
     return ["Error al buscar."];
   }
+}
+
+/**
+ * Obtiene el anuncio más reciente que esté marcado como "Activo".
+ * @returns {object|null} Un objeto con los datos del anuncio o null si no hay ninguno.
+ */
+function obtenerUltimoAnuncioActivo() {
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Anuncios");
+  if (!hoja) return null;
+
+  const datos = hoja.getDataRange().getValues();
+  // Recorremos desde el final hacia el principio para encontrar el último activo
+  for (let i = datos.length - 1; i >= 1; i--) {
+    const [id, fecha, titulo, mensaje, activo] = datos[i];
+    if (activo === true || activo.toString().toUpperCase() === 'TRUE') {
+      return { id, fecha, titulo, mensaje };
+    }
+  }
+  return null;
+}
+
+/**
+ * Verifica si hay un anuncio nuevo para un usuario y lo devuelve si no lo ha visto.
+ * Usa PropertiesService para recordar qué anuncios ha visto cada usuario.
+ * @param {string} usuarioId El ID del usuario.
+ * @returns {string|null} El mensaje del anuncio formateado o null.
+ */
+/**
+ * Verifica si hay un anuncio nuevo para un usuario y lo devuelve
+ * como un array de mensajes si no lo ha visto.
+ * @param {string} usuarioId El ID del usuario.
+ * @returns {string[]|null} Un array con los mensajes del anuncio o null.
+ */
+function verificarYObtenerAnuncioParaUsuario(usuarioId) {
+  const anuncio = obtenerUltimoAnuncioActivo();
+  if (!anuncio) return null;
+
+  const userProperties = PropertiesService.getUserProperties();
+  const propertyKey = 'anuncio_visto_' + anuncio.id;
+  const yaVisto = userProperties.getProperty(propertyKey);
+
+  if (!yaVisto) {
+    userProperties.setProperty(propertyKey, 'true');
+    
+    // --- ¡CAMBIO CLAVE AQUÍ! ---
+    // 1. Unimos el título y el mensaje en un solo bloque.
+    const textoCompleto = `📢 **${anuncio.titulo}**\n\n${anuncio.mensaje}`;
+
+    // 2. Dividimos el texto completo usando el doble salto de línea como separador.
+    // Esto crea un array de strings.
+    const mensajesSeparados = textoCompleto.split('\n\n');
+
+    // 3. Devolvemos el array de mensajes.
+    return mensajesSeparados;
+  }
+  
+  return null;
+}
+
+function abrirModalDeConteo() {
+  return HtmlService.createHtmlOutputFromFile('conteo-modal').getContent();
+}
+
+/**
+ * Busca artículos filtrando por múltiples palabras clave.
+ * @param {string} textoBusqueda El string de búsqueda, ej: "cem 42".
+ * @returns {object[]} Un array de objetos {clave, desc}.
+ */
+function buscarArticulosAvanzado(textoBusqueda) {
+  const terminos = textoBusqueda.toLowerCase().split(' ').filter(Boolean); // Divide "cem 42" en ['cem', '42']
+  if (terminos.length === 0) return [];
+
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Articulos");
+  if (!hoja) return [];
+
+  const rangoDatos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 2).getValues();
+  
+  const coincidencias = rangoDatos
+    .map(fila => ({ clave: fila[0].toString(), desc: fila[1].toString() }))
+    .filter(item => {
+      const descripcionMinusculas = item.desc.toLowerCase();
+      // Devuelve true solo si la descripción contiene TODOS los términos de búsqueda
+      return terminos.every(termino => descripcionMinusculas.includes(termino));
+    });
+      
+  return coincidencias.slice(0, 50); // Devolvemos hasta 50 resultados para la tabla
+}
+
+/**
+ * Recibe un array de conteos y los registra en la hoja "Conteos".
+ * @param {object[]} conteosArray El array de objetos de conteo.
+ * @returns {string} Un mensaje de confirmación con el número de registros guardados.
+ */
+function registrarMultiplesConteos(conteosArray) {
+  if (!conteosArray || conteosArray.length === 0) {
+    return "No se recibieron datos para registrar.";
+  }
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Conteos");
+  const usuarioId = Session.getActiveUser().getEmail(); // Obtenemos el usuario actual
+  const ahora = new Date();
+
+  const filasParaAñadir = conteosArray.map(conteo => {
+    const diferencia = Number(conteo.fisico) - Number(conteo.sistema);
+    const id = "C" + Date.now() + Math.random().toString(36).substring(2, 6);
+    return [ id, ahora, usuarioId, conteo.clave, conteo.producto, Number(conteo.sistema), Number(conteo.fisico), diferencia, true, 'Registro masivo' ];
+  });
+
+  // Usamos setValues para añadir todas las filas en una sola operación (mucho más rápido)
+  hoja.getRange(hoja.getLastRow() + 1, 1, filasParaAñadir.length, filasParaAñadir[0].length).setValues(filasParaAñadir);
+  
+  return `${filasParaAñadir.length} conteos registrados exitosamente.`;
+}
+
+/**
+ * Procesa el mensaje del usuario, lo busca en la base de datos de la hoja de cálculo
+ * y devuelve una respuesta.
+ * @param {string} mensaje El texto enviado por el usuario.
+ * @return {string} La respuesta del chatbot.
+ */
+function responder(mensaje) {
+  // --- Verificación de seguridad para evitar errores ---
+  if (!mensaje || typeof mensaje !== 'string') {
+    log("Se recibió un mensaje inválido o vacío.");
+    return "Ocurrió un error (mensaje inválido). Inténtalo de nuevo.";
+  }
+  // --- Fin de la verificación ---
+
+  var msj = mensaje.toLowerCase();
+  var ss = SpreadsheetApp.openById(spreadsheetId);
+  var sheet = ss.getSheetByName("BD");
+  var data = sheet.getDataRange().getValues();
+  var respuesta = "No entendi";
+
+  // Busca una coincidencia exacta primero
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toLowerCase() == msj) {
+      respuesta = data[i][1];
+      break;
+    }
+  }
+
+  // Si no hay coincidencia exacta, busca una coincidencia parcial
+  if (respuesta == "No entendi") {
+    for (var i = 1; i < data.length; i++) {
+      if (msj.includes(data[i][0].toLowerCase())) {
+        respuesta = data[i][1];
+        break;
+      }
+    }
+  }
+
+  log(respuesta);
+  return respuesta;
 }
