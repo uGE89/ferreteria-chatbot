@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plataforma Conversacional Interna</title>
-    
-    <!-- Tailwind CSS -->
+    <title>Plataforma Conversacional Interna Version al 28-06-2025</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts: Inter -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -25,276 +23,387 @@
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
         .quick-starter-btn { background-color: transparent; border: 1px solid #475569; color: #94a3b8; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s ease-in-out; }
         .quick-starter-btn:hover { background-color: #1e293b; color: #e2e8f0; border-color: #64748b; }
-        /* ... tus otros estilos ... */
-.suggestion-item {
-  background-color: #334155; /* bg-slate-700 */
-  border: 1px solid #475569; /* border-slate-600 */
-  color: #e2e8f0; /* text-slate-200 */
-  padding: 8px 12px;
-  margin-top: 4px;
-  border-radius: 8px;
-  cursor: pointer;
-  text-align: left;
-  width: 100%;
-  transition: background-color 0.2s;
-}
+        .suggestion-item {
+            background-color: #334155; /* bg-slate-700 */
+            border: 1px solid #475569; /* border-slate-600 */
+            color: #e2e8f0; /* text-slate-200 */
+            padding: 8px 12px;
+            margin-top: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+        .suggestion-item:hover {
+            background-color: #475569; /* bg-slate-600 */
+        }
+        /* ESTILOS AÑADIDOS PARA LOS BOTONES DEL FILTRO DE ADMIN */
+        .admin-tab-btn {
+            padding: 6px 12px;
+            border-radius: 9999px; /* Para hacerlos pill-shaped */
+            background-color: #334155; /* bg-slate-700 */
+            color: #e2e8f0; /* text-slate-200 */
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            border: none; /* Asegura que no tengan borde por defecto */
+        }
+        .admin-tab-btn:hover {
+            background-color: #475569; /* bg-slate-600 */
+        }
+        .admin-tab-btn.bg-yellow-500 { /* Clase para el botón activo */
+            background-color: #f59e0b; /* bg-yellow-500 */
+            color: #000; /* text-black */
+            font-weight: bold;
+        }
 
-.suggestion-item:hover {
-  background-color: #475569; /* bg-slate-600 */
-}
+        /* Estilos para los botones de navegación móvil */
+        .mobile-nav-btn {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            background-color: #334155; /* bg-slate-700 */
+            border: 1px solid #475569; /* border-slate-600 */
+            color: #94a3b8; /* text-slate-400 */
+            transition: all 0.2s ease-in-out;
+        }
+        .mobile-nav-btn.active {
+            background-color: #f59e0b; /* bg-amber-500 */
+            color: #1e293b; /* text-slate-800 */
+            border-color: #f59e0b;
+        }
+
+/* ... otras reglas ... */
+
+
     </style>
 </head>
-<body class="bg-slate-900 text-white flex items-center justify-center min-h-screen p-4">
+<body class="bg-slate-900 text-slate-200 flex justify-center items-center min-h-screen">
 
-    <!-- Pantalla de login -->
-    <div id="login-card" class="w-full max-w-sm">
-        <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl text-center">
-            <h1 class="text-2xl mb-2 font-bold">Acceso a Plataforma</h1>
-            <p class="text-slate-400 mb-6 text-sm">Ferretería Flores</p>
-            <div class="mb-4">
-                <input id="inputID" type="text" placeholder="Ingresa tu ID (ej. U001)"
-                       class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 text-center" />
+<div id="login-card" class="w-full max-w-sm">
+    <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl text-center">
+        <h1 class="text-2xl mb-2 font-bold">Acceso a Plataforma</h1>
+        <p class="text-slate-400 mb-6 text-sm">Ferretería Flores</p>
+        <div class="mb-4">
+            <input id="inputID" type="text" placeholder="Ingresa tu ID (ej. U001)"
+                   class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 text-center" />
+        </div>
+        <div class="mb-4">
+            <input id="inputPIN" type="password" placeholder="Ingresa tu PIN"
+                   class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 text-center" />
+        </div>
+        <button id="btnLogin" class="w-full bg-emerald-500 hover:bg-emerald-600 px-6 py-2.5 rounded-lg text-white font-semibold transition duration-300 disabled:bg-slate-600">
+            Entrar
+        </button>
+        <p id="loginMsg" class="mt-4 text-red-400 text-xs h-4"></p>
+    </div>
+</div>
+
+<div id="app-container" class="w-full max-w-7xl h-[90vh] max-h-[900px] flex-col gap-4 hidden bg-slate-900 rounded-2xl shadow-2xl p-4">
+    <header class="flex justify-between items-center flex-shrink-0">
+        <div>
+            <h1 id="header-title" class="text-lg font-bold text-white">Plataforma Conversacional Interna V280625</h1>
+            <p id="header-subtitle" class="text-xs text-slate-400">Ferretería Flores</p>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div id="user-info-area" class="text-right">
+                <p id="user-status" class="text-sm font-medium text-emerald-400">Conectando...</p>
+                <p id="user-id-display" class="text-xs text-slate-400 font-mono"></p>
             </div>
-            <button id="btnLogin" class="w-full bg-emerald-500 hover:bg-emerald-600 px-6 py-2.5 rounded-lg text-white font-semibold transition duration-300 disabled:bg-slate-600">
-                Entrar
+            <div id="admin-view-switcher" class="flex items-center p-1 bg-slate-700 rounded-lg hidden">
+                <button id="showChatBtn" class="px-3 py-1 rounded-md text-xs font-semibold">
+                    Chat
+                </button>
+                <button id="showAdminPanelBtn" class="px-3 py-1 rounded-md text-xs font-semibold">
+                    Panel
+                </button>
+            </div>
+            <button id="logoutBtn" class="px-3 py-1 rounded text-xs text-slate-400 border border-slate-600 hover:text-red-400 hover:border-red-400 transition">
+                Cerrar sesión
             </button>
-            <p id="loginMsg" class="mt-4 text-red-400 text-xs h-4"></p>
         </div>
+    </header>
+
+    <div id="content-area" class="flex-1 w-full flex overflow-hidden">
+        <div id="chat-column" class="flex flex-col h-full w-full bg-slate-800 rounded-xl overflow-hidden">
+            <main id="chat-window" class="flex-1 p-6 overflow-y-auto space-y-6" aria-live="polite">
+                </main>
+            <div id="quick-starters" class="p-4 border-t border-slate-700 flex-shrink-0">
+                <p class="text-xs text-slate-400 mb-2 font-semibold">Iniciadores rápidos:</p>
+                <div class="flex flex-wrap gap-2"></div>
+            </div>
+            <div id="suggestions-container" class="px-4 pb-2"></div>
+            <footer class="p-4 border-t border-slate-700 flex-shrink-0">
+                <form id="chat-form" class="flex items-center gap-3">
+                    <input type="text" id="message-input" placeholder="Escribe tu mensaje o reporte aquí..." class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off">
+                    <button type="submit" id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg p-2.5 transition disabled:bg-slate-600 flex items-center justify-center" aria-label="Enviar Mensaje">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </form>
+            </footer>
+        </div>
+
+        <div id="admin-panel" class="hidden flex-col h-full w-full bg-slate-800 rounded-xl overflow-y-auto">
+             </div>
     </div>
-
-
-    <!-- Contenedor principal del chat (oculto inicialmente) -->
-    <div id="chat-wrapper" class="w-full max-w-3xl h-[90vh] max-h-[800px] bg-slate-800 rounded-2xl shadow-2xl flex-col hidden">
-        <header class="p-4 border-b border-slate-700 flex justify-between items-center flex-shrink-0">
-            <div>
-                <h1 class="text-lg font-bold text-white">Plataforma Conversacional Interna</h1>
-                <p class="text-xs text-slate-400">Ferretería Flores</p>
-            </div>
-            <div class="text-right">
-                 <p id="user-status" class="text-sm font-medium text-emerald-400">Conectando...</p>
-                 <p id="user-id-display" class="text-xs text-slate-400 font-mono"></p>
-                 <button id="logoutBtn"
-            class="mt-2 px-3 py-1 rounded text-xs text-slate-400 border border-slate-600 hover:text-red-400 hover:border-red-400 transition">
-        Cerrar sesión
-    </button>
-            </div>
-        </header>
-
-        <main id="chat-window" class="flex-1 p-6 overflow-y-auto space-y-6">
-            <!-- Mensajes del chat -->
-        </main>
-
-        <div id="admin-summary-panel" class="hidden px-4">
-          <h2 class="text-sm text-slate-400 font-semibold mb-2 mt-2">Resumen del día</h2>
-          <button onclick="verResumenAdministrador()" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg px-4 py-1.5 text-sm mb-2">
-            Ver Resumen Diario
-          </button>
-          <pre id="resumen-admin" class="text-sm text-white bg-slate-700 p-3 rounded-md whitespace-pre-wrap"></pre>
-        </div>
-
-        <div id="quick-starters" class="p-4 border-t border-slate-700 flex-shrink-0">
-            <p class="text-xs text-slate-400 mb-2 font-semibold">Iniciadores rápidos:</p>
-            <div class="flex flex-wrap gap-2">
-                <button class="quick-starter-btn">Registrar problema</button>
-                <button class="quick-starter-btn">Hacer conteo de inventario</button>
-                <button class="quick-starter-btn">Dejar una sugerencia</button>
-            </div>
-        </div>
-
-        <!-- Panel de Herramientas del Administrador -->
-<div id="admin-tools" class="hidden p-4 border-t border-slate-700 text-sm space-y-4">
-
-  <!-- Botón de resumen diario -->
-  <div>
-    <button onclick="verResumenAdministrador()" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2 rounded-lg">
-      Ver resumen diario
-    </button>
-    <pre id="resumen-admin" class="mt-3 bg-slate-100 text-slate-800 p-3 rounded-lg whitespace-pre-wrap"></pre>
-  </div>
-
-  <!-- Mensajes para administrador -->
-  <div>
-    <h3 class="text-slate-300 font-semibold mb-1">📥 Mensajes recibidos</h3>
-    <div id="mensajes-admin" class="bg-slate-700 rounded-lg p-3 space-y-2 text-white text-sm max-h-40 overflow-y-auto">
-      <p class="text-slate-400 text-xs">No hay mensajes nuevos aún.</p>
-    </div>
-  </div>
 </div>
 
 
-
-
-    <div id="suggestions-container" class="px-4 pb-2"></div>
-    
-
-    <footer class="p-4 border-t border-slate-700 flex-shrink-0">
-        <form id="chat-form" class="flex items-center gap-3">
-            <input type="text" id="message-input" placeholder="Escribe tu mensaje o reporte aquí..." class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off">
-            <button type="submit" id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg p-2.5 transition disabled:bg-slate-600 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            </button>
-        </form>
-    </footer>
+    <div id="modal-container" class="fixed inset-0 bg-slate-900 bg-opacity-75 hidden justify-center items-center p-4 z-50">
     </div>
 
+    <div id="custom-alert-modal" class="fixed inset-0 bg-slate-900 bg-opacity-75 hidden justify-center items-center p-4 z-[100]">
+        <div class="bg-slate-800 p-6 rounded-lg shadow-xl text-center max-w-sm w-full">
+            <h3 id="custom-alert-title" class="text-xl font-bold mb-4 text-white"></h3>
+            <p id="custom-alert-message" class="text-slate-300 mb-6"></p>
+            <button id="custom-alert-close-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg">
+                Aceptar
+            </button>
+        </div>
+    </div>
+
+    <div id="custom-confirm-modal" class="fixed inset-0 bg-slate-900 bg-opacity-75 hidden justify-center items-center p-4 z-[100]">
+        <div class="bg-slate-800 p-6 rounded-lg shadow-xl text-center max-w-sm w-full">
+            <h3 class="text-xl font-bold mb-4 text-white">Confirmación</h3>
+            <p id="custom-confirm-message" class="text-slate-300 mb-6"></p>
+            <div class="flex justify-center gap-4">
+                <button id="custom-confirm-yes-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg">
+                    Sí
+                </button>
+                <button id="custom-confirm-no-btn" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg">
+                    No
+                </button>
+            </div>
+        </div>
+    </div>
 <script>
-    const loginCard = document.getElementById('login-card');
-    const chatWrapper = document.getElementById('chat-wrapper');
-    const btnLogin = document.getElementById('btnLogin');
-    const inputID = document.getElementById('inputID');
-    const loginMsg = document.getElementById('loginMsg');
+    // =========================================================================
+    // ================ SCRIPT FINAL Y UNIFICADO PARA INDEX.HTML ===============
+    // =========================================================================
 
-    const chatWindow = document.getElementById('chat-window');
-    const chatForm = document.getElementById('chat-form');
-    const messageInput = document.getElementById('message-input');
-    const sendButton = document.getElementById('send-button');
-    const quickStartersContainer = document.getElementById('quick-starters');
+    // --- Frontend Elements ---
+// --- Frontend Elements (NUEVA ESTRUCTURA) ---
+const loginCard = document.getElementById('login-card');
+const appContainer = document.getElementById('app-container'); // Contenedor principal
+const btnLogin = document.getElementById('btnLogin');
+const inputID = document.getElementById('inputID');
+const loginMsg = document.getElementById('loginMsg');
 
-    let currentUserId = '';
-    let currentSessionId = '';
-    let perfilActual = null; // Mantenemos esta variable global para acceder al perfil
+// Elementos de la cabecera
+const userStatus = document.getElementById('user-status');
+const userIdDisplay = document.getElementById('user-id-display');
+const logoutBtn = document.getElementById('logoutBtn');
+const adminViewSwitcher = document.getElementById('admin-view-switcher');
+const showChatBtn = document.getElementById('showChatBtn');
+const showAdminPanelBtn = document.getElementById('showAdminPanelBtn');
 
+// Paneles de contenido
+const chatColumn = document.getElementById('chat-column');
+const adminPanel = document.getElementById('admin-panel');
 
-    // --- BOTÓN CERRAR SESIÓN ---
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  // Opcional: confirmar
-  if (!confirm("¿Seguro que querés cerrar sesión?")) return;
+// Elementos del chat (la mayoría se mantienen)
+const chatWindow = document.getElementById('chat-window');
+const chatForm = document.getElementById('chat-form');
+const messageInput = document.getElementById('message-input');
+const sendButton = document.getElementById('send-button');
+const quickStartersContainer = document.getElementById('quick-starters').querySelector('div');
+const suggestionsContainer = document.getElementById('suggestions-container');
 
-  // 1. Limpia el almacenamiento local
-  sessionStorage.clear();
+    // --- Global State Variables ---
+    let perfilActual = null;
+    let currentModalEnteredCounts = {};
+    let adminState = { // New admin state
+        items: [],
+        filters: {
+            tipo: 'Todos',
+            fecha: ''
+        }
+    };
 
-  // 2. Podrías llamar a tu backend para marcar la sesión como cerrada
-  // google.script.run.cerrarSesion(currentSessionId);  // (si tuvieras esa función)
+    // --- Custom Alert/Confirm Functions ---
+    function showCustomAlert(message, type = 'info') {
+        const alertModal = document.getElementById('custom-alert-modal');
+        const alertMessage = document.getElementById('custom-alert-message');
+        const alertTitle = document.getElementById('custom-alert-title');
+        const alertCloseBtn = document.getElementById('custom-alert-close-btn');
 
-  // 3. Recarga la página para mostrar la pantalla de login
-  location.reload();
+        alertMessage.textContent = message;
+        alertModal.classList.remove('hidden', 'bg-red-900/75', 'bg-emerald-900/75', 'bg-blue-900/75', 'bg-slate-900/75');
+        alertModal.classList.add('flex');
+
+        let title = '';
+        switch (type) {
+            case 'success':
+                alertModal.classList.add('bg-emerald-900/75');
+                title = 'Éxito';
+                break;
+            case 'error':
+                alertModal.classList.add('bg-red-900/75');
+                title = 'Error';
+                break;
+            default: // info
+                alertModal.classList.add('bg-slate-900/75');
+                title = 'Información';
+                break;
+        }
+        alertTitle.textContent = title;
+
+        alertCloseBtn.onclick = () => {
+            alertModal.classList.add('hidden');
+        };
+    }
+
+    function showCustomConfirm(message) {
+        return new Promise((resolve) => {
+            const confirmModal = document.getElementById('custom-confirm-modal');
+            const confirmMessage = document.getElementById('custom-confirm-message');
+            const confirmYesBtn = document.getElementById('custom-confirm-yes-btn');
+            const confirmNoBtn = document.getElementById('custom-confirm-no-btn');
+
+            confirmMessage.textContent = message;
+            confirmModal.classList.remove('hidden');
+            confirmModal.classList.add('flex');
+
+            const closeConfirm = (result) => {
+                confirmModal.classList.add('hidden');
+                resolve(result);
+            };
+
+            confirmYesBtn.onclick = () => closeConfirm(true);
+            confirmNoBtn.onclick = () => closeConfirm(false);
+        });
+    }
+
+    // --- LOGOUT BUTTON ---
+    logoutBtn.addEventListener('click', async () => {
+        const confirmed = await showCustomConfirm("¿Seguro que querés cerrar sesión?");
+        if (!confirmed) return;
+        sessionStorage.clear();
+        location.reload();
+    });
+
+    // --- LÓGICA DE LOGIN E INICIALIZACIÓN (Modificado y unificado) ---
+
+    // Este listener document.addEventListener('DOMContentLoaded') ahora gestiona el auto-login
+    document.addEventListener('DOMContentLoaded', () => {
+        const storedProfile = sessionStorage.getItem('perfil');
+        if (storedProfile) {
+            // Si hay un perfil guardado, rellena el ID y simula un clic en el botón de login
+            inputID.value = JSON.parse(storedProfile).UsuarioID;
+            // No llamar directamente a procesarDatosIniciales aquí
+            // para que pase por el flujo normal de validación del login.
+            btnLogin.click();
+        } else {
+            console.log("No hay sesión almacenada, mostrando pantalla de login.");
+        }
+    });
+
+    // Listener para el botón de login
+// Dentro de tu etiqueta <script> en index.html
+
+btnLogin.addEventListener('click', () => {
+    const id = document.getElementById('inputID').value.trim();
+    const pin = document.getElementById('inputPIN').value.trim();
+
+    if (!id || !pin) {
+        // En lugar de usar loginMsg, usamos el modal de alerta que ya tienes
+        showCustomAlert("Por favor, ingresa tu ID y tu PIN.", 'info');
+        return;
+    }
+
+    loginMsg.textContent = "Validando...";
+    btnLogin.disabled = true;
+
+    // La función que llama al backend ahora debe enviar ambos argumentos
+    google.script.run
+        .withSuccessHandler(procesarDatosIniciales)
+        // Asumo que tienes una función para mostrar errores, si no, puedes usar showCustomAlert
+        .withFailureHandler(err => {
+            showCustomAlert(`Error de Login: ${err.message}`, 'error');
+            btnLogin.disabled = false;
+            loginMsg.textContent = '';
+        })
+        .cargarDatosIniciales(id, pin);
 });
 
 
-    // --- LÓGICA DE LOGIN ---
-    btnLogin.addEventListener('click', () => {
-        const id = inputID.value.trim();
-        if (!id) return;
+    // Función principal que procesa los datos iniciales después del login exitoso
+    // MODIFICACIÓN DE LA FUNCIÓN procesarDatosIniciales
+function procesarDatosIniciales(datos) {
+    console.log("📦 datos recibidos del Apps Script:", datos);
+    if (!datos.ok) {
+        loginMsg.textContent = datos.msg;
+        btnLogin.disabled = false;
+        return;
+    }
 
-        loginMsg.textContent = "Validando e iniciando sesión…";
-        btnLogin.disabled = true;
+    // Guardar estado
+    sessionStorage.setItem('perfil', JSON.stringify(datos.perfil));
+    sessionStorage.setItem('sessionId', datos.sesionId);
+    perfilActual = datos.perfil;
 
-        // CAMBIO PRINCIPAL: Una sola llamada para cargar todos los datos iniciales
-        google.script.run
-            .withSuccessHandler(procesarDatosIniciales) // Llama a la nueva función
-            .withFailureHandler(mostrarErrorGeneral)    // Maneja errores generales
-            .cargarDatosIniciales(id); // Envía el ID del usuario
-    });
+    // --- NUEVA LÓGICA DE UI ---
+    loginCard.classList.add('hidden');
+    appContainer.classList.remove('hidden');
+    appContainer.classList.add('flex'); // Aseguramos que sea flex
 
-    /**
-     * Esta función recibe el paquete de datos del servidor después de cargarDatosIniciales.
-     * @param {object} datos - El objeto devuelto por cargarDatosIniciales.
-     */
-    function procesarDatosIniciales(datos) {
-      console.log("📦 datos recibidos:", datos);
-        if (!datos.ok) {
-            // Si la validación u otro paso falló, muestra el mensaje de error
-            loginMsg.textContent = datos.msg;
-            btnLogin.disabled = false;
-            return;
-        }
+    // Renderizar Header
+    userStatus.textContent = `Activo: ${perfilActual.Nombre}`;
+    userIdDisplay.textContent = `Sucursal: ${perfilActual.Sucursal} | Rol: ${perfilActual.Rol}`;
 
-        // 1. Guardar el perfil y el ID de usuario actual
-        sessionStorage.setItem('perfil', JSON.stringify(datos.perfil));
-        perfilActual = datos.perfil; // Actualiza la variable global perfilActual
-        currentUserId = datos.perfil.usuarioID;
-        currentSessionId = datos.sesionId; // Guardar el ID de sesión
-        sessionStorage.setItem('sessionId', currentSessionId);
-        console.log("✅ sessionId guardado:", currentSessionId);
+    // Renderizar Chat
+    renderizarChatInicial(datos.mensajeAnuncio, datos.quickStarters);
 
+    // --- LÓGICA DE VISIBILIDAD PARA ADMIN ---
+    if (perfilActual.Rol === "Administrador") {
+        adminViewSwitcher.classList.remove('hidden');
+        showChatBtn.addEventListener('click', () => updateActiveView('chat'));
+        showAdminPanelBtn.addEventListener('click', () => updateActiveView('admin'));
+        updateActiveView('chat'); // Vista inicial por defecto
 
-        // 2. Transición de la interfaz
-        loginCard.classList.add('hidden');
-        chatWrapper.classList.remove('hidden');
-        chatWrapper.classList.add('flex');
+        // Inicializar el contenido del panel de admin (tu función original)
+        renderAdminPanel();
+        refrescarPanelAdmin();
 
-        // 3. Procesar el anuncio inicial (si existe)
-        if (datos.mensajeAnuncio && Array.isArray(datos.mensajeAnuncio)) {
+    } else {
+        adminViewSwitcher.classList.add('hidden');
+        updateActiveView('chat'); // Los no-admin solo ven el chat
+        adminPanel.remove(); // Opcional: eliminar el panel si no es admin
+    }
+
+    // Habilitar inputs del chat
+    messageInput.disabled = false;
+    messageInput.focus();
+    sendButton.disabled = false;
+}
+
+    // --- LÓGICA DE CHAT: Funciones para renderizar mensajes y manejar la IA ---
+
+    // Esta función reemplaza a 'initializeChat' y se encarga de mostrar la info del usuario
+    function renderizarHeader(perfil) {
+        const userStatus = document.getElementById('user-status');
+        const userIdDisplay = document.getElementById('user-id-display');
+
+        userStatus.textContent = `Activo: ${perfil.Nombre}`;
+        userIdDisplay.textContent = `Sucursal: ${perfil.Sucursal} | Rol: ${perfil.Rol}`;
+    }
+
+    // Esta función reemplaza la lógica de bienvenida y quick starters que estaba en 'procesarDatosIniciales'
+    function renderizarChatInicial(mensajeAnuncio, quickStarters) {
+        if (mensajeAnuncio && Array.isArray(mensajeAnuncio)) {
             let delay = 500;
-            datos.mensajeAnuncio.forEach(mensaje => {
+            mensajeAnuncio.forEach(mensaje => {
                 setTimeout(() => {
                     addMessage(mensaje, 'system');
                 }, delay);
                 delay += 1200;
             });
         }
-
-        // 4. Inicializar la interfaz del chat con los datos del perfil
-        initializeChat(datos.perfil);
-
-        // 5. Manejar datos específicos del administrador (si el rol lo permite)
-        if (datos.perfil.rol === "Administrador") {
-            document.getElementById("admin-tools").classList.remove("hidden");
-            // Mostrar resumen si viene en los datos iniciales
-            if (datos.resumenDiario) {
-                document.getElementById("resumen-admin").innerText = datos.resumenDiario;
-            }
-            // Cargar mensajes pendientes si vienen en los datos iniciales
-            if (datos.mensajesParaAdmin) {
-                renderizarMensajesAdmin(datos.mensajesParaAdmin);
-            }
+        if (quickStarters && Array.isArray(quickStarters)) {
+            renderQuickStarters(quickStarters);
         }
-        
-        // 6. Cargar los quick starters del AI si vienen en los datos iniciales
-        if (datos.quickStarters && Array.isArray(datos.quickStarters)) {
-            renderQuickStarters(datos.quickStarters);
-        }
-
-        // Una vez cargado todo, habilitar el input y el botón de enviar
-        messageInput.disabled = false;
-        sendButton.disabled = false;
-        messageInput.focus();
-    }
-
-    function mostrarErrorGeneral(err) {
-        loginMsg.textContent = `Error de comunicación con el servidor: ${err.message || 'Error desconocido.'}`;
-        btnLogin.disabled = false;
-        hideTypingIndicator(); // Asegurarse de ocultar si hay un error durante la carga
-        messageInput.disabled = false;
-        sendButton.disabled = false;
-    }
-
-    // Auto-login si ya existe un perfil en sessionStorage
-document.addEventListener('DOMContentLoaded', () => {
-    const storedProfile = sessionStorage.getItem('perfil');
-    const storedSession = sessionStorage.getItem('sessionId');
-
-    if (storedProfile && storedSession) {
-        const perfil = JSON.parse(storedProfile);
-        inputID.value = perfil.usuarioID;
-        currentSessionId = storedSession;
-        currentUserId = perfil.usuarioID;
-
-        // Opcional: mostrar al usuario que está cargando sesión
-        document.getElementById('user-status').textContent = `Recuperando sesión...`;
-
-        // Disparamos login visual y funcional
-        btnLogin.click(); // esto llamará a procesarDatosIniciales()
-    } else {
-        // Si no hay sesión, asegurate de limpiar todo
-        sessionStorage.removeItem('perfil');
-        sessionStorage.removeItem('sessionId');
-    }
-});
-
-
-
-    // --- LÓGICA DE CHAT ---
-    function initializeChat(perfil) {
-        const userStatus = document.getElementById('user-status');
-        const userIdDisplay = document.getElementById('user-id-display');
-
-        userStatus.textContent = `Activo: ${perfil.nombre}`;
-        userIdDisplay.textContent = `Sucursal: ${perfil.sucursal} | Rol: ${perfil.rol}`;
-
-        // Ya no es necesario llamar a getAIResponse("__inicio") aquí,
-        // porque el mensaje de bienvenida y quick starters se manejan en procesarDatosIniciales
-        // si vienen del backend.
     }
 
     function addMessage(text, sender) {
@@ -339,188 +448,305 @@ document.addEventListener('DOMContentLoaded', () => {
         if (indicator) indicator.remove();
     }
 
-    function getAIResponse(payload) { // <-- AHORA RECIBE EL OBJETO 'payload'
+    function getAIResponse(payload) {
         messageInput.disabled = true;
         sendButton.disabled = true;
         showTypingIndicator();
 
+        const userIdToPass = perfilActual?.UsuarioID;
+        const sessionIdToPass = sessionStorage.getItem('sessionId');
+
+        if (!userIdToPass || !sessionIdToPass) {
+            hideTypingIndicator();
+            showCustomAlert("⚠️ La sesión de usuario no está activa o se ha perdido. Por favor, intentá cerrar sesión y volver a entrar.", 'error');
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            return;
+        }
+
         google.script.run
             .withSuccessHandler(handleAIResponse)
             .withFailureHandler(handleAIError)
-            // AHORA PASAMOS EL OBJETO 'payload' COMPLETO AL BACKEND
-            .enviarAOpenAI(currentSessionId, currentUserId, payload, '');
+            .enviarAOpenAI(sessionIdToPass, userIdToPass, payload);
     }
 
     function handleAIResponse(data) {
         hideTypingIndicator();
+
         if (data.content) {
             addMessage(data.content, 'ai');
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.focus();
         }
 
-        if (data.function_call) {
-            const funcName = data.function_call.name;
-            const funcArgs = data.function_call.arguments;
-            const systemMessage = `Función invocada: ${funcName}(${funcArgs})`;
-            setTimeout(() => addMessage(systemMessage, 'system'), 500);
-        }
+        // --- NEW LOGIC TO HANDLE TOOLS ---
+        if (data.tool_call) {
+            const toolCall = data.tool_call;
+            const functionName = toolCall.function.name;
+            const functionArgs = JSON.parse(toolCall.function.arguments);
 
-        messageInput.disabled = false;
-        sendButton.disabled = false;
-        messageInput.focus();
+            addMessage(`Ejecutando: ${functionName}...`, 'system');
+
+            const userId = perfilActual.UsuarioID;
+            const sessionId = sessionStorage.getItem('sessionId');
+
+            google.script.run
+                .withSuccessHandler(functionResult => {
+                    addMessage(`Resultado: ${functionResult}`, 'system');
+
+                    const payloadForNextStep = {
+                        texto: null,
+                        tool_response: {
+                            tool_call_id: toolCall.id,
+                            function_name: functionName,
+                            result: functionResult
+                        }
+                    };
+
+                    showTypingIndicator();
+                    google.script.run
+                        .withSuccessHandler(handleAIResponse)
+                        .withFailureHandler(handleAIError)
+                        .enviarAOpenAI(sessionId, userId, payloadForNextStep);
+                })
+                .withFailureHandler(handleAIError)
+                .ejecutarHerramienta(functionName, functionArgs, userId, sessionId);
+        } else {
+            // If it's not a function call, make sure inputs are enabled
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.focus();
+        }
     }
 
     function handleAIError(error) {
         hideTypingIndicator();
-        addMessage(`Ocurrió un error al procesar tu solicitud: ${error.message}.`, 'system');
+        showCustomAlert(`Ocurrió un error al procesar tu solicitud: ${error.message}.`, 'error');
         messageInput.disabled = false;
         sendButton.disabled = false;
         messageInput.focus();
     }
 
-    // --- FUNCIONES DE ADMINISTRADOR ---
+    // --- Lógica del Panel de Administración (NUEVAS FUNCIONES) ---
 
-    // Añade esta función aquí
-    function getPerfilActual() {
-        return perfilActual;
-    }
+    function renderAdminPanel() {
+        const container = document.getElementById('admin-panel');
+        if (!container) return;
 
-    function verResumenAdministrador() {
-        const usuario = getPerfilActual();
-        if (!usuario || usuario.rol !== "Administrador") {
-            alert("Solo disponible para el rol Administrador");
-            return;
-        }
-
-        google.script.run.withSuccessHandler(function(resumen) {
-            document.getElementById("resumen-admin").innerText = resumen;
-        }).generarResumenAdmin();
-    }
-
-    function cargarMensajesAdministrador() {
-        google.script.run.withSuccessHandler((mensajes) => {
-            renderizarMensajesAdmin(mensajes);
-        }).cargarMensajesParaAdministrador();
-    }
-
-    // Función auxiliar para renderizar los mensajes del administrador (llamada desde procesarDatosIniciales y cargarMensajesAdministrador)
-    function renderizarMensajesAdmin(mensajes) {
-        const contenedor = document.getElementById("mensajes-admin");
-        contenedor.innerHTML = '';
-
-        if (!mensajes || mensajes.length === 0) {
-            contenedor.innerHTML = '<p class="text-slate-400 text-xs">No hay mensajes nuevos aún.</p>';
-            return;
-        }
-
-        mensajes.forEach((msg, index) => {
-            const bloque = document.createElement("div");
-            bloque.className = "border-b border-slate-600 pb-3";
-
-            bloque.innerHTML = `
-                <p><strong>${msg.usuario}</strong> dijo:</p>
-                <p class="text-slate-200 mb-2">${msg.texto}</p>
-                <textarea id="respuesta-${index}" class="w-full p-2 rounded text-slate-900 text-sm mb-1" placeholder="Escribí tu respuesta..."></textarea>
-                <button onclick="enviarRespuestaAdministrador('${msg.usuario}', '${msg.sesionId}', 'respuesta-${index}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
-                    Enviar respuesta
+        // 1. Dibuja la estructura y los filtros
+        container.innerHTML = `
+            <div class="p-4 sticky top-0 bg-slate-800 border-b border-slate-700 z-10">
+                <h2 class="text-lg font-bold text-white mb-4">Panel de Administración</h2>
+                <div id="admin-filter-tabs" class="flex gap-2 flex-wrap text-sm mb-3">
+                  <button data-tipo="Todos" class="admin-tab-btn bg-yellow-500 text-black font-bold">Todos</button>
+                  <button data-tipo="Problema" class="admin-tab-btn">⚠️ Problemas</button>
+                  <button data-tipo="Sugerencia" class="admin-tab-btn">💡 Sugerencias</button>
+                  <button data-tipo="Tarea" class="admin-tab-btn">📝 Tareas</button>
+                  <button data-tipo="Caja" class="admin-tab-btn">💰 Caja</button>
+                </div>
+                <input type="date" id="admin-filter-fecha" class="w-full bg-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-3">
+                 <button onclick="google.script.run.withSuccessHandler(resumen => showCustomAlert(resumen, 'info')).withFailureHandler(error => showCustomAlert('Error al cargar resumen: ' + error.message, 'error')).generarResumenAdmin();" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg px-4 py-1.5 text-sm">
+                    Generar Resumen Diario
                 </button>
-            `;
-            contenedor.appendChild(bloque);
+            </div>
+            <div id="admin-items-container" class="p-4 space-y-3"></div>
+        `;
+
+        // Set initial filter values if they exist in adminState
+        const initialActiveButton = document.querySelector(`.admin-tab-btn[data-tipo="${adminState.filters.tipo}"]`);
+        if (initialActiveButton) {
+            document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('bg-yellow-500', 'text-black', 'font-bold'));
+            initialActiveButton.classList.add('bg-yellow-500', 'text-black', 'font-bold');
+        }
+        document.getElementById('admin-filter-fecha').value = adminState.filters.fecha;
+
+        renderFilteredAdminItems(); // Renderiza los ítems inicialmente
+
+        // Listener para los nuevos botones de tipo (usando addEventListener)
+        document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                adminState.filters.tipo = btn.dataset.tipo;
+                document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('bg-yellow-500', 'text-black', 'font-bold'));
+                btn.classList.add('bg-yellow-500', 'text-black', 'font-bold');
+                renderFilteredAdminItems();
+            });
+        });
+
+        // Listener para el input de fecha (usando addEventListener)
+        document.getElementById('admin-filter-fecha').addEventListener('change', (e) => {
+            adminState.filters.fecha = e.target.value;
+            renderFilteredAdminItems();
         });
     }
 
-    function enviarRespuestaAdministrador(destinoUsuario, destinoSesion, inputId) {
-        const contenido = document.getElementById(inputId).value.trim();
-        if (!contenido) return alert("Escribí algo primero.");
+    function renderFilteredAdminItems() {
+        const container = document.getElementById('admin-items-container');
+        if (!container) return;
 
-        google.script.run.withSuccessHandler(() => {
-            alert("Mensaje enviado correctamente.");
-            document.getElementById(inputId).value = '';
-            cargarMensajesAdministrador(); // Refrescar los mensajes después de enviar
-        }).enviarMensajeAdministrador(destinoSesion, destinoUsuario, contenido);
+        let itemsToShow = [...adminState.items];
+
+        if (adminState.filters.tipo !== 'Todos') {
+            itemsToShow = itemsToShow.filter(item => item.tipo === adminState.filters.tipo);
+        }
+
+        if (adminState.filters.fecha) {
+            itemsToShow = itemsToShow.filter(item => {
+                const itemDate = item.fecha instanceof Date && !isNaN(item.fecha) ? item.fecha :
+                                 (typeof item.fecha === 'string' ? new Date(item.fecha) : null);
+
+                if (itemDate && !isNaN(itemDate.getTime())) {
+                    const filterDate = new Date(adminState.filters.fecha);
+                    return itemDate.getFullYear() === filterDate.getFullYear() &&
+                           itemDate.getMonth() === filterDate.getMonth() &&
+                           itemDate.getDate() === filterDate.getDate();
+                }
+                return false;
+            });
+        }
+
+        if (itemsToShow.length === 0) {
+            container.innerHTML = '<p class="text-slate-400 text-center text-sm p-4">No hay ítems que coincidan.</p>';
+            return;
+        }
+
+        // 1. Creamos el HTML como antes
+        container.innerHTML = itemsToShow.map(item => {
+            const statusColor = item.estado === 'Pendiente' ? 'bg-yellow-500/20 text-yellow-300' : 'bg-green-500/20 text-green-300';
+            const tipoIcono = { Problema: '⚠️', Sugerencia: '💡', Tarea: '📝', Caja: '💰' }[item.tipo] || '📁';
+            const fechaFormateada = item.fecha && item.fecha instanceof Date && !isNaN(item.fecha.getTime()) ?
+                                     item.fecha.toLocaleDateString('es-NI') : 'Sin fecha';
+
+            return `
+                <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+                    <div class="flex justify-between items-start">
+                        <p class="font-bold text-white text-sm pr-2">${tipoIcono} ${item.asunto || 'Sin asunto'}</p>
+                        <span class="text-xs ${statusColor} px-2 py-0.5 rounded-full whitespace-nowrap">${item.estado}</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1 mb-2 break-words">${item.detalle || ''}</p>
+                    <div class="flex justify-between items-center text-xs text-slate-500">
+                        <span>${item.usuario || 'N/A'} - ${fechaFormateada}</span>
+                        ${item.estado === 'Pendiente' ?
+                            `<button data-item-id="${item.id}" class="btn-marcar-revisado px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs">Marcar Revisado</button>` : ''
+                        }
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // --- 2. AÑADIMOS LOS LISTENERS DESPUÉS DE CREAR EL HTML ---
+        container.querySelectorAll('.btn-marcar-revisado').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const itemId = btn.dataset.itemId;
+                solicitarCambioEstado(itemId, 'Revisado');
+            });
+        });
     }
 
-    // --- EVENTOS DEL CHAT ---
-chatForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-  console.log("📤 intento de enviar. userId:", currentUserId, " sessionId:", currentSessionId);
+    function solicitarCambioEstado(itemId, nuevoEstado) {
+        if (!confirm(`¿Seguro que quieres cambiar el estado a "${nuevoEstado}"?`)) return;
 
-    if (!currentSessionId || !currentUserId) {
-        alert("⚠️ No se ha iniciado la sesión correctamente. Por favor, reiniciá el login.");
-        return;
+        google.script.run
+            .withSuccessHandler(response => {
+                showCustomAlert(response, 'success');
+                // Para refrescar la lista, simplemente llamamos a nuestra nueva función central.
+                refrescarPanelAdmin(); // <-- Llamada a la nueva función de refresco
+            })
+            .withFailureHandler(err => showCustomAlert(err.message, 'error'))
+            .actualizarEstadoItemAdmin(itemId, nuevoEstado);
     }
 
-    const userInput = messageInput.value.trim();
-    if (userInput) {
-        addMessage(userInput, 'user');
-        getAIResponse({ texto: userInput, claveProducto: null });
-        messageInput.value = '';
+    // --- CHAT EVENTS ---
+    chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const userInput = messageInput.value.trim();
+        if (userInput) {
+            addMessage(userInput, 'user');
+            getAIResponse({ texto: userInput, claveProducto: null });
+            messageInput.value = '';
+        }
+    });
+
+
+
+
+
+quickStartersContainer.addEventListener('click', (e) => {
+    // Nos aseguramos de que el clic fue en un botón de inicio rápido
+    if (e.target.tagName === 'BUTTON' && e.target.classList.contains('quick-starter-btn')) {
+        
+        // Obtenemos el nombre de la función que guardamos en el atributo 'data-function-name' del botón
+        const functionName = e.target.dataset.functionName;
+        const buttonText = e.target.textContent;
+
+        // ==========================================================
+        // ==== ¡NUEVA LÓGICA INTELIGENTE! ====
+        // ==========================================================
+        
+        // Comprobamos si el botón presionado es el de registrar conteo
+        if (functionName === 'registrarConteo') {
+            
+            // Si es el de conteo, llamamos directamente a la función que abre el modal
+            console.log("Botón de conteo detectado. Abriendo modal directamente.");
+            gestionarAperturaModal(); // Asumo que esta es tu función para el modal de conteo
+            
+        } else {
+            
+            // Si es cualquier otro botón, mantenemos el comportamiento original:
+            // Lo enviamos como un mensaje al chat para que la IA lo procese.
+            console.log(`Botón regular detectado: "${buttonText}". Enviando al chat.`);
+            addMessage(buttonText, 'user');
+            getAIResponse({ texto: buttonText });
+            messageInput.value = '';
+            messageInput.focus();
+        }
     }
 });
 
 
-    quickStartersContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('quick-starter-btn')) {
-            const text = e.target.textContent;
 
-            if (text === 'Hacer conteo de inventario') {
-                gestionarAperturaModal();
-            } else {
-                addMessage(text, 'user');
-                getAIResponse({ texto: text, claveProducto: null });
-                messageInput.value = '';
-                messageInput.focus();
-            }
-        }
+function renderQuickStarters(starters) {
+    quickStartersContainer.innerHTML = '';
+    if (!starters || starters.length === 0) return;
+
+    const buttonClasses = 'quick-starter-btn bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-full text-sm transition duration-200 ease-in-out';
+
+    starters.forEach(starterObject => {
+        const button = document.createElement('button');
+        button.className = buttonClasses;
+        button.textContent = starterObject.NombrePantalla;
+        button.dataset.functionName = starterObject.NombreFuncion;
+        quickStartersContainer.appendChild(button);
     });
+}
 
-    // Función auxiliar para renderizar los quick starters (llamada desde procesarDatosIniciales)
-    function renderQuickStarters(starters) {
-        quickStartersContainer.innerHTML = ''; // Limpiar cualquier botón previo
-        starters.forEach(starterText => {
-            const button = document.createElement('button');
-            button.className = 'quick-starter-btn bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-full text-sm transition duration-200 ease-in-out';
-            button.textContent = starterText;
-            quickStartersContainer.appendChild(button);
-        });
-    }
-
-
-    // --- INICIO DE LA LÓGICA DEL BUSCADOR @ ---
-
-    const suggestionsContainer = document.getElementById('suggestions-container');
-
-    // 1. Escuchamos cada vez que el usuario escribe en el input
+    // --- LÓGICA DEL BUSCADOR @ ---
     messageInput.addEventListener('input', () => {
         const text = messageInput.value;
         const atIndex = text.lastIndexOf('@');
 
         if (atIndex !== -1) {
             const query = text.substring(atIndex + 1);
-
-            // Solo buscamos si ha escrito al menos 2 letras después del @
             if (query.length >= 2) {
                 google.script.run
                     .withSuccessHandler(displaySuggestions)
                     .buscarArticulo(query);
             } else {
-                suggestionsContainer.innerHTML = ''; // Limpia si borra el texto de búsqueda
+                suggestionsContainer.innerHTML = '';
             }
         } else {
-            suggestionsContainer.innerHTML = ''; // Limpia si borra el @
+            suggestionsContainer.innerHTML = '';
         }
     });
 
-    // 2. Función que se ejecuta cuando el backend devuelve las sugerencias
     function displaySuggestions(suggestions) {
-        suggestionsContainer.innerHTML = ''; // Limpia sugerencias anteriores
+        suggestionsContainer.innerHTML = '';
         if (suggestions && suggestions.length > 0) {
             suggestions.forEach(suggestion => {
                 const item = document.createElement('button');
-                item.type = 'button'; // Para que no envíe el formulario
+                item.type = 'button';
                 item.className = 'suggestion-item';
                 item.textContent = suggestion;
-
-                // 3. Acción al hacer clic en una sugerencia
                 item.onclick = () => {
                     selectSuggestion(suggestion);
                 };
@@ -529,182 +755,358 @@ chatForm.addEventListener('submit', (e) => {
         }
     }
 
-    // 4. Función para insertar la sugerencia seleccionada en el input
     function selectSuggestion(suggestion) {
         const text = messageInput.value;
         const atIndex = text.lastIndexOf('@');
-
-        // Reemplaza "@busqueda" por el nombre completo del producto
         const newText = text.substring(0, atIndex) + suggestion + ' ';
         messageInput.value = newText;
-
-        suggestionsContainer.innerHTML = ''; // Limpia las sugerencias
-        messageInput.focus(); // Devuelve el foco al input
+        suggestionsContainer.innerHTML = '';
+        messageInput.focus();
     }
 
-    // --- FIN DE LA LÓGICA DEL BUSCADOR @ ---
+    // --- LÓGICA DEL MODAL (Conteo de Inventario) ---
 
+    function actualizarConteoEnMemoria(inputElement, claveProducto) {
+        const valor = inputElement.value.trim();
+        if (valor && parseFloat(valor) >= 0) {
+            currentModalEnteredCounts[claveProducto] = valor;
+        } else {
+            delete currentModalEnteredCounts[claveProducto];
+        }
+    }
 
-    // --- INICIO DE LA LÓGICA DEL MODAL ---
-
-    const modalContainer = document.getElementById('modal-container');
-
-    /**
-     * PASO 1: Esta función es la que debes llamar cuando el usuario hace clic
-     * en el botón "Hacer conteo de inventario". Se encarga de pedir el HTML
-     * del modal al servidor.
-     */
     function gestionarAperturaModal() {
         console.log("Solicitando HTML del modal de conteo al servidor...");
-        // Muestra un indicador de carga si lo deseas
-
         google.script.run
-            .withSuccessHandler(construirModal) // Cuando el HTML llegue, llama a la función de construcción
+            .withSuccessHandler(construirModal)
             .withFailureHandler(error => {
-                alert("Error al cargar el modal: " + error.message);
+                showCustomAlert("Error al cargar el modal: " + error.message, 'error');
             })
-            .abrirModalDeConteo(); // Esta es la función en tu Code.gs que devuelve el HTML
+            .abrirModalDeConteo();
     }
 
-
-    /**
-     * Esta es la función completa. Se encarga de:
-     * 1. Recibir e insertar el HTML del modal.
-     * 2. Mostrar el modal.
-     * 3. Buscar y renderizar la lista de artículos dentro del modal.
-     * 4. Conectar todos los botones (buscar, cerrar, registrar).
-     */
     function construirModal(contenidoHTML) {
-        if (!contenidoHTML) {
-            alert("Error: El contenido del modal está vacío.");
-            return;
-        }
-
-        // --- PASO 1: USAR EL NUEVO CONTENEDOR ---
-        const modalContainer = document.getElementById("modal-container");
-        modalContainer.innerHTML = contenidoHTML;
-
-        // --- PASO 2: BUSCAR TODOS LOS ELEMENTOS DEL MODAL ---
-        const modal = document.getElementById("conteo-modal");
-        const searchInput = document.getElementById('searchInput');
-        const tableBody = document.getElementById('results-table-body');
-        const submitBtn = document.getElementById('submitBtn');
-        const btnCerrar = document.getElementById("mi-boton-de-cerrar");
-
-        let todosLosArticulos = [];
-
-        // --- PASO 3: HACER VISIBLE EL MODAL ---
-        if (modalContainer) {
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('flex');
-        } else {
-            console.error("Error crítico: No se encontró el #modal-container en index.html.");
-            return;
-        }
-
-        // --- PASO 4: LÓGICA PARA CARGAR ARTÍCULOS ---
-        function renderizarTabla(articulos) {
-            if (!tableBody) return;
-            tableBody.innerHTML = '';
-            todosLosArticulos = articulos;
-            articulos.forEach((articulo, index) => {
-                const tr = document.createElement('tr');
-                tr.className = 'border-b border-slate-700 hover:bg-slate-800';
-                tr.innerHTML = `
-                    <td class="p-3">
-                        <div class="font-bold">${articulo.desc}</div>
-                        <div class="text-xs text-slate-400">${articulo.clave}</div>
-                    </td>
-                    <td class="p-2"><input type="number" data-index="${index}" name="sistema" class="w-full p-2 rounded bg-slate-700"></td>
-                    <td class="p-2"><input type="number" data-index="${index}" name="fisico" class="w-full p-2 rounded bg-slate-700"></td>
-                `;
-                tableBody.appendChild(tr);
-            });
-        }
-
-        function buscarArticulos(texto = "") {
-            google.script.run
-                .withSuccessHandler(renderizarTabla)
-                .buscarArticulosAvanzado(texto);
-        }
-
-        // --- PASO 5: CONECTAR EVENTOS Y CARGAR DATOS ---
-        buscarArticulos(); // Carga inicial
-
-        if (searchInput) {
-            searchInput.addEventListener('input', () => buscarArticulos(searchInput.value));
-        }
-
-        if (btnCerrar) {
-            btnCerrar.addEventListener("click", cerrarModal);
-        }
-
-        if (submitBtn) {
-            submitBtn.addEventListener('click', () => {
-                const conteosARegistrar = [];
-                const inputsSistema = document.querySelectorAll('input[name="sistema"]');
-                const inputsFisico = document.querySelectorAll('input[name="fisico"]');
-                inputsSistema.forEach((inputSistema, i) => {
-                    const inputFisico = inputsFisico[i];
-                    if (inputSistema.value && inputFisico.value) {
-                        const index = inputSistema.dataset.index;
-                        const articulo = todosLosArticulos[index];
-                        conteosARegistrar.push({
-                            clave: articulo.clave,
-                            producto: articulo.desc,
-                            sistema: parseFloat(inputSistema.value), // Convertir a número
-                            fisico: parseFloat(inputFisico.value)   // Convertir a número
-                        });
-                    }
-                });
-
-                if (conteosARegistrar.length > 0) {
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = 'Registrando...';
-                    // Usar perfilActual.usuarioID que ya está disponible
-                    google.script.run
-                        .withSuccessHandler(resultado => {
-                            alert(resultado);
-                            cerrarModal();
-                        })
-                        .withFailureHandler(error => {
-                            alert(`Error al registrar conteos: ${error.message}`);
-                            submitBtn.disabled = false;
-                            submitBtn.textContent = 'Registrar Conteos';
-                        })
-                        .registrarMultiplesConteos(conteosARegistrar, perfilActual.usuarioID);
-                } else {
-                    alert('No hay conteos completos para registrar.');
-                }
-            });
-        }
+    if (!contenidoHTML) {
+        showCustomAlert("Error: El contenido del modal está vacío.", 'error');
+        return;
     }
 
-    function cerrarModal() {
-        let datosIngresados = false;
-        const inputs = document.querySelectorAll('#modal-container input[type="number"]');
+    const modalContainer = document.getElementById("modal-container");
+    modalContainer.innerHTML = contenidoHTML;
 
-        inputs.forEach(input => {
-            if (input.value.trim() !== '') {
-                datosIngresados = true;
-            }
+    // ---> MEJORA 1: AbortController para limpiar eventos.
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.getElementById('results-table-body');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnCerrar = document.getElementById("mi-boton-de-cerrar");
+
+    let inventarioCompletoDelModal = [];
+    currentModalEnteredCounts = {};
+
+    modalContainer.classList.remove('hidden');
+    modalContainer.classList.add('flex');
+
+    // Función para cerrar y limpiar todo
+    function cerrarYLimpiarModal(submitted = false) {
+        modalContainer.classList.add('hidden');
+        modalContainer.classList.remove('flex');
+        modalContainer.innerHTML = ''; // Limpiar el contenido para la próxima vez
+        
+        // ---> MEJORA 1: Se abortan todos los listeners asociados a este modal.
+        controller.abort();
+        
+        // Si el modal se cerró después de un envío exitoso, no se hace nada más
+        if (submitted) return;
+        
+        // Lógica adicional si se cancela, por ejemplo, un mensaje de confirmación
+        // const unsavedChanges = Object.keys(currentModalEnteredCounts).length > 0;
+        // if (unsavedChanges && !confirm("¿Seguro que quieres cerrar? Perderás los conteos no guardados.")) {
+        //     modalContainer.classList.remove('hidden');
+        //     modalContainer.classList.add('flex');
+        //     return; // No cerrar si el usuario cancela
+        // }
+    }
+
+    function renderizarTabla(articulos) {
+        if (!tableBody) return;
+        let htmlFilas = '';
+        articulos.forEach((articulo) => {
+            const valorGuardado = currentModalEnteredCounts[articulo.Clave] || '';
+            htmlFilas += `
+                <tr class="border-b border-slate-700 hover:bg-slate-800">
+                    <td class="p-3">
+                        <div class="font-bold">${articulo.Descripcion}</div>
+                        <div class="text-xs text-slate-400">${articulo.Clave}</div>
+                    </td>
+                    <td class="p-2 align-middle">
+                        <input type="number" readonly class="w-full p-2 rounded bg-slate-700/50 text-white border-none" value="${articulo.StockSistema || 0}">
+                    </td>
+                    <td class="p-2 align-middle">
+                        <input type="number" name="fisico" class="w-full p-2 rounded bg-slate-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Contado" value="${valorGuardado}" oninput="actualizarConteoEnMemoria(this, '${articulo.Clave}')">
+                    </td>
+                </tr>`;
         });
+        tableBody.innerHTML = htmlFilas || '<tr><td colspan="3" class="text-center p-4">No se encontraron artículos.</td></tr>';
+    }
 
-        if (datosIngresados) {
-            if (!confirm("Has ingresado datos que no se han guardado. ¿Estás seguro de que quieres cerrar?")) {
-                return;
+    function buscarArticulosLocalmente() {
+        const terminos = searchInput.value.toLowerCase().split(' ').filter(Boolean);
+        if (terminos.length === 0) {
+            renderizarTabla(inventarioCompletoDelModal);
+            return;
+        }
+        const articulosFiltrados = inventarioCompletoDelModal.filter(item => {
+            const searchableText = `${item.Descripcion} ${item.Clave}`.toLowerCase();
+            return terminos.every(t => searchableText.includes(t));
+        });
+        renderizarTabla(articulosFiltrados);
+    }
+    
+    // ---> MEJORA 2: Función de "Debounce"
+    function debounce(func, timeout = 300){
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+      };
+    }
+    
+    // Se crea una versión "debounced" de la búsqueda
+    const debouncedSearch = debounce(buscarArticulosLocalmente);
+
+
+    // ---> MEJORA 3: Mostrar estado de carga inicial
+    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-4">Cargando inventario...</td></tr>';
+    searchInput.disabled = true;
+    submitBtn.disabled = true;
+
+    google.script.run
+        .withSuccessHandler(articulos => {
+            inventarioCompletoDelModal = articulos;
+            renderizarTabla(inventarioCompletoDelModal);
+            // ---> MEJORA 3: Habilitar controles cuando los datos llegan
+            searchInput.disabled = false;
+            submitBtn.disabled = false;
+            searchInput.focus(); // Poner el foco en el buscador
+        })
+        .withFailureHandler(err => {
+            tableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-red-400">Error al cargar inventario: ${err.message}</td></tr>`;
+            // El botón de submit sigue deshabilitado, pero el de cerrar no.
+        })
+        .buscarArticulosAvanzado('');
+
+    // ---> MEJORA 2: El evento ahora es 'input' y usa la versión debounced
+    searchInput.addEventListener('input', debouncedSearch, { signal });
+
+    btnCerrar.addEventListener("click", () => cerrarYLimpiarModal(false), { signal });
+
+    submitBtn.addEventListener('click', async () => {
+        const conteosARegistrar = [];
+        for (const claveProducto in currentModalEnteredCounts) {
+            const valorInput = currentModalEnteredCounts[claveProducto];
+            if (valorInput === null || valorInput.trim() === '') continue; // Ignorar conteos vacíos
+
+            const cantidadFisica = parseFloat(valorInput);
+            const articuloCompleto = inventarioCompletoDelModal.find(item => item.Clave === claveProducto);
+
+            if (articuloCompleto && !isNaN(cantidadFisica)) {
+                conteosARegistrar.push({
+                    clave: articuloCompleto.Clave,
+                    producto: articuloCompleto.Descripcion,
+                    sistema: articuloCompleto.StockSistema || 0,
+                    fisico: cantidadFisica,
+                    observacion: '' // Puedes añadir un campo para esto si quieres
+                });
             }
+        }
+
+        if (conteosARegistrar.length === 0) {
+            showCustomAlert('No has ingresado ningún conteo válido para registrar.', 'info');
+            return;
+        }
+
+        const confirmado = await showCustomConfirm(`Vas a registrar ${conteosARegistrar.length} conteo(s). ¿Continuar?`);
+        if (!confirmado) return;
+
+        submitBtn.disabled = true;
+        btnCerrar.disabled = true; // Deshabilitar también el botón de cerrar durante el envío
+        submitBtn.textContent = 'Registrando...';
+
+        try {
+            const userIdToPass = perfilActual.UsuarioID;
+            const resultado = await new Promise((resolve, reject) => {
+                google.script.run
+                    .withSuccessHandler(resolve)
+                    .withFailureHandler(reject)
+                    .registrarMultiplesConteos(conteosARegistrar, userIdToPass);
+            });
+
+            showCustomAlert(resultado, 'success');
+            cerrarYLimpiarModal(true); // Cerrar y limpiar, indicando que fue por un submit exitoso
+        } catch (error) {
+            showCustomAlert(`Error al registrar: ${error.message}`, 'error');
+            submitBtn.disabled = false;
+            btnCerrar.disabled = false; // Rehabilitar el botón de cerrar si falla
+            submitBtn.textContent = 'Registrar Conteos Completados';
+        }
+    }, { signal });
+}
+
+    async function cerrarModal(skipConfirm = false) {
+        if (!skipConfirm && Object.keys(currentModalEnteredCounts).length > 0) {
+            const confirmed = await showCustomConfirm("Has ingresado datos que no se han guardado. ¿Seguro que quieres cerrar?");
+            if (!confirmed) return;
         }
 
         const modalContainer = document.getElementById('modal-container');
         if (modalContainer) {
             modalContainer.classList.add('hidden');
-            modalContainer.classList.remove('flex');
-            modalContainer.innerHTML = ''; // Limpiamos el contenido para el siguiente uso
+            modalContainer.innerHTML = '';
+        }
+        currentModalEnteredCounts = {};
+    }
+
+    /**
+     * Función central para cargar/refrescar todos los datos del panel de admin.
+     * Realiza el proceso de 2 pasos: primero carga mensajes, luego los de caja.
+     */
+    function refrescarPanelAdmin() {
+        console.log("Iniciando refresco completo del panel de admin...");
+        const panel = document.getElementById('admin-panel');
+        if(panel) {
+            // Mostramos un mensaje de carga mientras se ejecutan las llamadas
+            document.getElementById('admin-items-container').innerHTML = `<p class="text-slate-400 text-center text-sm p-4">Cargando ítems...</p>`;
+        }
+
+        // PASO A: Cargar los mensajes
+        google.script.run
+            .withSuccessHandler(itemsIniciales => {
+                console.log("Refresco - Mensajes recibidos:", itemsIniciales);
+                
+                // Guardamos los primeros datos
+                const safeItemsIniciales = Array.isArray(itemsIniciales) ? itemsIniciales : [];
+                let combinedItems = safeItemsIniciales.map(d => ({...d, fecha: d.fecha ? new Date(d.fecha) : null}));
+                adminState.items = combinedItems;
+                
+                // Renderizamos la lista solo con mensajes para una carga rápida inicial
+                renderFilteredAdminItems();
+
+                // PASO B: Cargar los movimientos de caja
+                google.script.run
+                    .withSuccessHandler(itemsDeCaja => {
+                        console.log("Refresco - Caja recibida:", itemsDeCaja);
+                        const safeItemsDeCaja = Array.isArray(itemsDeCaja) ? itemsDeCaja : [];
+                        const nuevosItems = safeItemsDeCaja.map(d => ({...d, fecha: d.fecha ? new Date(d.fecha) : null}));
+                        
+                        // Fusionamos los arrays
+                        adminState.items = [...combinedItems, ...nuevosItems];
+                        
+                        // Re-ordenamos la lista combinada
+                        adminState.items.sort((a, b) => {
+                            const dateA = (a.fecha instanceof Date && !isNaN(a.fecha.getTime())) ? a.fecha.getTime() : 0;
+                            const dateB = (b.fecha instanceof Date && !isNaN(b.fecha.getTime())) ? b.fecha.getTime() : 0;
+                            return dateB - dateA; // De más reciente a más antiguo
+                        });
+                        
+                        console.log("Refresco - Estado final fusionado:", adminState.items);
+                        // Volvemos a dibujar la lista de ítems ya con todo fusionado y ordenado
+                        renderFilteredAdminItems(); 
+                    })
+                    .withFailureHandler(err => console.error("Error en el Paso B (Caja):", err))
+                    .obtenerMovimientosDeCaja(); 
+            })
+            .withFailureHandler(err => console.error("Error en el Paso A (Mensajes):", err))
+            .obtenerPanelAdminData_SoloMensajes();
+    }
+
+// --- COPIA Y PEGA ESTA FUNCIÓN COMPLETA EN TU <script> ---
+
+/**
+ * Configura la lógica para los botones de navegación móvil (Chat/Panel).
+ * Este es el método definitivo que manipula directamente las clases de Tailwind.
+ */
+    function setupMobileViewToggle() {
+        const btnShowChat = document.getElementById('btn-show-chat');
+        const btnShowPanel = document.getElementById('btn-show-panel');
+        const chatColumn = document.getElementById('chat-column');
+        const adminPanel = document.getElementById('admin-panel');
+
+        if (!btnShowChat || !btnShowPanel || !chatColumn || !adminPanel) {
+            console.error("Elementos de navegación móvil no encontrados. La vista móvil no funcionará.");
+            return;
+        }
+
+        // --- Lógica para el botón de CHAT ---
+        btnShowChat.addEventListener('click', () => {
+            if (btnShowChat.classList.contains('active')) return;
+
+            // Ocultar el panel de admin
+            adminPanel.classList.add('hidden');
+            adminPanel.classList.remove('flex');
+
+            // Mostrar la columna del chat
+            chatColumn.classList.remove('hidden');
+            chatColumn.classList.add('flex');
+
+            // Actualizar el estado visual de los botones
+            btnShowChat.classList.add('active');
+            btnShowPanel.classList.remove('active');
+        });
+
+        // --- Lógica para el botón de PANEL ---
+        btnShowPanel.addEventListener('click', () => {
+            if (btnShowPanel.classList.contains('active')) return;
+            
+            // Ocultar la columna del chat
+            chatColumn.classList.add('hidden');
+            chatColumn.classList.remove('flex');
+            
+            // Mostrar el panel de admin
+            adminPanel.classList.remove('hidden');
+            adminPanel.classList.add('flex');
+
+            // Actualizar el estado visual de los botones
+            btnShowPanel.classList.add('active');
+            btnShowChat.classList.remove('active');
+        });
+    }
+
+    // =================================================================
+// ==== NUEVA FUNCIÓN PARA CONTROLAR LA VISTA (CHAT O PANEL) ====
+// =================================================================
+function updateActiveView(viewName) {
+    // Ocultar todos los paneles primero
+    chatColumn.classList.add('hidden');
+    adminPanel.classList.add('hidden');
+
+    // Resetear estilos de los botones del switcher
+    showChatBtn.classList.remove('bg-blue-600', 'text-white');
+    showChatBtn.classList.add('text-slate-300', 'hover:bg-slate-600');
+    showAdminPanelBtn.classList.remove('bg-blue-600', 'text-white');
+    showAdminPanelBtn.classList.add('text-slate-300', 'hover:bg-slate-600');
+
+    // Mostrar el panel activo y actualizar el estilo del botón
+    if (viewName === 'chat') {
+        chatColumn.classList.remove('hidden');
+        showChatBtn.classList.add('bg-blue-600', 'text-white');
+        showChatBtn.classList.remove('text-slate-300', 'hover:bg-slate-600');
+    } else if (viewName === 'admin') {
+        adminPanel.classList.remove('hidden');
+        showAdminPanelBtn.classList.add('bg-blue-600', 'text-white');
+        showAdminPanelBtn.classList.remove('text-slate-300', 'hover:bg-slate-600');
+        
+        // Opcional: Refrescar el panel de admin cada vez que se muestra
+        if (typeof refrescarPanelAdmin === 'function') {
+            refrescarPanelAdmin();
         }
     }
+}
+
+
+
 </script>
-<div id="modal-container" class="fixed inset-0 bg-slate-900 bg-opacity-75 hidden justify-center items-center p-4 z-50">
-    </div>
 </body>
 </html>
