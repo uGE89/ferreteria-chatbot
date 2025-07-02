@@ -139,3 +139,29 @@ function obtenerMovimientosDeCaja() {
     return [];
   }
 }
+
+/**
+ * Actualiza el estado de un mensaje en la hoja 'Mensajes'.
+ * @param {string} itemId - El ID del mensaje a modificar.
+ * @param {string} nuevoEstado - El nuevo estado que se asignará.
+ * @returns {string} Mensaje de confirmación.
+ */
+function actualizarEstadoItemAdmin(itemId, nuevoEstado) {
+  try {
+    const ok = updateRowInSheet(
+      SHEET_NAMES.MENSAJES,
+      'ID_Mensaje',
+      itemId,
+      { Estado: nuevoEstado }
+    );
+
+    if (!ok) {
+      throw new Error('No se encontró el item a actualizar.');
+    }
+
+    return `Estado actualizado a "${nuevoEstado}".`;
+  } catch (e) {
+    logError('AdminPanel', 'actualizarEstadoItemAdmin', e.message, e.stack, JSON.stringify({ itemId, nuevoEstado }));
+    throw new Error(`Error al actualizar estado: ${e.message}`);
+  }
+}
