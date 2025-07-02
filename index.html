@@ -809,7 +809,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalContainer.innerHTML = html;
                 modalOverlay.classList.remove('hidden');
                 document.body.style.overflow = 'hidden'; // Evita scroll de fondo
-                
+
                 // Una vez cargado el HTML, inicializamos todos los listeners y funciones
                 inicializarModal();
                 showSpinner(false);
@@ -820,6 +820,8 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .abrirModalDeConteo();
     }
+    // Exponer la función para que pueda usarse fuera de este alcance
+    window.abrirModalDeConteo = abrirModalDeConteo;
 
     // Función que se ejecuta una vez que el HTML del modal está en la página
     function inicializarModal() {
