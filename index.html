@@ -75,6 +75,11 @@
             border-color: #f59e0b;
         }
 
+        .row-diff-positive { background-color: #f0fdf4; }
+        .row-diff-negative { background-color: #fef2f2; }
+        .row-diff-positive:hover { background-color: #dcfce7; }
+        .row-diff-negative:hover { background-color: #fee2e2; }
+
 /* ... otras reglas ... */
 
 
@@ -166,7 +171,7 @@
 
     <div id="custom-confirm-modal" class="fixed inset-0 bg-slate-900 bg-opacity-75 hidden justify-center items-center p-4 z-[100]">
         <div class="bg-slate-800 p-6 rounded-lg shadow-xl text-center max-w-sm w-full">
-            <h3 class="text-xl font-bold mb-4 text-white">Confirmación</h3>
+            <h3 id="custom-confirm-title" class="text-xl font-bold mb-4 text-white">Confirmación</h3>
             <p id="custom-confirm-message" class="text-slate-300 mb-6"></p>
             <div class="flex justify-center gap-4">
                 <button id="custom-confirm-yes-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg">
@@ -223,7 +228,7 @@ const suggestionsContainer = document.getElementById('suggestions-container');
     };
 
     // --- Custom Alert/Confirm Functions ---
-    function showCustomAlert(message, type = 'info') {
+    function showCustomAlert(message, type = 'info', onClose) {
         const alertModal = document.getElementById('custom-alert-modal');
         const alertMessage = document.getElementById('custom-alert-message');
         const alertTitle = document.getElementById('custom-alert-title');
@@ -252,17 +257,22 @@ const suggestionsContainer = document.getElementById('suggestions-container');
 
         alertCloseBtn.onclick = () => {
             alertModal.classList.add('hidden');
+            if (typeof onClose === 'function') onClose();
         };
     }
 
-    function showCustomConfirm(message) {
+    function showCustomConfirm(message, yesText = 'Sí', noText = 'No', title = 'Confirmación') {
         return new Promise((resolve) => {
             const confirmModal = document.getElementById('custom-confirm-modal');
             const confirmMessage = document.getElementById('custom-confirm-message');
+            const confirmTitle = document.getElementById('custom-confirm-title');
             const confirmYesBtn = document.getElementById('custom-confirm-yes-btn');
             const confirmNoBtn = document.getElementById('custom-confirm-no-btn');
 
-            confirmMessage.textContent = message;
+            confirmMessage.innerHTML = message;
+            if (confirmTitle) confirmTitle.textContent = title;
+            confirmYesBtn.textContent = yesText;
+            confirmNoBtn.textContent = noText;
             confirmModal.classList.remove('hidden');
             confirmModal.classList.add('flex');
 
@@ -767,12 +777,35 @@ function renderQuickStarters(starters) {
     // --- LÓGICA DEL MODAL (Conteo de Inventario) ---
 
     function actualizarConteoEnMemoria(inputElement, claveProducto) {
-        const valor = inputElement.value.trim();
-        if (valor && parseFloat(valor) >= 0) {
-            currentModalEnteredCounts[claveProducto] = valor;
-        } else {
+        const row = inputElement.closest('tr');
+        if (!row) return;
+
+        if (!currentModalEnteredCounts[claveProducto]) {
+            currentModalEnteredCounts[claveProducto] = {};
+        }
+
+        const tipo = inputElement.dataset.type;
+        if (tipo) {
+            currentModalEnteredCounts[claveProducto][tipo] = inputElement.value.trim();
+        }
+
+        const registro = currentModalEnteredCounts[claveProducto];
+        if (!registro.fisico && !registro.cpi && !registro.vpe && !registro.razon) {
             delete currentModalEnteredCounts[claveProducto];
         }
+
+        const sistema = parseFloat(row.querySelector('input[data-type="sistema"]').value) || 0;
+        const fisico = parseFloat(row.querySelector('input[data-type="fisico"]').value) || 0;
+        const cpi = parseFloat(row.querySelector('input[data-type="cpi"]').value) || 0;
+        const vpe = parseFloat(row.querySelector('input[data-type="vpe"]').value) || 0;
+        const diferencia = fisico - sistema - vpe - cpi;
+
+        const diffCell = row.querySelector('[data-type="diferencia"]');
+        if (diffCell) diffCell.textContent = isNaN(diferencia) ? '' : diferencia;
+
+        row.classList.remove('row-diff-positive', 'row-diff-negative');
+        if (diferencia > 0) row.classList.add('row-diff-positive');
+        else if (diferencia < 0) row.classList.add('row-diff-negative');
     }
 
     function gestionarAperturaModal() {
@@ -802,6 +835,9 @@ function renderQuickStarters(starters) {
     const tableBody = document.getElementById('results-table-body');
     const submitBtn = document.getElementById('submitBtn');
     const btnCerrar = document.getElementById("mi-boton-de-cerrar");
+    const filterSelect = document.getElementById('conteoFilter');
+
+    let currentModalFilter = filterSelect ? filterSelect.value : 'Todos';
 
     let inventarioCompletoDelModal = [];
     currentModalEnteredCounts = {};
@@ -830,39 +866,142 @@ function renderQuickStarters(starters) {
         // }
     }
 
+    function tocaConteoHoy(producto) {
+        const periodo = (producto.Periodo || '').toLowerCase();
+        const diaAsignado = parseInt(producto.Dia, 10);
+        const hoy = new Date();
+
+        if (periodo === 'diario') return true;
+
+        const diaSemanaActual = ((hoy.getDay() + 6) % 7) + 1; // Lunes=1, Domingo=7
+
+        if (periodo === 'semanal') {
+            return diaSemanaActual === diaAsignado;
+        }
+
+        const esLaborable = date => {
+            const d = date.getDay();
+            return d !== 0 && d !== 6;
+        };
+
+        if (periodo === 'mensual') {
+            const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            let contador = 0;
+            for (let d = new Date(inicioMes); d <= hoy; d.setDate(d.getDate() + 1)) {
+                if (esLaborable(d)) contador++;
+            }
+            return contador === diaAsignado;
+        }
+
+        if (periodo === 'bimestral') {
+            const inicioAnio = new Date(hoy.getFullYear(), 0, 1);
+            let contador = 0;
+            for (let d = new Date(inicioAnio); d <= hoy; d.setDate(d.getDate() + 1)) {
+                if (esLaborable(d)) contador++;
+            }
+            const diaCiclo = ((contador - 1) % 44) + 1;
+            return diaCiclo === diaAsignado;
+        }
+
+        return false;
+    }
+
     function renderizarTabla(articulos) {
         if (!tableBody) return;
+
+        const headRow = tableBody.closest('table').querySelector('thead tr');
+        if (headRow && !headRow.dataset.extendido) {
+            headRow.innerHTML = `
+                <th class="p-3 text-center w-4"><input type="checkbox" id="select-all"></th>
+                <th class="p-3">Producto</th>
+                <th class="p-3 w-32">Sistema</th>
+                <th class="p-3 w-32">Físico</th>
+                <th class="p-3 w-24">CPI</th>
+                <th class="p-3 w-24">VPE</th>
+                <th class="p-3">Razón</th>
+                <th class="p-3 w-24">Diferencia</th>
+                <th class="p-3 w-16">Acciones</th>`;
+            headRow.dataset.extendido = '1';
+        }
+
         let htmlFilas = '';
         articulos.forEach((articulo) => {
-            const valorGuardado = currentModalEnteredCounts[articulo.Clave] || '';
+            const guardado = currentModalEnteredCounts[articulo.Clave] || {};
+            const valFisico = guardado.fisico || '';
+            const valCpi = guardado.cpi || '';
+            const valVpe = guardado.vpe || '';
+            const valRazon = guardado.razon || '';
+
+            const sistemaNum = parseFloat(articulo.StockSistema || 0);
+            const fisicoNum = parseFloat(valFisico) || 0;
+            const cpiNum = parseFloat(valCpi) || 0;
+            const vpeNum = parseFloat(valVpe) || 0;
+            const diferencia = fisicoNum - sistemaNum - vpeNum - cpiNum;
+
+            const rowClass = diferencia > 0 ? 'row-diff-positive' : (diferencia < 0 ? 'row-diff-negative' : '');
+
+            const opciones = [
+                { v: '', t: 'Seleccionar...' },
+                { v: 'Entrega incorrecta', t: 'Entrega incorrecta' },
+                { v: 'Recepción incorrecta', t: 'Recepción incorrecta' },
+                { v: 'Devolución de cliente', t: 'Devolución de cliente' },
+                { v: 'Devolución de proveedor', t: 'Devolución de proveedor' }
+            ];
+            const opcionesHtml = opciones.map(o => `<option value="${o.v}" ${valRazon === o.v ? 'selected' : ''}>${o.t}</option>`).join('');
+
             htmlFilas += `
-                <tr class="border-b border-slate-700 hover:bg-slate-800">
+                <tr data-clave="${articulo.Clave}" class="border-b border-slate-700 hover:bg-slate-800 ${rowClass}">
+                    <td class="p-2 text-center"><input type="checkbox" class="fila-checkbox"></td>
                     <td class="p-3">
                         <div class="font-bold">${articulo.Descripcion}</div>
                         <div class="text-xs text-slate-400">${articulo.Clave}</div>
                     </td>
                     <td class="p-2 align-middle">
-                        <input type="number" readonly class="w-full p-2 rounded bg-slate-700/50 text-white border-none" value="${articulo.StockSistema || 0}">
+                        <input type="number" data-type="sistema" readonly class="w-full p-2 rounded bg-slate-700/50 text-white border-none" value="${articulo.StockSistema || 0}">
                     </td>
                     <td class="p-2 align-middle">
-                        <input type="number" name="fisico" class="w-full p-2 rounded bg-slate-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Contado" value="${valorGuardado}" oninput="actualizarConteoEnMemoria(this, '${articulo.Clave}')">
+                        <input type="number" data-type="fisico" class="w-full p-2 rounded bg-slate-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Contado" value="${valFisico}" oninput="actualizarConteoEnMemoria(this, '${articulo.Clave}')">
+                    </td>
+                    <td class="p-2 align-middle">
+                        <input type="number" data-type="cpi" class="w-full p-2 rounded bg-slate-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="0" value="${valCpi}" oninput="actualizarConteoEnMemoria(this, '${articulo.Clave}')">
+                    </td>
+                    <td class="p-2 align-middle">
+                        <input type="number" data-type="vpe" class="w-full p-2 rounded bg-slate-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="0" value="${valVpe}" oninput="actualizarConteoEnMemoria(this, '${articulo.Clave}')">
+                    </td>
+                    <td class="p-2 align-middle">
+                        <select data-type="razon" class="w-full p-2 rounded bg-slate-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" onchange="actualizarConteoEnMemoria(this, '${articulo.Clave}')">
+                            ${opcionesHtml}
+                        </select>
+                    </td>
+                    <td class="p-2 align-middle" data-type="diferencia">${isNaN(diferencia) ? '' : diferencia}</td>
+                    <td class="p-2 text-center">
+                        <button type="button" class="reset-row-btn text-red-400 hover:text-red-600" data-clave="${articulo.Clave}">↺</button>
                     </td>
                 </tr>`;
         });
-        tableBody.innerHTML = htmlFilas || '<tr><td colspan="3" class="text-center p-4">No se encontraron artículos.</td></tr>';
+        tableBody.innerHTML = htmlFilas || '<tr><td colspan="9" class="text-center p-4">No se encontraron artículos.</td></tr>';
     }
 
     function buscarArticulosLocalmente() {
-        const terminos = searchInput.value.toLowerCase().split(' ').filter(Boolean);
-        if (terminos.length === 0) {
-            renderizarTabla(inventarioCompletoDelModal);
-            return;
+        let lista = [...inventarioCompletoDelModal];
+
+        if (currentModalFilter === 'hoy') {
+            lista = lista.filter(tocaConteoHoy);
         }
-        const articulosFiltrados = inventarioCompletoDelModal.filter(item => {
-            const searchableText = `${item.Descripcion} ${item.Clave}`.toLowerCase();
-            return terminos.every(t => searchableText.includes(t));
-        });
-        renderizarTabla(articulosFiltrados);
+
+        const terminos = searchInput.value.toLowerCase().split(' ').filter(Boolean);
+        if (terminos.length > 0) {
+            lista = lista.filter(item => {
+                const searchableText = `${item.Descripcion} ${item.Clave}`.toLowerCase();
+                return terminos.every(t => searchableText.includes(t));
+            });
+        }
+
+        if (currentModalFilter === 'hoy') {
+            lista = lista.slice(0, 40);
+        }
+
+        renderizarTabla(lista);
     }
     
     // ---> MEJORA 2: Función de "Debounce"
@@ -879,21 +1018,21 @@ function renderQuickStarters(starters) {
 
 
     // ---> MEJORA 3: Mostrar estado de carga inicial
-    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-4">Cargando inventario...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="9" class="text-center p-4">Cargando inventario...</td></tr>';
     searchInput.disabled = true;
     submitBtn.disabled = true;
 
     google.script.run
         .withSuccessHandler(articulos => {
             inventarioCompletoDelModal = articulos;
-            renderizarTabla(inventarioCompletoDelModal);
+            buscarArticulosLocalmente();
             // ---> MEJORA 3: Habilitar controles cuando los datos llegan
             searchInput.disabled = false;
             submitBtn.disabled = false;
             searchInput.focus(); // Poner el foco en el buscador
         })
         .withFailureHandler(err => {
-            tableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-red-400">Error al cargar inventario: ${err.message}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="9" class="text-center p-4 text-red-400">Error al cargar inventario: ${err.message}</td></tr>`;
             // El botón de submit sigue deshabilitado, pero el de cerrar no.
         })
         .buscarArticulosAvanzado('');
@@ -901,57 +1040,117 @@ function renderQuickStarters(starters) {
     // ---> MEJORA 2: El evento ahora es 'input' y usa la versión debounced
     searchInput.addEventListener('input', debouncedSearch, { signal });
 
-    btnCerrar.addEventListener("click", () => cerrarYLimpiarModal(false), { signal });
+    if (filterSelect) {
+        filterSelect.addEventListener('change', () => {
+            currentModalFilter = filterSelect.value;
+            buscarArticulosLocalmente();
+        }, { signal });
+    }
+
+    const selectAllCb = modalContainer.querySelector('#select-all');
+    const batchContainer = modalContainer.querySelector('#batch-actions');
+    const batchSelect = modalContainer.querySelector('#batch-razon');
+    const applyBatchBtn = modalContainer.querySelector('#applyBatchBtn');
+
+    function actualizarVisibilidadLote() {
+        const count = tableBody.querySelectorAll('.fila-checkbox:checked').length;
+        if (batchContainer) batchContainer.classList.toggle('hidden', count === 0);
+    }
+
+    tableBody.addEventListener('change', (e) => {
+        if (e.target.classList.contains('fila-checkbox')) {
+            actualizarVisibilidadLote();
+        }
+    }, { signal });
+
+    tableBody.addEventListener('click', (e) => {
+        const btn = e.target.closest('.reset-row-btn');
+        if (btn) {
+            const clave = btn.dataset.clave;
+            delete currentModalEnteredCounts[clave];
+            buscarArticulosLocalmente();
+            actualizarVisibilidadLote();
+        }
+    }, { signal });
+
+    if (selectAllCb) {
+        selectAllCb.addEventListener('change', () => {
+            const checked = selectAllCb.checked;
+            tableBody.querySelectorAll('.fila-checkbox').forEach(cb => cb.checked = checked);
+            actualizarVisibilidadLote();
+        }, { signal });
+    }
+
+    if (applyBatchBtn) {
+        applyBatchBtn.addEventListener('click', () => {
+            const razon = batchSelect.value;
+            if (!razon) {
+                showCustomAlert('Selecciona una razón para aplicar.', 'info');
+                return;
+            }
+            tableBody.querySelectorAll('.fila-checkbox:checked').forEach(cb => {
+                const row = cb.closest('tr');
+                const clave = row.dataset.clave;
+                const select = row.querySelector('select[data-type="razon"]');
+                if (select) {
+                    select.value = razon;
+                    actualizarConteoEnMemoria(select, clave);
+                }
+            });
+            actualizarVisibilidadLote();
+        }, { signal });
+    }
+
+    btnCerrar.addEventListener("click", async () => {
+        if (Object.keys(currentModalEnteredCounts).length > 0) {
+            const confirmar = await showCustomConfirm('Advertencia: hay cambios sin guardar.', 'Cerrar sin guardar', 'Continuar editando');
+            if (!confirmar) return;
+        }
+        cerrarYLimpiarModal(false);
+    }, { signal });
 
     submitBtn.addEventListener('click', async () => {
-        const conteosARegistrar = [];
-        for (const claveProducto in currentModalEnteredCounts) {
-            const valorInput = currentModalEnteredCounts[claveProducto];
-            if (valorInput === null || valorInput.trim() === '') continue; // Ignorar conteos vacíos
-
-            const cantidadFisica = parseFloat(valorInput);
-            const articuloCompleto = inventarioCompletoDelModal.find(item => item.Clave === claveProducto);
-
-            if (articuloCompleto && !isNaN(cantidadFisica)) {
-                conteosARegistrar.push({
-                    clave: articuloCompleto.Clave,
-                    producto: articuloCompleto.Descripcion,
-                    sistema: articuloCompleto.StockSistema || 0,
-                    fisico: cantidadFisica,
-                    observacion: '' // Puedes añadir un campo para esto si quieres
-                });
-            }
-        }
-
-        if (conteosARegistrar.length === 0) {
-            showCustomAlert('No has ingresado ningún conteo válido para registrar.', 'info');
+        if (Object.keys(currentModalEnteredCounts).length === 0) {
+            showCustomAlert('Sin cambios', 'info');
             return;
         }
 
-        const confirmado = await showCustomConfirm(`Vas a registrar ${conteosARegistrar.length} conteo(s). ¿Continuar?`);
+        const conteosARegistrar = [];
+        for (const claveProducto in currentModalEnteredCounts) {
+            const registro = currentModalEnteredCounts[claveProducto];
+            const articuloCompleto = inventarioCompletoDelModal.find(item => item.Clave === claveProducto);
+            if (!articuloCompleto) continue;
+
+            const fisico = parseFloat(registro.fisico) || 0;
+            const cpi = parseFloat(registro.cpi) || 0;
+            const vpe = parseFloat(registro.vpe) || 0;
+            const sistema = parseFloat(articuloCompleto.StockSistema || 0);
+            const diferencia = fisico - sistema - vpe - cpi;
+
+            conteosARegistrar.push({
+                producto: articuloCompleto.Descripcion,
+                diferencia
+            });
+        }
+
+        if (conteosARegistrar.length === 0) {
+            showCustomAlert('No hay modificaciones válidas para registrar.', 'info');
+            return;
+        }
+
+        let resumen = '<ul class="text-left">';
+        conteosARegistrar.forEach(r => {
+            resumen += `<li>${r.producto}: ${r.diferencia}</li>`;
+        });
+        resumen += '</ul>';
+
+        const confirmado = await showCustomConfirm(resumen, 'Confirmar', 'Cancelar', '¿Confirmar Registro?');
         if (!confirmado) return;
 
-        submitBtn.disabled = true;
-        btnCerrar.disabled = true; // Deshabilitar también el botón de cerrar durante el envío
-        submitBtn.textContent = 'Registrando...';
-
-        try {
-            const userIdToPass = perfilActual.UsuarioID;
-            const resultado = await new Promise((resolve, reject) => {
-                google.script.run
-                    .withSuccessHandler(resolve)
-                    .withFailureHandler(reject)
-                    .registrarMultiplesConteos(conteosARegistrar, userIdToPass);
-            });
-
-            showCustomAlert(resultado, 'success');
-            cerrarYLimpiarModal(true); // Cerrar y limpiar, indicando que fue por un submit exitoso
-        } catch (error) {
-            showCustomAlert(`Error al registrar: ${error.message}`, 'error');
-            submitBtn.disabled = false;
-            btnCerrar.disabled = false; // Rehabilitar el botón de cerrar si falla
-            submitBtn.textContent = 'Registrar Conteos Completados';
-        }
+        currentModalEnteredCounts = {};
+        buscarArticulosLocalmente();
+        actualizarVisibilidadLote();
+        showCustomAlert('Éxito', 'success', () => cerrarYLimpiarModal(true));
     }, { signal });
 }
 
