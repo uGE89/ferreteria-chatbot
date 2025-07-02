@@ -726,6 +726,13 @@ function renderQuickStarters(starters) {
         button.className = buttonClasses;
         button.textContent = starterObject.NombrePantalla;
         button.dataset.functionName = starterObject.NombreFuncion;
+
+        // Si el iniciador corresponde a "registrarConteo" asignamos un id
+        // específico para poder referenciarlo desde otros scripts.
+        if (starterObject.NombreFuncion === 'registrarConteo') {
+            button.id = 'abrirModalConteoBtn';
+        }
+
         quickStartersContainer.appendChild(button);
     });
 }
