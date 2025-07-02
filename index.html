@@ -782,8 +782,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- VARIABLES Y REFERENCIAS DOM DEL MODAL ---
     // Asegúrate de que el botón que abre tu modal tenga el id 'abrirModalConteoBtn' o ajústalo aquí.
     const openModalBtn = document.getElementById('abrirModalConteoBtn'); 
-    const modalOverlay = document.getElementById('modal-overlay'); // Asume que tienes un overlay que contiene el modal
-    const modalContainer = document.getElementById('modal-container'); // El div que cargará el HTML del modal
+    // Usamos #modal-container como overlay y contenedor del contenido
+    const modalOverlay = document.getElementById('modal-container');
+    const modalContainer = modalOverlay; // El div que cargará el HTML del modal
     
     // Variables globales para el estado del modal
     let editedData = {};
@@ -1029,7 +1030,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function forceCloseModal() {
         editedData = {};
         inventoryData = [];
-        const modalOverlay = document.getElementById('modal-overlay'); // Re-seleccionar por si acaso
+        const modalOverlay = document.getElementById('modal-container'); // Re-seleccionar por si acaso
         if(modalOverlay) modalOverlay.classList.add('hidden');
         document.body.style.overflow = 'auto';
         document.getElementById('modal-container').innerHTML = ''; // Limpiar el contenido
