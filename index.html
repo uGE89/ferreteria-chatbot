@@ -698,7 +698,7 @@ quickStartersContainer.addEventListener('click', (e) => {
             
             // Si es el de conteo, llamamos directamente a la función que abre el modal
             console.log("Botón de conteo detectado. Abriendo modal directamente.");
-            gestionarAperturaModal(); // Asumo que esta es tu función para el modal de conteo
+            abrirModalDeConteo();
             
         } else {
             
@@ -776,397 +776,361 @@ function renderQuickStarters(starters) {
 
     // --- LÓGICA DEL MODAL (Conteo de Inventario) ---
 
-    function actualizarConteoEnMemoria(inputElement, claveProducto) {
-        const row = inputElement.closest('tr');
-        if (!row) return;
+// --- INICIO DE LA LÓGICA DEL MODAL DE CONTEO ---
+document.addEventListener('DOMContentLoaded', () => {
 
-        if (!currentModalEnteredCounts[claveProducto]) {
-            currentModalEnteredCounts[claveProducto] = {};
-        }
+    // --- VARIABLES Y REFERENCIAS DOM DEL MODAL ---
+    // Asegúrate de que el botón que abre tu modal tenga el id 'abrirModalConteoBtn' o ajústalo aquí.
+    const openModalBtn = document.getElementById('abrirModalConteoBtn'); 
+    const modalOverlay = document.getElementById('modal-overlay'); // Asume que tienes un overlay que contiene el modal
+    const modalContainer = document.getElementById('modal-container'); // El div que cargará el HTML del modal
+    
+    // Variables globales para el estado del modal
+    let editedData = {};
+    let inventoryData = []; // Caché de los datos del inventario cargados
+    let currentFilter = 'hoy';
+    const RAZONES_AJUSTE = ["Entrega incorrecta", "Recepción incorrecta", "Devolución de cliente", "Devolución de proveedor", "Ajuste de inventario", "Merma", "Otro"];
 
-        const tipo = inputElement.dataset.type;
-        if (tipo) {
-            currentModalEnteredCounts[claveProducto][tipo] = inputElement.value.trim();
-        }
-
-        const registro = currentModalEnteredCounts[claveProducto];
-        if (!registro.fisico && !registro.cpi && !registro.vpe && !registro.razon) {
-            delete currentModalEnteredCounts[claveProducto];
-        }
-
-        const sistema = parseFloat(row.querySelector('input[data-type="sistema"]').value) || 0;
-        const fisico = parseFloat(row.querySelector('input[data-type="fisico"]').value) || 0;
-        const cpi = parseFloat(row.querySelector('input[data-type="cpi"]').value) || 0;
-        const vpe = parseFloat(row.querySelector('input[data-type="vpe"]').value) || 0;
-        const diferencia = fisico - sistema - vpe - cpi;
-
-        const diffCell = row.querySelector('[data-type="diferencia"]');
-        if (diffCell) diffCell.textContent = isNaN(diferencia) ? '' : diferencia;
-
-        row.classList.remove('row-diff-positive', 'row-diff-negative');
-        if (diferencia > 0) row.classList.add('row-diff-positive');
-        else if (diferencia < 0) row.classList.add('row-diff-negative');
-    }
-
-    function gestionarAperturaModal() {
-        console.log("Solicitando HTML del modal de conteo al servidor...");
+    // --- LÓGICA PRINCIPAL ---
+    
+    // Función para abrir y preparar el modal
+    function abrirModalDeConteo() {
+        showSpinner(true);
         google.script.run
-            .withSuccessHandler(construirModal)
-            .withFailureHandler(error => {
-                showCustomAlert("Error al cargar el modal: " + error.message, 'error');
+            .withSuccessHandler(html => {
+                modalContainer.innerHTML = html;
+                modalOverlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Evita scroll de fondo
+                
+                // Una vez cargado el HTML, inicializamos todos los listeners y funciones
+                inicializarModal();
+                showSpinner(false);
+            })
+            .withFailureHandler(err => {
+                alert('Error al cargar el modal: ' + err.message);
+                showSpinner(false);
             })
             .abrirModalDeConteo();
     }
 
-    function construirModal(contenidoHTML) {
-    if (!contenidoHTML) {
-        showCustomAlert("Error: El contenido del modal está vacío.", 'error');
-        return;
-    }
+    // Función que se ejecuta una vez que el HTML del modal está en la página
+    function inicializarModal() {
+        // Listeners para botones principales
+        document.getElementById('close-modal-button').addEventListener('click', cerrarModalDeConteo);
+        document.getElementById('register-counts-button').addEventListener('click', registrarConteos);
+        document.getElementById('search-inventory-input').addEventListener('keydown', handleSearch);
 
-    const modalContainer = document.getElementById("modal-container");
-    modalContainer.innerHTML = contenidoHTML;
-
-    // ---> MEJORA 1: AbortController para limpiar eventos.
-    const controller = new AbortController();
-    const { signal } = controller;
-
-    const searchInput = document.getElementById('searchInput');
-    const tableBody = document.getElementById('results-table-body');
-    const submitBtn = document.getElementById('submitBtn');
-    const btnCerrar = document.getElementById("mi-boton-de-cerrar");
-    const filterSelect = document.getElementById('conteoFilter');
-
-    let currentModalFilter = filterSelect ? filterSelect.value : 'Todos';
-
-    let inventarioCompletoDelModal = [];
-    currentModalEnteredCounts = {};
-
-    modalContainer.classList.remove('hidden');
-    modalContainer.classList.add('flex');
-
-    // Función para cerrar y limpiar todo
-    function cerrarYLimpiarModal(submitted = false) {
-        modalContainer.classList.add('hidden');
-        modalContainer.classList.remove('flex');
-        modalContainer.innerHTML = ''; // Limpiar el contenido para la próxima vez
-        
-        // ---> MEJORA 1: Se abortan todos los listeners asociados a este modal.
-        controller.abort();
-        
-        // Si el modal se cerró después de un envío exitoso, no se hace nada más
-        if (submitted) return;
-        
-        // Lógica adicional si se cancela, por ejemplo, un mensaje de confirmación
-        // const unsavedChanges = Object.keys(currentModalEnteredCounts).length > 0;
-        // if (unsavedChanges && !confirm("¿Seguro que quieres cerrar? Perderás los conteos no guardados.")) {
-        //     modalContainer.classList.remove('hidden');
-        //     modalContainer.classList.add('flex');
-        //     return; // No cerrar si el usuario cancela
-        // }
-    }
-
-    function tocaConteoHoy(producto) {
-        const periodo = (producto.Periodo || '').toLowerCase();
-        const diaAsignado = parseInt(producto.Dia, 10);
-        const hoy = new Date();
-
-        if (periodo === 'diario') return true;
-
-        const diaSemanaActual = ((hoy.getDay() + 6) % 7) + 1; // Lunes=1, Domingo=7
-
-        if (periodo === 'semanal') {
-            return diaSemanaActual === diaAsignado;
-        }
-
-        const esLaborable = date => {
-            const d = date.getDay();
-            return d !== 0 && d !== 6;
-        };
-
-        if (periodo === 'mensual') {
-            const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-            let contador = 0;
-            for (let d = new Date(inicioMes); d <= hoy; d.setDate(d.getDate() + 1)) {
-                if (esLaborable(d)) contador++;
-            }
-            return contador === diaAsignado;
-        }
-
-        if (periodo === 'bimestral') {
-            const inicioAnio = new Date(hoy.getFullYear(), 0, 1);
-            let contador = 0;
-            for (let d = new Date(inicioAnio); d <= hoy; d.setDate(d.getDate() + 1)) {
-                if (esLaborable(d)) contador++;
-            }
-            const diaCiclo = ((contador - 1) % 44) + 1;
-            return diaCiclo === diaAsignado;
-        }
-
-        return false;
-    }
-
-    function renderizarTabla(articulos) {
-        if (!tableBody) return;
-
-        const headRow = tableBody.closest('table').querySelector('thead tr');
-        if (headRow && !headRow.dataset.extendido) {
-            headRow.innerHTML = `
-                <th class="p-3 text-center w-4"><input type="checkbox" id="select-all"></th>
-                <th class="p-3">Producto</th>
-                <th class="p-3 w-32">Sistema</th>
-                <th class="p-3 w-32">Físico</th>
-                <th class="p-3 w-24">CPI</th>
-                <th class="p-3 w-24">VPE</th>
-                <th class="p-3">Razón</th>
-                <th class="p-3 w-24">Diferencia</th>
-                <th class="p-3 w-16">Acciones</th>`;
-            headRow.dataset.extendido = '1';
-        }
-
-        let htmlFilas = '';
-        articulos.forEach((articulo) => {
-            const guardado = currentModalEnteredCounts[articulo.Clave] || {};
-            const valFisico = guardado.fisico || '';
-            const valCpi = guardado.cpi || '';
-            const valVpe = guardado.vpe || '';
-            const valRazon = guardado.razon || '';
-
-            const sistemaNum = parseFloat(articulo.StockSistema || 0);
-            const fisicoNum = parseFloat(valFisico) || 0;
-            const cpiNum = parseFloat(valCpi) || 0;
-            const vpeNum = parseFloat(valVpe) || 0;
-            const diferencia = fisicoNum - sistemaNum - vpeNum - cpiNum;
-
-            const rowClass = diferencia > 0 ? 'row-diff-positive' : (diferencia < 0 ? 'row-diff-negative' : '');
-
-            const opciones = [
-                { v: '', t: 'Seleccionar...' },
-                { v: 'Entrega incorrecta', t: 'Entrega incorrecta' },
-                { v: 'Recepción incorrecta', t: 'Recepción incorrecta' },
-                { v: 'Devolución de cliente', t: 'Devolución de cliente' },
-                { v: 'Devolución de proveedor', t: 'Devolución de proveedor' }
-            ];
-            const opcionesHtml = opciones.map(o => `<option value="${o.v}" ${valRazon === o.v ? 'selected' : ''}>${o.t}</option>`).join('');
-
-            htmlFilas += `
-                <tr data-clave="${articulo.Clave}" class="border-b border-slate-700 hover:bg-slate-800 ${rowClass}">
-                    <td class="p-2 text-center"><input type="checkbox" class="fila-checkbox"></td>
-                    <td class="p-3">
-                        <div class="font-bold">${articulo.Descripcion}</div>
-                        <div class="text-xs text-slate-400">${articulo.Clave}</div>
-                    </td>
-                    <td class="p-2 align-middle">
-                        <input type="number" data-type="sistema" readonly class="w-full p-2 rounded bg-slate-700/50 text-white border-none" value="${articulo.StockSistema || 0}">
-                    </td>
-                    <td class="p-2 align-middle">
-                        <input type="number" data-type="fisico" class="w-full p-2 rounded bg-slate-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Contado" value="${valFisico}" oninput="actualizarConteoEnMemoria(this, '${articulo.Clave}')">
-                    </td>
-                    <td class="p-2 align-middle">
-                        <input type="number" data-type="cpi" class="w-full p-2 rounded bg-slate-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="0" value="${valCpi}" oninput="actualizarConteoEnMemoria(this, '${articulo.Clave}')">
-                    </td>
-                    <td class="p-2 align-middle">
-                        <input type="number" data-type="vpe" class="w-full p-2 rounded bg-slate-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="0" value="${valVpe}" oninput="actualizarConteoEnMemoria(this, '${articulo.Clave}')">
-                    </td>
-                    <td class="p-2 align-middle">
-                        <select data-type="razon" class="w-full p-2 rounded bg-slate-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" onchange="actualizarConteoEnMemoria(this, '${articulo.Clave}')">
-                            ${opcionesHtml}
-                        </select>
-                    </td>
-                    <td class="p-2 align-middle" data-type="diferencia">${isNaN(diferencia) ? '' : diferencia}</td>
-                    <td class="p-2 text-center">
-                        <button type="button" class="reset-row-btn text-red-400 hover:text-red-600" data-clave="${articulo.Clave}">↺</button>
-                    </td>
-                </tr>`;
-        });
-        tableBody.innerHTML = htmlFilas || '<tr><td colspan="9" class="text-center p-4">No se encontraron artículos.</td></tr>';
-    }
-
-    function buscarArticulosLocalmente() {
-        let lista = [...inventarioCompletoDelModal];
-
-        if (currentModalFilter === 'hoy') {
-            lista = lista.filter(tocaConteoHoy);
-        }
-
-        const terminos = searchInput.value.toLowerCase().split(' ').filter(Boolean);
-        if (terminos.length > 0) {
-            lista = lista.filter(item => {
-                const searchableText = `${item.Descripcion} ${item.Clave}`.toLowerCase();
-                return terminos.every(t => searchableText.includes(t));
+        // Listeners para filtros
+        document.querySelectorAll('.inventory-filter-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                currentFilter = e.target.dataset.filter;
+                document.getElementById('search-inventory-input').value = '';
+                actualizarBotonesFiltro();
+                renderizarTabla();
             });
+        });
+        
+        // Listener para acciones en lote
+        document.getElementById('apply-batch-reason-btn').addEventListener('click', aplicarRazonEnLote);
+
+        // Llenar el select de razones en lote
+        const batchReasonSelect = document.getElementById('batch-reason-select');
+        batchReasonSelect.innerHTML = `<option value="">Seleccionar...</option>` + RAZONES_AJUSTE.map(r => `<option value="${r}">${r}</option>`).join('');
+
+        // Carga inicial de datos
+        cargarYRenderizarInventario();
+    }
+
+    // Carga los datos del backend y los muestra
+    function cargarYRenderizarInventario() {
+        const query = document.getElementById('search-inventory-input').value;
+        showTableSpinner(true);
+        
+        google.script.run
+            .withSuccessHandler(data => {
+                inventoryData = data;
+                renderizarTabla();
+                showTableSpinner(false);
+            })
+            .withFailureHandler(err => {
+                alert('Error al buscar artículos: ' + err.message);
+                showTableSpinner(false);
+            })
+            .buscarArticulosAvanzado(query, currentFilter); // Pasamos el filtro al backend
+    }
+
+    // Renderiza la tabla con los datos actuales
+    function renderizarTabla() {
+        const tableBody = document.getElementById('inventory-table-body');
+        tableBody.innerHTML = '';
+
+        if (!inventoryData || inventoryData.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-gray-500">No hay artículos que coincidan con los criterios.</td></tr>`;
+            return;
         }
 
-        if (currentModalFilter === 'hoy') {
-            lista = lista.slice(0, 40);
-        }
+        inventoryData.forEach(item => {
+            const savedData = editedData[item.Clave] || {};
+            const stockFisico = savedData.stockFisico !== undefined ? savedData.stockFisico : '';
+            const cpi = savedData.cpi !== undefined ? savedData.cpi : '';
+            const vpe = savedData.vpe !== undefined ? savedData.vpe : '';
+            const razon = savedData.razon !== undefined ? savedData.razon : '';
 
-        renderizarTabla(lista);
+            const row = document.createElement('tr');
+            row.className = 'tabular-nums transition-colors duration-200';
+            row.dataset.clave = item.Clave;
+
+            const razonOptions = RAZONES_AJUSTE.map(r => `<option value="${r}" ${r === razon ? 'selected' : ''}>${r}</option>`).join('');
+
+            row.innerHTML = `
+                <td class="p-4"><input type="checkbox" class="row-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded"></td>
+                <td class="px-4 py-3">
+                    <div class="text-sm font-medium text-gray-900">${item.Descripcion || 'N/A'}</div>
+                    <div class="text-xs text-gray-500">${item.Clave} | ${item.Periodo || 'N/A'} (Día: ${item.Dia || 'N/A'})</div>
+                </td>
+                <td class="px-2 py-3 text-center"><input type="number" readonly value="${item.StockSistema || 0}" class="w-24 p-2 text-center bg-gray-100 border border-gray-300 rounded-md"></td>
+                <td class="px-2 py-3 text-center"><input type="number" data-type="stockFisico" value="${stockFisico}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"></td>
+                <td class="px-2 py-3 text-center"><input type="number" data-type="cpi" value="${cpi}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"></td>
+                <td class="px-2 py-3 text-center"><input type="number" data-type="vpe" value="${vpe}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"></td>
+                <td class="px-4 py-3"><select data-type="razon" class="w-full p-2 border border-gray-300 rounded-md bg-white"><option value="">Seleccionar...</option>${razonOptions}</select></td>
+                <td class="px-2 py-3 text-center"><span class="difference-value font-bold text-lg">0</span></td>
+                <td class="px-2 py-3 text-center"><button class="reset-row-btn text-gray-400 hover:text-red-600" title="Resetear Fila"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button></td>
+            `;
+            tableBody.appendChild(row);
+
+            // Añadir listeners para esta fila
+            row.querySelectorAll('input[type="number"], select').forEach(el => el.addEventListener('input', () => manejarInputFila(row)));
+            row.querySelector('.reset-row-btn').addEventListener('click', () => {
+                delete editedData[item.Clave];
+                renderizarTabla(); // Re-renderiza para reflejar el estado original
+            });
+            
+            if(stockFisico !== '') calcularYMostrarDiferencia(row);
+        });
+
+        // Listeners para checkboxes y select all
+        document.getElementById('select-all-checkbox').addEventListener('change', toggleSelectAll);
+        document.querySelectorAll('.row-checkbox').forEach(cb => cb.addEventListener('change', actualizarVisibilidadAccionesLote));
+        actualizarVisibilidadAccionesLote();
     }
     
-    // ---> MEJORA 2: Función de "Debounce"
-    function debounce(func, timeout = 300){
-      let timer;
-      return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => { func.apply(this, args); }, timeout);
-      };
+    // --- FUNCIONES AUXILIARES DEL MODAL ---
+
+    function manejarInputFila(row) {
+        const clave = row.dataset.clave;
+        // Solo guarda en editedData si hay un valor en stock fisico
+        const stockFisicoInput = row.querySelector('input[data-type="stockFisico"]');
+        if (stockFisicoInput.value.trim() === '') {
+            delete editedData[clave];
+        } else {
+             editedData[clave] = {
+                clave: clave,
+                descripcion: row.querySelector('.text-sm.font-medium').textContent,
+                stockSistema: parseFloat(row.querySelector('input[readonly]').value) || 0,
+                stockFisico: stockFisicoInput.value,
+                cpi: row.querySelector('input[data-type="cpi"]').value,
+                vpe: row.querySelector('input[data-type="vpe"]').value,
+                razon: row.querySelector('select[data-type="razon"]').value
+            };
+        }
+        calcularYMostrarDiferencia(row);
     }
     
-    // Se crea una versión "debounced" de la búsqueda
-    const debouncedSearch = debounce(buscarArticulosLocalmente);
+    function calcularYMostrarDiferencia(row) {
+        const sistema = parseFloat(row.querySelector('input[readonly]').value) || 0;
+        const fisico = parseFloat(row.querySelector('input[data-type="stockFisico"]').value) || 0;
+        const cpi = parseFloat(row.querySelector('input[data-type="cpi"]').value) || 0;
+        const vpe = parseFloat(row.querySelector('input[data-type="vpe"]').value) || 0;
+        const diferencia = fisico - sistema - vpe - cpi;
+        
+        const diferenciaSpan = row.querySelector('.difference-value');
+        diferenciaSpan.textContent = diferencia.toFixed(2);
 
+        row.classList.remove('row-diff-positive', 'row-diff-negative');
+        diferenciaSpan.classList.remove('diff-positive', 'diff-negative', 'diff-zero');
 
-    // ---> MEJORA 3: Mostrar estado de carga inicial
-    tableBody.innerHTML = '<tr><td colspan="9" class="text-center p-4">Cargando inventario...</td></tr>';
-    searchInput.disabled = true;
-    submitBtn.disabled = true;
-
-    google.script.run
-        .withSuccessHandler(articulos => {
-            inventarioCompletoDelModal = articulos;
-            buscarArticulosLocalmente();
-            // ---> MEJORA 3: Habilitar controles cuando los datos llegan
-            searchInput.disabled = false;
-            submitBtn.disabled = false;
-            searchInput.focus(); // Poner el foco en el buscador
-        })
-        .withFailureHandler(err => {
-            tableBody.innerHTML = `<tr><td colspan="9" class="text-center p-4 text-red-400">Error al cargar inventario: ${err.message}</td></tr>`;
-            // El botón de submit sigue deshabilitado, pero el de cerrar no.
-        })
-        .buscarArticulosAvanzado('');
-
-    // ---> MEJORA 2: El evento ahora es 'input' y usa la versión debounced
-    searchInput.addEventListener('input', debouncedSearch, { signal });
-
-    if (filterSelect) {
-        filterSelect.addEventListener('change', () => {
-            currentModalFilter = filterSelect.value;
-            buscarArticulosLocalmente();
-        }, { signal });
-    }
-
-    const selectAllCb = modalContainer.querySelector('#select-all');
-    const batchContainer = modalContainer.querySelector('#batch-actions');
-    const batchSelect = modalContainer.querySelector('#batch-razon');
-    const applyBatchBtn = modalContainer.querySelector('#applyBatchBtn');
-
-    function actualizarVisibilidadLote() {
-        const count = tableBody.querySelectorAll('.fila-checkbox:checked').length;
-        if (batchContainer) batchContainer.classList.toggle('hidden', count === 0);
-    }
-
-    tableBody.addEventListener('change', (e) => {
-        if (e.target.classList.contains('fila-checkbox')) {
-            actualizarVisibilidadLote();
+        if (diferencia > 0) {
+            diferenciaSpan.classList.add('diff-positive');
+            row.classList.add('row-diff-positive');
+        } else if (diferencia < 0) {
+            diferenciaSpan.classList.add('diff-negative');
+            row.classList.add('row-diff-negative');
+        } else {
+            diferenciaSpan.classList.add('diff-zero');
         }
-    }, { signal });
-
-    tableBody.addEventListener('click', (e) => {
-        const btn = e.target.closest('.reset-row-btn');
-        if (btn) {
-            const clave = btn.dataset.clave;
-            delete currentModalEnteredCounts[clave];
-            buscarArticulosLocalmente();
-            actualizarVisibilidadLote();
-        }
-    }, { signal });
-
-    if (selectAllCb) {
-        selectAllCb.addEventListener('change', () => {
-            const checked = selectAllCb.checked;
-            tableBody.querySelectorAll('.fila-checkbox').forEach(cb => cb.checked = checked);
-            actualizarVisibilidadLote();
-        }, { signal });
     }
 
-    if (applyBatchBtn) {
-        applyBatchBtn.addEventListener('click', () => {
-            const razon = batchSelect.value;
-            if (!razon) {
-                showCustomAlert('Selecciona una razón para aplicar.', 'info');
-                return;
+    function registrarConteos() {
+        const conteosValidos = Object.values(editedData).filter(d => d.stockFisico !== '' && d.razon !== '');
+        
+        if (conteosValidos.length === 0) {
+            mostrarConfirmacion({
+                title: "Sin cambios para registrar",
+                body: "Debes introducir el 'Stock Físico' y seleccionar una 'Razón de Ajuste' para al menos un artículo antes de poder registrar.",
+                primaryText: "Entendido",
+                primaryClass: "bg-indigo-600 hover:bg-indigo-700",
+                showSecondary: false
+            });
+            return;
+        }
+
+        const summaryList = conteosValidos.map(item => {
+             const diferencia = (parseFloat(item.stockFisico) || 0) - (parseFloat(item.stockSistema) || 0) - (parseFloat(item.cpi) || 0) - (parseFloat(item.vpe) || 0);
+             let colorClass = diferencia > 0 ? 'text-green-600' : (diferencia < 0 ? 'text-red-600' : 'text-gray-700');
+             return `<li>${item.descripcion} (Diferencia: <strong class="${colorClass}">${diferencia.toFixed(2)}</strong>)</li>`;
+        }).join('');
+
+        mostrarConfirmacion({
+            title: "Confirmar Registro de Conteos",
+            body: `Se van a registrar ajustes para <strong>${conteosValidos.length} artículos</strong>. <ul class="list-disc list-inside mt-2">${summaryList}</ul><p class="mt-4">¿Deseas continuar?</p>`,
+            primaryText: "Confirmar y Registrar",
+            primaryClass: "bg-green-600 hover:bg-green-700",
+            onPrimaryClick: () => {
+                showSpinner(true);
+                google.script.run
+                    .withSuccessHandler(response => {
+                        showSpinner(false);
+                        editedData = {};
+                        mostrarConfirmacion({
+                            title: "Éxito", body: response, primaryText: "Aceptar", primaryClass: "bg-indigo-600 hover:bg-indigo-700",
+                            onPrimaryClick: () => {
+                                document.getElementById('confirmation-modal-container').classList.add('hidden');
+                                cerrarModalDeConteo();
+                            },
+                            showSecondary: false
+                        });
+                    })
+                    .withFailureHandler(err => {
+                        showSpinner(false);
+                        mostrarConfirmacion({title: "Error", body: err.message, primaryText: "Cerrar", primaryClass: "bg-red-600 hover:bg-red-700", showSecondary: false});
+                    })
+                    .registrarMultiplesConteos(conteosValidos);
             }
-            tableBody.querySelectorAll('.fila-checkbox:checked').forEach(cb => {
-                const row = cb.closest('tr');
-                const clave = row.dataset.clave;
-                const select = row.querySelector('select[data-type="razon"]');
-                if (select) {
-                    select.value = razon;
-                    actualizarConteoEnMemoria(select, clave);
+        });
+    }
+
+    function cerrarModalDeConteo() {
+        if (Object.keys(editedData).length > 0) {
+            mostrarConfirmacion({
+                title: "Advertencia: Cambios sin guardar",
+                body: "Tienes conteos modificados que no se han registrado. Si cierras, perderás estos cambios.",
+                primaryText: "Cerrar sin guardar",
+                primaryClass: "bg-red-600 hover:bg-red-700",
+                secondaryText: "Continuar editando",
+                onPrimaryClick: () => {
+                    forceCloseModal();
                 }
             });
-            actualizarVisibilidadLote();
-        }, { signal });
+        } else {
+            forceCloseModal();
+        }
+    }
+    
+    function forceCloseModal() {
+        editedData = {};
+        inventoryData = [];
+        const modalOverlay = document.getElementById('modal-overlay'); // Re-seleccionar por si acaso
+        if(modalOverlay) modalOverlay.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        document.getElementById('modal-container').innerHTML = ''; // Limpiar el contenido
     }
 
-    btnCerrar.addEventListener("click", async () => {
-        if (Object.keys(currentModalEnteredCounts).length > 0) {
-            const confirmar = await showCustomConfirm('Advertencia: hay cambios sin guardar.', 'Cerrar sin guardar', 'Continuar editando');
-            if (!confirmar) return;
+    function handleSearch(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            currentFilter = 'todos'; // La búsqueda anula el filtro de 'hoy'
+            actualizarBotonesFiltro();
+            cargarYRenderizarInventario();
         }
-        cerrarYLimpiarModal(false);
-    }, { signal });
+    }
 
-    submitBtn.addEventListener('click', async () => {
-        if (Object.keys(currentModalEnteredCounts).length === 0) {
-            showCustomAlert('Sin cambios', 'info');
-            return;
-        }
-
-        const conteosARegistrar = [];
-        for (const claveProducto in currentModalEnteredCounts) {
-            const registro = currentModalEnteredCounts[claveProducto];
-            const articuloCompleto = inventarioCompletoDelModal.find(item => item.Clave === claveProducto);
-            if (!articuloCompleto) continue;
-
-            const fisico = parseFloat(registro.fisico) || 0;
-            const cpi = parseFloat(registro.cpi) || 0;
-            const vpe = parseFloat(registro.vpe) || 0;
-            const sistema = parseFloat(articuloCompleto.StockSistema || 0);
-            const diferencia = fisico - sistema - vpe - cpi;
-
-            conteosARegistrar.push({
-                producto: articuloCompleto.Descripcion,
-                diferencia
-            });
-        }
-
-        if (conteosARegistrar.length === 0) {
-            showCustomAlert('No hay modificaciones válidas para registrar.', 'info');
-            return;
-        }
-
-        let resumen = '<ul class="text-left">';
-        conteosARegistrar.forEach(r => {
-            resumen += `<li>${r.producto}: ${r.diferencia}</li>`;
+    function actualizarBotonesFiltro() {
+        document.querySelectorAll('.inventory-filter-btn').forEach(btn => {
+            const isSelected = btn.dataset.filter === currentFilter;
+            btn.classList.toggle('bg-indigo-600', isSelected);
+            btn.classList.toggle('text-white', isSelected);
+            btn.classList.toggle('bg-gray-200', !isSelected);
+            btn.classList.toggle('text-gray-700', !isSelected);
         });
-        resumen += '</ul>';
-
-        const confirmado = await showCustomConfirm(resumen, 'Confirmar', 'Cancelar', '¿Confirmar Registro?');
-        if (!confirmado) return;
-
-        currentModalEnteredCounts = {};
-        buscarArticulosLocalmente();
-        actualizarVisibilidadLote();
-        showCustomAlert('Éxito', 'success', () => cerrarYLimpiarModal(true));
-    }, { signal });
-}
-
-    async function cerrarModal(skipConfirm = false) {
-        if (!skipConfirm && Object.keys(currentModalEnteredCounts).length > 0) {
-            const confirmed = await showCustomConfirm("Has ingresado datos que no se han guardado. ¿Seguro que quieres cerrar?");
-            if (!confirmed) return;
-        }
-
-        const modalContainer = document.getElementById('modal-container');
-        if (modalContainer) {
-            modalContainer.classList.add('hidden');
-            modalContainer.innerHTML = '';
-        }
-        currentModalEnteredCounts = {};
     }
+
+    // --- LÓGICA DE ACCIONES EN LOTE ---
+
+    function toggleSelectAll() {
+        const isChecked = document.getElementById('select-all-checkbox').checked;
+        document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = isChecked);
+        actualizarVisibilidadAccionesLote();
+    }
+
+    function actualizarVisibilidadAccionesLote() {
+        const anySelected = document.querySelectorAll('.row-checkbox:checked').length > 0;
+        document.getElementById('batch-action-container').classList.toggle('hidden', !anySelected);
+    }
+    
+    function aplicarRazonEnLote() {
+        const reason = document.getElementById('batch-reason-select').value;
+        if (!reason) return;
+        document.querySelectorAll('.row-checkbox:checked').forEach(cb => {
+            const row = cb.closest('tr');
+            row.querySelector('select[data-type="razon"]').value = reason;
+            manejarInputFila(row); // Asegura que el cambio se registre en editedData
+        });
+    }
+
+    // --- MODAL DE CONFIRMACIÓN GENÉRICO ---
+    function mostrarConfirmacion(config) {
+        const modal = document.getElementById('confirmation-modal-container');
+        const titleEl = document.getElementById('confirmation-title');
+        const bodyEl = document.getElementById('confirmation-body');
+        const primaryBtn = document.getElementById('confirm-btn-primary');
+        const secondaryBtn = document.getElementById('confirm-btn-secondary');
+
+        titleEl.textContent = config.title;
+        bodyEl.innerHTML = config.body;
+        primaryBtn.textContent = config.primaryText;
+        primaryBtn.className = `px-4 py-2 text-white rounded-md ${config.primaryClass}`;
+        
+        if(config.showSecondary === false) {
+            secondaryBtn.classList.add('hidden');
+        } else {
+            secondaryBtn.classList.remove('hidden');
+            secondaryBtn.textContent = config.secondaryText || 'Cancelar';
+        }
+
+        // Clonar y reemplazar para limpiar listeners previos
+        const newPrimary = primaryBtn.cloneNode(true);
+        primaryBtn.parentNode.replaceChild(newPrimary, primaryBtn);
+        newPrimary.addEventListener('click', () => {
+            if (config.onPrimaryClick) config.onPrimaryClick();
+            else modal.classList.add('hidden');
+        });
+
+        const newSecondary = secondaryBtn.cloneNode(true);
+        secondaryBtn.parentNode.replaceChild(newSecondary, secondaryBtn);
+        newSecondary.addEventListener('click', () => {
+             if (config.onSecondaryClick) config.onSecondaryClick();
+             else modal.classList.add('hidden');
+        });
+        
+        modal.classList.remove('hidden');
+    }
+
+    // --- SPINNERS ---
+    function showSpinner(show) { /* Implementa tu spinner de carga global */ }
+    function showTableSpinner(show) {
+        const tableBody = document.getElementById('inventory-table-body');
+        if (show) {
+            tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-gray-500">Cargando datos...</td></tr>`;
+        }
+    }
+    
+    // Asigna el evento al botón principal que abre el modal
+    if(openModalBtn) {
+        openModalBtn.addEventListener('click', abrirModalDeConteo);
+    }
+
+});
+// --- FIN DE LA LÓGICA DEL MODAL DE CONTEO ---
 
     /**
      * Función central para cargar/refrescar todos los datos del panel de admin.
