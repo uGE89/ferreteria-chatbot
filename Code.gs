@@ -284,10 +284,17 @@ function buscarArticulo(query) {
  * @param {string} query - El texto de búsqueda.
  * @returns {Array<object>} Un array de objetos de productos que coinciden.
  */
+const INVENTARIO_COLUMNS = ['Clave','Descripcion','StockSistema','Ubicacion','Precio Costo','Precio Venta','Inversion','Participación','Acumulado','Periodo','Dia'];
+
 function buscarArticulosAvanzado(query) {
   try {
     // 1. Leemos directamente de la hoja, sin caché.
-    const inventory = getSheetData(SHEET_NAMES.INVENTARIO); 
+    const raw = getSheetData(SHEET_NAMES.INVENTARIO);
+    const inventory = raw.map(r => {
+      const obj = {};
+      INVENTARIO_COLUMNS.forEach(col => obj[col] = r[col]);
+      return obj;
+    });
 
     // Si no hay búsqueda, devolvemos todo el inventario.
     if (!query || query.trim() === '') {
