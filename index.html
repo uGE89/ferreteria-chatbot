@@ -797,6 +797,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let editedData = {};
     let inventoryData = []; // Caché de los datos del inventario cargados
     let currentFilter = 'hoy';
+    let hasSearched = false; // Controla si el usuario ya realizó una búsqueda
     const RAZONES_AJUSTE = ["Entrega incorrecta", "Recepción incorrecta", "Devolución de cliente", "Devolución de proveedor", "Ajuste de inventario", "Merma", "Otro"];
 
     // --- LÓGICA PRINCIPAL ---
@@ -845,8 +846,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const batchReasonSelect = document.getElementById('batch-reason-select');
         batchReasonSelect.innerHTML = `<option value="">Seleccionar...</option>` + RAZONES_AJUSTE.map(r => `<option value="${r}">${r}</option>`).join('');
 
-        // Carga inicial de datos
-        cargarYRenderizarInventario();
+        // Estado inicial
+        hasSearched = false;
+        inventoryData = [];
+        renderizarTabla();
     }
 
     // Carga los datos del backend y los muestra
@@ -873,7 +876,10 @@ document.addEventListener('DOMContentLoaded', () => {
         tableBody.innerHTML = '';
 
         if (!inventoryData || inventoryData.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-gray-500">No hay artículos que coincidan con los criterios.</td></tr>`;
+            const msg = hasSearched
+                ? 'No hay artículos que coincidan con los criterios.'
+                : 'Escribe en el buscador y presiona Enter para comenzar.';
+            tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-gray-500">${msg}</td></tr>`;
             return;
         }
 
@@ -1037,6 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function forceCloseModal() {
         editedData = {};
         inventoryData = [];
+        hasSearched = false;
         const modalOverlay = document.getElementById('modal-container'); // Re-seleccionar por si acaso
         if(modalOverlay) modalOverlay.classList.add('hidden');
         document.body.style.overflow = 'auto';
@@ -1046,6 +1053,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleSearch(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
+            const query = e.target.value.trim();
+            if (query === '') return;
+            hasSearched = true;
             currentFilter = 'todos'; // La búsqueda anula el filtro de 'hoy'
             actualizarBotonesFiltro();
             cargarYRenderizarInventario();
