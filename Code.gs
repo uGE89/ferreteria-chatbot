@@ -286,45 +286,41 @@ function buscarArticulo(query) {
  */
 const INVENTARIO_COLUMNS = ['Clave','Descripcion','StockSistema','Ubicacion','Precio Costo','Precio Venta','Inversion','Participación','Acumulado','Periodo','Dia'];
 
-function buscarArticulosAvanzado(query) {
+function buscarArticulosAvanzado(query, filter = 'todos') {
   try {
-    // 1. Leemos directamente de la hoja, sin caché.
-    const raw = getSheetData(SHEET_NAMES.INVENTARIO);
-    const inventory = raw.map(r => {
-      const obj = {};
-      INVENTARIO_COLUMNS.forEach(col => obj[col] = r[col]);
-      return obj;
-    });
+    const inventory = getSheetData(SHEET_NAMES.INVENTARIO);
 
-    // Si no hay búsqueda, devolvemos todo el inventario.
-    if (!query || query.trim() === '') {
-      // Antes de devolver, asegurémonos de que el primer item tenga las propiedades esperadas
-      // Esto ayuda a depurar problemas de nombres de columna (ej. 'Descripcion' vs 'descripcion')
-      if (inventory.length > 0 && inventory[0].Descripcion === undefined) {
-         Logger.log(`ADVERTENCIA: El primer artículo del inventario no tiene la propiedad 'Descripcion'. Revisa los encabezados de la hoja. Propiedades encontradas: ${Object.keys(inventory[0]).join(', ')}`);
-      }
-      return inventory;
+    let filteredInventory = inventory;
+
+    // 1. Filtrado por conteo de hoy
+    if (filter === 'hoy' && (!query || query.trim() === '')) {
+      filteredInventory = inventory.filter(tocaConteoHoy);
     }
 
-    const searchTerms = query.toLowerCase().split(' ').filter(term => term.trim() !== '');
-    if (searchTerms.length === 0) return [];
-
-    return inventory.filter(item => {
-      // 2. Usamos una validación más flexible.
-      // Solo necesitamos que el item exista y tenga una descripción para ser buscable.
-      if (!item || !item.Descripcion) {
-        return false;
+    // 2. Filtrar por término de búsqueda
+    if (query && query.trim() !== '') {
+      const searchTerms = query.toLowerCase().split(' ').filter(term => term.trim() !== '');
+      if (searchTerms.length > 0) {
+        filteredInventory = filteredInventory.filter(item => {
+          if (!item || !item.Descripcion) return false;
+          const searchableText = `${item.Descripcion} ${item.Clave || ''}`.toLowerCase();
+          return searchTerms.every(term => searchableText.includes(term));
+        });
       }
-      
-      // 3. Construimos el texto de búsqueda de forma segura con template literals.
-      const searchableText = `${item.Descripcion} ${item.Clave || ''}`.toLowerCase();
-      
-      return searchTerms.every(term => searchableText.includes(term));
-    });
+    }
+
+    return filteredInventory.map(r => ({
+      Clave: r.Clave,
+      Descripcion: r.Descripcion,
+      StockSistema: r.StockSistema,
+      Ubicacion: r.Ubicacion,
+      Periodo: r.Periodo,
+      Dia: r.Dia
+    }));
 
   } catch (e) {
-    logError('DAL', 'buscarArticulosAvanzado', e.message, e.stack, query);
-    return []; 
+    logError('Code.gs', 'buscarArticulosAvanzado', e.message, e.stack, JSON.stringify({query, filter}));
+    return [];
   }
 }
 
@@ -446,5 +442,104 @@ function getAITools() {
 
   Logger.log(`--- getAITools finalizado: Se configuraron ${tools.length} herramientas. ---`);
   return tools;
+}
+
+// --- LÓGICA DE CALENDARIO DE CONTEO Y REGISTRO DE CONTEOS ---
+
+/**
+ * NUEVA FUNCIÓN: Registra múltiples conteos de inventario en la hoja de Conteos.
+ * @param {Array<object>} conteos - Un array de objetos, cada uno representando un conteo.
+ * @returns {string} Un mensaje de confirmación.
+ */
+function registrarMultiplesConteos(conteos) {
+  try {
+    const userId = Session.getActiveUser().getEmail();
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.CONTEOS);
+    if (!sheet) throw new Error(`La hoja '${SHEET_NAMES.CONTEOS}' no fue encontrada.`);
+
+    const timestamp = getFormattedTimestamp();
+    const rowsToAdd = conteos.map(conteo => {
+      const { clave, descripcion, stockSistema, stockFisico, cpi, vpe, razon } = conteo;
+      const diferencia = (parseFloat(stockFisico) || 0) - (parseFloat(stockSistema) || 0) - (parseFloat(cpi) || 0) - (parseFloat(vpe) || 0);
+      return [
+        `CONTEO-${new Date().getTime()}-${Math.floor(Math.random() * 1000)}`,
+        timestamp,
+        userId,
+        clave,
+        descripcion,
+        parseFloat(stockSistema) || 0,
+        parseFloat(stockFisico) || 0,
+        parseFloat(cpi) || 0,
+        parseFloat(vpe) || 0,
+        diferencia,
+        razon
+      ];
+    });
+
+    sheet.getRange(sheet.getLastRow() + 1, 1, rowsToAdd.length, rowsToAdd[0].length).setValues(rowsToAdd);
+
+    return `${conteos.length} ajuste(s) de inventario han sido registrados correctamente.`;
+
+  } catch (e) {
+    logError('Code.gs', 'registrarMultiplesConteos', e.message, e.stack, JSON.stringify(conteos));
+    throw new Error(`Error al registrar los conteos: ${e.message}`);
+  }
+}
+
+/**
+ * Determina si un producto debe ser contado hoy basado en su ciclo.
+ * @param {object} producto - El objeto del producto con las propiedades 'Periodo' y 'Dia'.
+ * @returns {boolean} - True si debe contarse hoy.
+ */
+function tocaConteoHoy(producto) {
+  const today = new Date();
+  const periodo = producto.Periodo;
+  const diaAsignado = parseInt(producto.Dia, 10);
+
+  if (!periodo || isNaN(diaAsignado)) return false;
+
+  switch (periodo.toLowerCase()) {
+    case 'diario':
+      return true;
+
+    case 'semanal':
+      const dayOfWeek = today.getDay();
+      const adjustedDayOfWeek = dayOfWeek === 0 ? 7 : dayOfWeek;
+      return diaAsignado === adjustedDayOfWeek;
+
+    case 'mensual':
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const nthWorkday = countWorkdays(startOfMonth, today);
+      return diaAsignado === nthWorkday;
+
+    case 'bimestral':
+      const month = today.getMonth();
+      const startOfCycle = new Date(today.getFullYear(), Math.floor(month / 2) * 2, 1);
+      const nthWorkdayInCycle = countWorkdays(startOfCycle, today);
+      return diaAsignado === nthWorkdayInCycle;
+
+    default:
+      return false;
+  }
+}
+
+/**
+ * Cuenta los días hábiles (L-V) entre dos fechas (inclusivo).
+ * @param {Date} startDate - La fecha de inicio.
+ * @param {Date} endDate - La fecha de fin.
+ * @returns {number} - El número de días hábiles.
+ */
+function countWorkdays(startDate, endDate) {
+  let count = 0;
+  const curDate = new Date(startDate.getTime());
+  while (curDate <= endDate) {
+    const dayOfWeek = curDate.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      count++;
+    }
+    curDate.setDate(curDate.getDate() + 1);
+  }
+  return count;
 }
 
