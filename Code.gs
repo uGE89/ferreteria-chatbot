@@ -64,75 +64,7 @@ function getFormattedTimestamp() {
 
 // --- LÓGICA DE NEGOCIO Y API DE IA ---
 
-/**
- * Carga los datos iniciales para el login y la interfaz del chat.
- * Valida ID y PIN contra la constante USUARIOS, y configura la sesión.
- * @param {string} userId - El ID del usuario que intenta iniciar sesión.
- * @param {string} pin - El PIN del usuario para la autenticación.
- * @returns {object} Un objeto con el perfil del usuario, ID de sesión, mensajes iniciales y quick starters.
- */
-function cargarDatosIniciales(userId, pin) {
-  try {
-    // 1. Buscamos al usuario en nuestra constante de código (rápido y seguro).
-    const userStaticData = USUARIOS.find(u => u.UsuarioID === userId && u.PIN === pin);
-
-    // 2. Validación de credenciales.
-    if (!userStaticData) {
-      return { ok: false, msg: 'ID de usuario o PIN incorrecto.' };
-    }
-
-    // 3. Verificamos si el usuario está activo.
-    if (!userStaticData.Activo) {
-      return { ok: false, msg: 'Este usuario se encuentra inactivo.' };
-    }
-    
-    // En este punto, `userStaticData` ya tiene el nombre si está bien definido en la constante USUARIOS.
-    // Si necesitas que el nombre SIEMPRE venga de la hoja, deberías tener una columna 'Nombre' en tu hoja 'Usuarios'.
-    // Asumiendo que la constante USUARIOS es la fuente primaria de datos del perfil:
-    const perfil = { ...userStaticData };
-    delete perfil.PIN; // Eliminar el PIN antes de enviar al frontend por seguridad.
-
-    // --- El resto de la función para configurar la sesión y los quick starters ---
-    const rolUsuario = perfil.Rol;
-    const sessionId = 'SESS-' + Date.now() + '-' + Utilities.getUuid().substring(0, 8);
-
-    appendRowToSheet(SHEET_NAMES.SESIONES, {
-      SesionID: sessionId,
-      UsuarioID: perfil.UsuarioID,
-      FechaInicio: getFormattedTimestamp(),
-      UltimaActividad: getFormattedTimestamp(),
-      HistorialConversacion: '[]',
-      EstadoSesion: 'Activa'
-    });
-
-    const welcomeMessage = PROMPT_SISTEMA_GENERAL.split('\n').filter(line => line.includes('¡Hola!') || line.includes('•'));
-    
-    const quickStarters = HERRAMIENTAS_AI
-      .filter(tool => tool.EsQuickStarter === true)
-      .filter(tool => {
-        const rolesPermitidos = Array.isArray(tool.rolesPermitidos) ? tool.rolesPermitidos : ['Todos'];
-        return rolesPermitidos.includes('Todos') || rolesPermitidos.includes(rolUsuario);
-      })
-      .map(tool => ({
-        NombrePantalla: tool.NombrePantalla,
-        NombreFuncion: tool.NombreFuncion
-      }));
-    
-    let responseData = {
-      ok: true,
-      perfil: perfil,
-      sesionId: sessionId,
-      mensajeAnuncio: welcomeMessage,
-      quickStarters: quickStarters
-    };
-
-    return responseData;
-
-  } catch (e) {
-    logError('Code', 'cargarDatosIniciales', e.message, e.stack, `userId: ${userId}`);
-    return { ok: false, msg: `Error interno al cargar datos iniciales: ${e.message}.` };
-  }
-}
+// La implementación oficial de `cargarDatosIniciales` se encuentra en Controladores.gs
 
 /**
  * Envía una solicitud al modelo de IA de OpenAI y maneja su respuesta.
@@ -451,41 +383,7 @@ function getAITools() {
  * @param {Array<object>} conteos - Un array de objetos, cada uno representando un conteo.
  * @returns {string} Un mensaje de confirmación.
  */
-function registrarMultiplesConteos(conteos) {
-  try {
-    const userId = Session.getActiveUser().getEmail();
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_NAMES.CONTEOS);
-    if (!sheet) throw new Error(`La hoja '${SHEET_NAMES.CONTEOS}' no fue encontrada.`);
-
-    const timestamp = getFormattedTimestamp();
-    const rowsToAdd = conteos.map(conteo => {
-      const { clave, descripcion, stockSistema, stockFisico, cpi, vpe, razon } = conteo;
-      const diferencia = (parseFloat(stockFisico) || 0) - (parseFloat(stockSistema) || 0) - (parseFloat(cpi) || 0) - (parseFloat(vpe) || 0);
-      return [
-        `CONTEO-${new Date().getTime()}-${Math.floor(Math.random() * 1000)}`,
-        timestamp,
-        userId,
-        clave,
-        descripcion,
-        parseFloat(stockSistema) || 0,
-        parseFloat(stockFisico) || 0,
-        parseFloat(cpi) || 0,
-        parseFloat(vpe) || 0,
-        diferencia,
-        razon
-      ];
-    });
-
-    sheet.getRange(sheet.getLastRow() + 1, 1, rowsToAdd.length, rowsToAdd[0].length).setValues(rowsToAdd);
-
-    return `${conteos.length} ajuste(s) de inventario han sido registrados correctamente.`;
-
-  } catch (e) {
-    logError('Code.gs', 'registrarMultiplesConteos', e.message, e.stack, JSON.stringify(conteos));
-    throw new Error(`Error al registrar los conteos: ${e.message}`);
-  }
-}
+// registrarMultiplesConteos se define de forma completa en Toolbox.gs
 
 /**
  * Determina si un producto debe ser contado hoy basado en su ciclo.
