@@ -911,58 +911,61 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPage(currentPage);
     }
 
+    function createRow(item) {
+        const savedData = editedData[item.Clave] || {};
+        const sistema = savedData.stockSistema !== undefined ? savedData.stockSistema : (item.StockSistema || 0);
+        const stockFisico = savedData.stockFisico !== undefined ? savedData.stockFisico : '';
+        const cpi = savedData.cpi !== undefined ? savedData.cpi : '';
+        const vpe = savedData.vpe !== undefined ? savedData.vpe : '';
+        const razon = savedData.razon !== undefined ? savedData.razon : '';
+
+        const row = document.createElement('tr');
+        row.className = 'tabular-nums transition-colors duration-200';
+        row.dataset.clave = item.Clave;
+
+        const razonOptions = RAZONES_AJUSTE.map(r => `<option value="${r}" ${r === razon ? 'selected' : ''}>${r}</option>`).join('');
+
+        row.innerHTML = `
+            <td class="p-4"><input type="checkbox" class="row-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded"></td>
+            <td class="px-4 py-3">
+                <div class="text-sm font-medium text-gray-900">${item.Descripcion || 'N/A'}</div>
+                <div class="text-xs text-gray-500">${item.Clave}</div>
+            </td>
+            <td class="px-2 py-3 text-center"><input type="number" data-type="stockSistema" value="${sistema}" class="w-24 p-2 text-center bg-gray-100 border border-gray-300 rounded-md text-gray-900"></td>
+            <td class="px-2 py-3 text-center"><input type="number" data-type="stockFisico" value="${stockFisico}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-500"></td>
+            <td class="px-2 py-3 text-center"><input type="number" data-type="cpi" value="${cpi}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-500"></td>
+            <td class="px-2 py-3 text-center"><input type="number" data-type="vpe" value="${vpe}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-500"></td>
+            <td class="px-4 py-3 w-48"><select data-type="razon" class="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-500"><option value="">Seleccionar...</option>${razonOptions}</select></td>
+            <td class="px-2 py-3 text-center"><span class="difference-value font-bold text-lg">0</span></td>
+            <td class="px-2 py-3 text-center"><button class="reset-row-btn text-gray-400 hover:text-red-600" title="Resetear Fila"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button></td>
+        `;
+
+        row.querySelectorAll('input[type="number"], select').forEach(el => el.addEventListener('input', () => manejarInputFila(row)));
+        row.querySelector('.reset-row-btn').addEventListener('click', () => {
+            delete editedData[item.Clave];
+            row.replaceWith(createRow(item));
+            actualizarVisibilidadAccionesLote();
+        });
+
+        actualizarColorInputs(row);
+        if(stockFisico !== '') calcularYMostrarDiferencia(row);
+        return row;
+    }
+
     function renderPage(pageNumber) {
         currentPage = pageNumber;
 
         const tableBody = document.getElementById('inventory-table-body');
-        tableBody.innerHTML = '';
-
         const start = (pageNumber - 1) * itemsPerPage;
         const end = start + itemsPerPage;
         const pageItems = inventoryData.slice(start, end);
 
-        pageItems.forEach(item => {
-            const savedData = editedData[item.Clave] || {};
-            const sistema = savedData.stockSistema !== undefined ? savedData.stockSistema : (item.StockSistema || 0);
-            const stockFisico = savedData.stockFisico !== undefined ? savedData.stockFisico : '';
-            const cpi = savedData.cpi !== undefined ? savedData.cpi : '';
-            const vpe = savedData.vpe !== undefined ? savedData.vpe : '';
-            const razon = savedData.razon !== undefined ? savedData.razon : '';
-
-            const row = document.createElement('tr');
-            row.className = 'tabular-nums transition-colors duration-200';
-            row.dataset.clave = item.Clave;
-
-            const razonOptions = RAZONES_AJUSTE.map(r => `<option value="${r}" ${r === razon ? 'selected' : ''}>${r}</option>`).join('');
-
-            row.innerHTML = `
-                <td class="p-4"><input type="checkbox" class="row-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded"></td>
-                <td class="px-4 py-3">
-                    <div class="text-sm font-medium text-gray-900">${item.Descripcion || 'N/A'}</div>
-                    <div class="text-xs text-gray-500">${item.Clave}</div>
-                </td>
-                <td class="px-2 py-3 text-center"><input type="number" data-type="stockSistema" value="${sistema}" class="w-24 p-2 text-center bg-gray-100 border border-gray-300 rounded-md text-gray-900"></td>
-                <td class="px-2 py-3 text-center"><input type="number" data-type="stockFisico" value="${stockFisico}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-500"></td>
-                <td class="px-2 py-3 text-center"><input type="number" data-type="cpi" value="${cpi}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-500"></td>
-                <td class="px-2 py-3 text-center"><input type="number" data-type="vpe" value="${vpe}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-500"></td>
-                <td class="px-4 py-3 w-48"><select data-type="razon" class="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-500"><option value="">Seleccionar...</option>${razonOptions}</select></td>
-                <td class="px-2 py-3 text-center"><span class="difference-value font-bold text-lg">0</span></td>
-                <td class="px-2 py-3 text-center"><button class="reset-row-btn text-gray-400 hover:text-red-600" title="Resetear Fila"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button></td>
-            `;
-            tableBody.appendChild(row);
-
-            row.querySelectorAll('input[type="number"], select').forEach(el => el.addEventListener('input', () => manejarInputFila(row)));
-            row.querySelector('.reset-row-btn').addEventListener('click', () => {
-                delete editedData[item.Clave];
-                renderPage(currentPage);
-            });
-
-            actualizarColorInputs(row);
-            if(stockFisico !== '') calcularYMostrarDiferencia(row);
-        });
+        const rows = pageItems.map(item => createRow(item));
+        tableBody.replaceChildren(...rows);
+        
 
         document.getElementById('select-all-checkbox').addEventListener('change', toggleSelectAll);
-        document.querySelectorAll('.row-checkbox').forEach(cb => cb.addEventListener('change', actualizarVisibilidadAccionesLote));
+        tableBody.querySelectorAll('.row-checkbox').forEach(cb => cb.addEventListener('change', actualizarVisibilidadAccionesLote));
         actualizarVisibilidadAccionesLote();
 
         const controls = document.getElementById('pagination-controls');
