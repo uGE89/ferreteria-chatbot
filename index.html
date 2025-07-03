@@ -1032,7 +1032,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         showSpinner(false);
                         mostrarConfirmacion({title: "Error", body: err.message, primaryText: "Cerrar", primaryClass: "bg-red-600 hover:bg-red-700", showSecondary: false});
                     })
-                    .registrarMultiplesConteos(conteosValidos);
+                    .registrarMultiplesConteos(conteosValidos, perfilActual.UsuarioID);
             }
         });
     }
