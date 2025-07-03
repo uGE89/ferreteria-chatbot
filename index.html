@@ -851,8 +851,9 @@ document.addEventListener('DOMContentLoaded', () => {
             button.addEventListener('click', (e) => {
                 currentFilter = e.target.dataset.filter;
                 document.getElementById('search-inventory-input').value = '';
+                hasSearched = true; // asegurar mensaje correcto cuando no haya resultados
                 actualizarBotonesFiltro();
-                renderizarTabla();
+                cargarYRenderizarInventario();
             });
         });
         
