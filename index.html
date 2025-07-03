@@ -843,6 +843,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Listeners para botones principales
         document.getElementById('close-modal-button').addEventListener('click', cerrarModalDeConteo);
+        document.getElementById('print-list-button').addEventListener('click', () => window.print());
         document.getElementById('register-counts-button').addEventListener('click', registrarConteos);
         document.getElementById('search-inventory-input').addEventListener('keydown', handleSearch);
 
