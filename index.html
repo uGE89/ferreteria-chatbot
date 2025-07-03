@@ -803,6 +803,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let hasSearched = false; // Controla si el usuario ya realizó una búsqueda
     const RAZONES_AJUSTE = ["Entrega incorrecta", "Recepción incorrecta", "Devolución de cliente", "Devolución de proveedor", "Ajuste de inventario", "Merma", "Otro"];
 
+    const itemsPerPage = 20;
+    let currentPage = 1;
+    let totalPages = 1;
+
     // --- LÓGICA PRINCIPAL ---
     
     // Función para abrir y preparar el modal
@@ -879,6 +883,7 @@ document.addEventListener('DOMContentLoaded', () => {
         google.script.run
             .withSuccessHandler(data => {
                 inventoryData = data;
+                currentPage = 1;
                 renderizarTabla();
                 showTableSpinner(false);
             })
@@ -902,7 +907,21 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        inventoryData.forEach(item => {
+        totalPages = Math.ceil(inventoryData.length / itemsPerPage);
+        renderPage(currentPage);
+    }
+
+    function renderPage(pageNumber) {
+        currentPage = pageNumber;
+
+        const tableBody = document.getElementById('inventory-table-body');
+        tableBody.innerHTML = '';
+
+        const start = (pageNumber - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const pageItems = inventoryData.slice(start, end);
+
+        pageItems.forEach(item => {
             const savedData = editedData[item.Clave] || {};
             const sistema = savedData.stockSistema !== undefined ? savedData.stockSistema : (item.StockSistema || 0);
             const stockFisico = savedData.stockFisico !== undefined ? savedData.stockFisico : '';
@@ -932,21 +951,45 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             tableBody.appendChild(row);
 
-            // Añadir listeners para esta fila
             row.querySelectorAll('input[type="number"], select').forEach(el => el.addEventListener('input', () => manejarInputFila(row)));
             row.querySelector('.reset-row-btn').addEventListener('click', () => {
                 delete editedData[item.Clave];
-                renderizarTabla(); // Re-renderiza para reflejar el estado original
+                renderPage(currentPage);
             });
 
             actualizarColorInputs(row);
             if(stockFisico !== '') calcularYMostrarDiferencia(row);
         });
 
-        // Listeners para checkboxes y select all
         document.getElementById('select-all-checkbox').addEventListener('change', toggleSelectAll);
         document.querySelectorAll('.row-checkbox').forEach(cb => cb.addEventListener('change', actualizarVisibilidadAccionesLote));
         actualizarVisibilidadAccionesLote();
+
+        const controls = document.getElementById('pagination-controls');
+        controls.innerHTML = '';
+
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = 'Prev';
+        prevBtn.className = 'px-2 py-1 border rounded';
+        prevBtn.disabled = pageNumber === 1;
+        prevBtn.addEventListener('click', () => renderPage(currentPage - 1));
+        controls.appendChild(prevBtn);
+
+        for(let i = 1; i <= totalPages; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.textContent = i;
+            pageBtn.className = 'px-2 py-1 border rounded' + (i === currentPage ? ' bg-indigo-600 text-white' : '');
+            pageBtn.disabled = i === currentPage;
+            pageBtn.addEventListener('click', () => renderPage(i));
+            controls.appendChild(pageBtn);
+        }
+
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = 'Next';
+        nextBtn.className = 'px-2 py-1 border rounded';
+        nextBtn.disabled = pageNumber === totalPages;
+        nextBtn.addEventListener('click', () => renderPage(currentPage + 1));
+        controls.appendChild(nextBtn);
     }
     
     // --- FUNCIONES AUXILIARES DEL MODAL ---
@@ -1086,6 +1129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editedData = {};
         inventoryData = [];
         hasSearched = false;
+        currentPage = 1;
         const modalOverlay = document.getElementById('modal-container'); // Re-seleccionar por si acaso
         if(modalOverlay) modalOverlay.classList.add('hidden');
         document.body.style.overflow = 'auto';
