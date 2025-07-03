@@ -216,17 +216,18 @@ function buscarArticulo(query) {
  * @param {string} query - El texto de búsqueda.
  * @returns {Array<object>} Un array de objetos de productos que coinciden.
  */
-const INVENTARIO_COLUMNS = ['Clave','Descripcion','StockSistema','Ubicacion','Precio Costo','Precio Venta','Inversion','Participación','Acumulado','Periodo','Dia'];
+const INVENTARIO_COLUMNS = ['Clave','Descripcion','StockSistema','Ubicacion','Precio Costo','Precio Venta','Inversion','Participación','Acumulado','Periodo','Dia','tocaConteoHoy'];
 
 function buscarArticulosAvanzado(query, filter = 'todos') {
   try {
-    const inventory = getSheetData(SHEET_NAMES.INVENTARIO);
+    const inventory = getSheetData(SHEET_NAMES.INVENTARIO)
+      .sort((a, b) => String(a.Descripcion).localeCompare(String(b.Descripcion), 'es', {sensitivity: 'base'}));
 
     let filteredInventory = inventory;
 
-    // 1. Filtrado por conteo de hoy
-    if (filter === 'hoy' && (!query || query.trim() === '')) {
-      filteredInventory = inventory.filter(tocaConteoHoy);
+    // 1. Filtrado por conteo de hoy utilizando la columna pre calculada
+    if (filter === 'hoy') {
+      filteredInventory = filteredInventory.filter(item => String(item.tocaConteoHoy).toUpperCase() === 'TRUE');
     }
 
     // 2. Filtrar por término de búsqueda
@@ -390,54 +391,4 @@ function getAITools() {
  * @param {object} producto - El objeto del producto con las propiedades 'Periodo' y 'Dia'.
  * @returns {boolean} - True si debe contarse hoy.
  */
-function tocaConteoHoy(producto) {
-  const today = new Date();
-  const periodo = producto.Periodo;
-  const diaAsignado = parseInt(producto.Dia, 10);
-
-  if (!periodo || isNaN(diaAsignado)) return false;
-
-  switch (periodo.toLowerCase()) {
-    case 'diario':
-      return true;
-
-    case 'semanal':
-      const dayOfWeek = today.getDay();
-      const adjustedDayOfWeek = dayOfWeek === 0 ? 7 : dayOfWeek;
-      return diaAsignado === adjustedDayOfWeek;
-
-    case 'mensual':
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const nthWorkday = countWorkdays(startOfMonth, today);
-      return diaAsignado === nthWorkday;
-
-    case 'bimestral':
-      const month = today.getMonth();
-      const startOfCycle = new Date(today.getFullYear(), Math.floor(month / 2) * 2, 1);
-      const nthWorkdayInCycle = countWorkdays(startOfCycle, today);
-      return diaAsignado === nthWorkdayInCycle;
-
-    default:
-      return false;
-  }
-}
-
-/**
- * Cuenta los días hábiles (L-V) entre dos fechas (inclusivo).
- * @param {Date} startDate - La fecha de inicio.
- * @param {Date} endDate - La fecha de fin.
- * @returns {number} - El número de días hábiles.
- */
-function countWorkdays(startDate, endDate) {
-  let count = 0;
-  const curDate = new Date(startDate.getTime());
-  while (curDate <= endDate) {
-    const dayOfWeek = curDate.getDay();
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      count++;
-    }
-    curDate.setDate(curDate.getDate() + 1);
-  }
-  return count;
-}
 
