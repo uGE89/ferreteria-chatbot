@@ -23,8 +23,8 @@
         </div>
     </div>
 
-    <div class="flex-grow overflow-y-auto">
-        <table class="w-full text-left">
+    <div id="inventory-modal" class="flex-grow overflow-y-auto">
+        <table id="inventory-table" class="w-full text-left">
             <thead class="sticky top-0 bg-gray-200 z-10">
                 <tr>
                     <th class="p-3 text-center w-4 font-semibold text-gray-700"><input type="checkbox" id="select-all-checkbox"></th>
@@ -41,6 +41,7 @@
             <tbody id="inventory-table-body">
             </tbody>
         </table>
+        <div id="pagination-controls" class="p-4 flex justify-center gap-2"></div>
     </div>
 
     <div id="batch-action-container" class="flex items-center justify-end gap-2 p-4 border-t border-gray-200 hidden">
