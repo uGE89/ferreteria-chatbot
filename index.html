@@ -843,7 +843,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Listeners para botones principales
         document.getElementById('close-modal-button').addEventListener('click', cerrarModalDeConteo);
-        document.getElementById('print-list-button').addEventListener('click', () => window.print());
+        document.getElementById('print-list-button').addEventListener('click', imprimirTabla);
         document.getElementById('register-counts-button').addEventListener('click', registrarConteos);
         document.getElementById('search-inventory-input').addEventListener('keydown', handleSearch);
 
@@ -904,6 +904,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         inventoryData.forEach(item => {
             const savedData = editedData[item.Clave] || {};
+            const sistema = savedData.stockSistema !== undefined ? savedData.stockSistema : (item.StockSistema || 0);
             const stockFisico = savedData.stockFisico !== undefined ? savedData.stockFisico : '';
             const cpi = savedData.cpi !== undefined ? savedData.cpi : '';
             const vpe = savedData.vpe !== undefined ? savedData.vpe : '';
@@ -921,11 +922,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="text-sm font-medium text-gray-900">${item.Descripcion || 'N/A'}</div>
                     <div class="text-xs text-gray-500">${item.Clave}</div>
                 </td>
-                <td class="px-2 py-3 text-center"><input type="number" data-type="stockSistema" value="${item.StockSistema || 0}" class="w-24 p-2 text-center bg-gray-100 border border-gray-300 rounded-md text-gray-900"></td>
-                <td class="px-2 py-3 text-center"><input type="number" data-type="stockFisico" value="${stockFisico}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"></td>
-                <td class="px-2 py-3 text-center"><input type="number" data-type="cpi" value="${cpi}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"></td>
-                <td class="px-2 py-3 text-center"><input type="number" data-type="vpe" value="${vpe}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"></td>
-                <td class="px-4 py-3 w-48"><select data-type="razon" class="w-full p-2 border border-gray-300 rounded-md bg-white"><option value="">Seleccionar...</option>${razonOptions}</select></td>
+                <td class="px-2 py-3 text-center"><input type="number" data-type="stockSistema" value="${sistema}" class="w-24 p-2 text-center bg-gray-100 border border-gray-300 rounded-md text-gray-900"></td>
+                <td class="px-2 py-3 text-center"><input type="number" data-type="stockFisico" value="${stockFisico}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-500"></td>
+                <td class="px-2 py-3 text-center"><input type="number" data-type="cpi" value="${cpi}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-500"></td>
+                <td class="px-2 py-3 text-center"><input type="number" data-type="vpe" value="${vpe}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-500"></td>
+                <td class="px-4 py-3 w-48"><select data-type="razon" class="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-500"><option value="">Seleccionar...</option>${razonOptions}</select></td>
                 <td class="px-2 py-3 text-center"><span class="difference-value font-bold text-lg">0</span></td>
                 <td class="px-2 py-3 text-center"><button class="reset-row-btn text-gray-400 hover:text-red-600" title="Resetear Fila"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button></td>
             `;
@@ -937,7 +938,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 delete editedData[item.Clave];
                 renderizarTabla(); // Re-renderiza para reflejar el estado original
             });
-            
+
+            actualizarColorInputs(row);
             if(stockFisico !== '') calcularYMostrarDiferencia(row);
         });
 
@@ -951,22 +953,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function manejarInputFila(row) {
         const clave = row.dataset.clave;
-        // Solo guarda en editedData si hay un valor en stock fisico
-        const stockFisicoInput = row.querySelector('input[data-type="stockFisico"]');
-        if (stockFisicoInput.value.trim() === '') {
-            delete editedData[clave];
+        const sistemaInput = row.querySelector('input[data-type="stockSistema"]');
+        const fisicoInput = row.querySelector('input[data-type="stockFisico"]');
+        const cpiInput = row.querySelector('input[data-type="cpi"]');
+        const vpeInput = row.querySelector('input[data-type="vpe"]');
+        const razonSelect = row.querySelector('select[data-type="razon"]');
+
+        const valores = {
+            clave: clave,
+            descripcion: row.querySelector('.text-sm.font-medium').textContent,
+            stockSistema: sistemaInput.value,
+            stockFisico: fisicoInput.value,
+            cpi: cpiInput.value,
+            vpe: vpeInput.value,
+            razon: razonSelect.value
+        };
+
+        const anyValue = valores.stockSistema !== '' || valores.stockFisico !== '' || valores.cpi !== '' || valores.vpe !== '' || valores.razon !== '';
+        if (anyValue) {
+            editedData[clave] = valores;
         } else {
-             editedData[clave] = {
-                clave: clave,
-                descripcion: row.querySelector('.text-sm.font-medium').textContent,
-                stockSistema: parseFloat(row.querySelector('input[data-type="stockSistema"]').value) || 0,
-                stockFisico: stockFisicoInput.value,
-                cpi: row.querySelector('input[data-type="cpi"]').value,
-                vpe: row.querySelector('input[data-type="vpe"]').value,
-                razon: row.querySelector('select[data-type="razon"]').value
-            };
+            delete editedData[clave];
         }
+
+        actualizarColorInputs(row);
         calcularYMostrarDiferencia(row);
+    }
+
+    function actualizarColorInputs(row) {
+        row.querySelectorAll('input[data-type="stockFisico"], input[data-type="cpi"], input[data-type="vpe"], select[data-type="razon"]').forEach(el => {
+            if (el.value && el.value !== '') {
+                el.classList.add('text-gray-900');
+                el.classList.remove('text-gray-500');
+            } else {
+                el.classList.add('text-gray-500');
+                el.classList.remove('text-gray-900');
+            }
+        });
     }
     
     function calcularYMostrarDiferencia(row) {
@@ -994,12 +1017,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function registrarConteos() {
-        const conteosValidos = Object.values(editedData).filter(d => d.stockFisico !== '' && d.razon !== '');
+        const conteosValidos = Object.values(editedData).filter(d => d.stockFisico !== '');
         
         if (conteosValidos.length === 0) {
             mostrarConfirmacion({
                 title: "Sin cambios para registrar",
-                body: "Debes introducir el 'Stock Físico' y seleccionar una 'Razón de Ajuste' para al menos un artículo antes de poder registrar.",
+                body: "Debes introducir el 'Stock Físico' para al menos un artículo antes de poder registrar.",
                 primaryText: "Entendido",
                 primaryClass: "bg-indigo-600 hover:bg-indigo-700",
                 showSecondary: false
@@ -1112,6 +1135,25 @@ document.addEventListener('DOMContentLoaded', () => {
             row.querySelector('select[data-type="razon"]').value = reason;
             manejarInputFila(row); // Asegura que el cambio se registre en editedData
         });
+    }
+
+    function imprimirTabla() {
+        const printWindow = window.open('', '_blank');
+        const rowsHtml = inventoryData.map(item => {
+            const data = editedData[item.Clave] || {};
+            const sistema = data.stockSistema !== undefined ? data.stockSistema : (item.StockSistema || 0);
+            const fisico = data.stockFisico !== undefined ? data.stockFisico : '';
+            const cpi = data.cpi !== undefined ? data.cpi : '';
+            const vpe = data.vpe !== undefined ? data.vpe : '';
+            const razon = data.razon !== undefined ? data.razon : '';
+            return `<tr><td>${item.Clave}</td><td>${item.Descripcion || ''}</td><td>${sistema}</td><td>${fisico}</td><td>${cpi}</td><td>${vpe}</td><td>${razon}</td></tr>`;
+        }).join('');
+
+        printWindow.document.write(`<!DOCTYPE html><html><head><title>Conteo</title><style>table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #000;padding:4px;text-align:left;}th{background:#f0f0f0;}</style></head><body><table><thead><tr><th>Clave</th><th>Producto</th><th>Sistema</th><th>Físico</th><th>CPI</th><th>VPE</th><th>Razón</th></tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
     }
 
     // --- MODAL DE CONFIRMACIÓN GENÉRICO ---
