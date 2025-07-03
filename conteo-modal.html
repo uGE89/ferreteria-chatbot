@@ -4,21 +4,25 @@
     <base target="_top">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-800 text-slate-200 p-4">
+<body class="bg-gray-100 text-gray-800 p-4">
 
-<div id="conteo-modal" class="w-full max-w-4xl h-[80vh] bg-slate-800 rounded-2xl shadow-2xl flex flex-col">
-    <header class="flex justify-between items-center p-6 border-b border-slate-700">
+<div id="conteo-modal" class="w-full max-w-6xl h-[80vh] bg-white rounded-2xl shadow-2xl flex flex-col">
+    <header class="flex justify-between items-center p-6 border-b border-gray-200">
         <h2 class="text-2xl font-bold">Registro de Conteo</h2>
         <button id="close-modal-button" type="button" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg">Cerrar</button>
     </header>
 
-    <div class="p-4 border-b border-slate-700">
-        <input id="search-inventory-input" type="text" placeholder="Buscar artículos..." class="w-full p-3 bg-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off">
+    <div class="p-4 border-b border-gray-200 flex flex-wrap items-center gap-4">
+        <input id="search-inventory-input" type="text" placeholder="Buscar artículos..." class="flex-grow p-3 bg-gray-200 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off">
+        <div class="flex gap-2">
+            <button data-filter="hoy" class="inventory-filter-btn bg-indigo-600 text-white px-3 py-2 rounded" type="button">Conteos hoy</button>
+            <button data-filter="todos" class="inventory-filter-btn bg-gray-200 text-gray-700 px-3 py-2 rounded" type="button">Todos</button>
+        </div>
     </div>
 
     <div class="flex-grow overflow-y-auto">
         <table class="w-full text-left">
-            <thead class="sticky top-0 bg-slate-700 z-10">
+            <thead class="sticky top-0 bg-gray-200 z-10">
                 <tr>
                     <th class="p-3 text-center w-4"><input type="checkbox" id="select-all-checkbox"></th>
                     <th class="p-3">Producto</th>
@@ -26,7 +30,7 @@
                     <th class="p-3 w-32">Físico</th>
                     <th class="p-3 w-24">CPI</th>
                     <th class="p-3 w-24">VPE</th>
-                    <th class="p-3">Razón</th>
+                    <th class="p-3 w-48">Razón</th>
                     <th class="p-3 w-24">Diferencia</th>
                     <th class="p-3 w-16">Acciones</th>
                 </tr>
@@ -36,8 +40,8 @@
         </table>
     </div>
 
-    <div id="batch-action-container" class="flex items-center justify-end gap-2 p-4 border-t border-slate-700 hidden">
-        <select id="batch-reason-select" class="p-2 rounded bg-slate-700 text-white">
+    <div id="batch-action-container" class="flex items-center justify-end gap-2 p-4 border-t border-gray-200 hidden">
+        <select id="batch-reason-select" class="p-2 rounded bg-gray-200">
             <option value="">Seleccionar...</option>
             <option value="Entrega incorrecta">Entrega incorrecta</option>
             <option value="Recepción incorrecta">Recepción incorrecta</option>
@@ -47,20 +51,20 @@
         <button id="apply-batch-reason-btn" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">Aplicar</button>
     </div>
 
-    <footer class="p-6 border-t border-slate-700 text-right">
+    <footer class="p-6 border-t border-gray-200 text-right">
         <button id="register-counts-button" class="bg-emerald-500 hover:bg-emerald-600 font-bold px-6 py-3 rounded-lg">
             Registrar Conteos Completados
         </button>
     </footer>
 </div>
 
-<div id="confirmation-modal-container" class="fixed inset-0 bg-slate-900 bg-opacity-75 hidden justify-center items-center p-4">
-    <div class="bg-slate-800 p-6 rounded-lg shadow-xl text-center max-w-sm w-full">
-        <h3 id="confirmation-title" class="text-xl font-bold mb-4 text-white"></h3>
-        <div id="confirmation-body" class="text-slate-300 mb-6"></div>
+<div id="confirmation-modal-container" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex justify-center items-center p-4">
+    <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm w-full">
+        <h3 id="confirmation-title" class="text-xl font-bold mb-4 text-gray-900"></h3>
+        <div id="confirmation-body" class="text-gray-700 mb-6"></div>
         <div class="flex justify-center gap-4">
             <button id="confirm-btn-primary" class="px-4 py-2 text-white rounded-md bg-blue-600 hover:bg-blue-700"></button>
-            <button id="confirm-btn-secondary" class="px-4 py-2 text-white rounded-md bg-slate-600 hover:bg-slate-700">Cancelar</button>
+            <button id="confirm-btn-secondary" class="px-4 py-2 text-white rounded-md bg-gray-600 hover:bg-gray-700">Cancelar</button>
         </div>
     </div>
 </div>
