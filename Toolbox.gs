@@ -184,8 +184,8 @@ function generarResumenAdmin() {
  */
 function registrarMultiplesConteos(conteos, userId) {
   try {
-const userProfile = obtenerDetallesDeUsuario(userId);
-const userName = userProfile ? userProfile.Nombre : 'Desconocido';
+    const userProfile = obtenerDetallesDeUsuario(userId);
+    const userName = userProfile ? userProfile.Nombre : 'Desconocido';
     const userSucursal = userProfile ? userProfile.Sucursal : 'Desconocida';
 
     conteos.forEach(conteo => {
@@ -193,17 +193,26 @@ const userName = userProfile ? userProfile.Nombre : 'Desconocido';
 
       const conteoId = `CONTEO-${new Date().getTime()}-${Math.floor(Math.random() * 1000)}`;
 
+      const diferencia =
+        (parseFloat(conteo.stockFisico) || 0) -
+        (parseFloat(conteo.stockSistema) || 0) -
+        (parseFloat(conteo.vpe) || 0) -
+        (parseFloat(conteo.cpi) || 0);
+
       appendRowToSheet(SHEET_NAMES.CONTEOS, {
         ID_Conteo: conteoId,
-        Fecha: nowFormatted.split(' ')[0], // Extrae solo la fecha
-        Hora: nowFormatted.split(' ')[1],  // Extrae solo la hora
+        Fecha: nowFormatted.split(' ')[0],
+        Hora: nowFormatted.split(' ')[1],
         UsuarioID: userId,
         NombreUsuario: userName,
-        ClaveProducto: conteo.clave,
-        DescripcionProducto: conteo.producto,
-        CantidadSistema: conteo.sistema,
-        CantidadFisico: conteo.fisico,
-        Diferencia: conteo.fisico - conteo.sistema,
+        ClaveProducto: "'" + String(conteo.clave),
+        DescripcionProducto: conteo.descripcion,
+        CantidadSistema: conteo.stockSistema,
+        CantidadFisico: conteo.stockFisico,
+        CPI: conteo.cpi,
+        VPE: conteo.vpe,
+        'Razón de Ajuste': conteo.razon,
+        Diferencia: diferencia,
         Observacion: conteo.observacion || '',
         SucursalUsuario: userSucursal
       });

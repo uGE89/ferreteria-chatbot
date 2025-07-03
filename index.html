@@ -79,6 +79,9 @@
         .row-diff-negative { background-color: #fef2f2; }
         .row-diff-positive:hover { background-color: #dcfce7; }
         .row-diff-negative:hover { background-color: #fee2e2; }
+        .diff-positive { color: #15803d; }
+        .diff-negative { color: #b91c1c; }
+        .diff-zero { color: #475569; }
 
 /* ... otras reglas ... */
 
@@ -916,7 +919,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="text-sm font-medium text-gray-900">${item.Descripcion || 'N/A'}</div>
                     <div class="text-xs text-gray-500">${item.Clave}</div>
                 </td>
-                <td class="px-2 py-3 text-center"><input type="number" readonly value="${item.StockSistema || 0}" class="w-24 p-2 text-center bg-gray-100 border border-gray-300 rounded-md"></td>
+                <td class="px-2 py-3 text-center"><input type="number" data-type="stockSistema" value="${item.StockSistema || 0}" class="w-24 p-2 text-center bg-gray-100 border border-gray-300 rounded-md text-gray-900"></td>
                 <td class="px-2 py-3 text-center"><input type="number" data-type="stockFisico" value="${stockFisico}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"></td>
                 <td class="px-2 py-3 text-center"><input type="number" data-type="cpi" value="${cpi}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"></td>
                 <td class="px-2 py-3 text-center"><input type="number" data-type="vpe" value="${vpe}" placeholder="0" class="w-24 p-2 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"></td>
@@ -954,7 +957,7 @@ document.addEventListener('DOMContentLoaded', () => {
              editedData[clave] = {
                 clave: clave,
                 descripcion: row.querySelector('.text-sm.font-medium').textContent,
-                stockSistema: parseFloat(row.querySelector('input[readonly]').value) || 0,
+                stockSistema: parseFloat(row.querySelector('input[data-type="stockSistema"]').value) || 0,
                 stockFisico: stockFisicoInput.value,
                 cpi: row.querySelector('input[data-type="cpi"]').value,
                 vpe: row.querySelector('input[data-type="vpe"]').value,
@@ -965,7 +968,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function calcularYMostrarDiferencia(row) {
-        const sistema = parseFloat(row.querySelector('input[readonly]').value) || 0;
+        const sistema = parseFloat(row.querySelector('input[data-type="stockSistema"]').value) || 0;
         const fisico = parseFloat(row.querySelector('input[data-type="stockFisico"]').value) || 0;
         const cpi = parseFloat(row.querySelector('input[data-type="cpi"]').value) || 0;
         const vpe = parseFloat(row.querySelector('input[data-type="vpe"]').value) || 0;
