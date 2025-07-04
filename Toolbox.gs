@@ -235,8 +235,25 @@ function registrarMultiplesConteos(conteos, userId) {
 }
 
 /**
+ * Obtiene la descripción de un producto a partir de su clave.
+ * @param {string} clave - La clave del producto.
+ * @returns {string} La descripción encontrada o cadena vacía si no existe.
+ */
+function obtenerDescripcionPorClave(clave) {
+  try {
+    const inventario = getSheetData(SHEET_NAMES.INVENTARIO);
+    const item = inventario.find(p => String(p.Clave) === String(clave));
+    return item ? item.Descripcion : '';
+  } catch (e) {
+    logError('Toolbox', 'obtenerDescripcionPorClave', e.message, e.stack, clave);
+    return '';
+  }
+}
+
+/**
  * Registra un conteo individual de inventario en la hoja 'Conteos'.
  * Mapea nombres comunes de productos a claves específicas antes de registrar.
+ * @param {string} userId - ID del usuario que realiza el conteo.
  * @param {string} claveProducto - La clave o descripción del producto.
  * @param {number} cantidadSistema - Cantidad existente en el sistema.
  * @param {number} cantidadFisico - Cantidad contada físicamente.
@@ -245,9 +262,13 @@ function registrarMultiplesConteos(conteos, userId) {
  * @param {string} observacion - Observaciones o justificación de la diferencia.
  * @returns {string} Mensaje de confirmación.
  */
-function registrarConteo(claveProducto, cantidadSistema, cantidadFisico, cpi, vpe, observacion) {
+function registrarConteo(userId, claveProducto, cantidadSistema, cantidadFisico, cpi, vpe, observacion) {
   try {
     const nowFormatted = getFormattedTimestamp();
+
+    const userProfile = obtenerDetallesDeUsuario(userId);
+    const userName = userProfile ? userProfile.Nombre : 'Desconocido';
+    const userSucursal = userProfile ? userProfile.Sucursal : 'Desconocida';
 
     // Normaliza y mapea descripciones a claves conocidas
     const claveLower = String(claveProducto).toLowerCase();
@@ -257,6 +278,8 @@ function registrarConteo(claveProducto, cantidadSistema, cantidadFisico, cpi, vp
     } else if (claveLower.includes('caja')) {
       claveFinal = 'CCH';
     }
+
+    const descripcion = obtenerDescripcionPorClave(claveFinal) || String(claveProducto);
 
     const diferencia =
       (parseFloat(cantidadFisico) || 0) -
@@ -270,13 +293,17 @@ function registrarConteo(claveProducto, cantidadSistema, cantidadFisico, cpi, vp
       ID_Conteo: conteoId,
       Fecha: nowFormatted.split(' ')[0],
       Hora: nowFormatted.split(' ')[1],
+      UsuarioID: userId,
+      NombreUsuario: userName,
       ClaveProducto: "'" + String(claveFinal),
+      DescripcionProducto: descripcion,
       CantidadSistema: cantidadSistema,
       CantidadFisico: cantidadFisico,
       CPI: cpi,
       VPE: vpe,
       Diferencia: diferencia,
-      Observacion: observacion || ''
+      Observacion: observacion || '',
+      SucursalUsuario: userSucursal
     });
 
     return `Conteo registrado para el producto ${claveFinal}.`;

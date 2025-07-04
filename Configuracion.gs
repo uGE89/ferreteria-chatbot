@@ -217,31 +217,39 @@ const HERRAMIENTAS_AI = [
     NombreFuncion: 'registrarConteo',
     NombrePantalla: '🔢 Registrar Conteo de Inventario',
     Descripcion: 'Registra un conteo de inventario para un producto específico. Se utiliza para comparar el stock del sistema con el stock físico encontrado.',
-    SchemaParametros: {
-      type: 'object',
-      properties: {
-        claveProducto: {
-          type: 'string',
-          description: 'La clave única del producto que se está contando.'
-        },
-        cantidadSistema: {
-          type: 'number',
-          description: 'La cantidad del producto registrada en el sistema.'
-        },
-        cantidadFisico: {
-          type: 'number',
-          description: 'La cantidad física del producto encontrada.'
-        },
-        observacion: {
-          type: 'string',
-          description: 'Cualquier observación o justificación para la diferencia, si la hay.'
-        }
-      },
-      required: ['claveProducto', 'cantidadSistema', 'cantidadFisico']
-    },
-    ComportamientoAdicional: 'SIEMPRE pide confirmación al usuario antes de registrar el conteo. Si el usuario proporciona una justificación para una diferencia, capta esa justificación en el parámetro `observacion`.',
-    EsQuickStarter: true,
-    PromptEspecifico: 'Prompt específico para registrar conteos: Guía al usuario para obtener la clave del producto, cantidad en sistema y cantidad física. SIEMPRE pide confirmación antes de llamar a la función. Si hay una diferencia, pregunta por la observación y captúrala.',
+    SchemaParametros: {
+      type: 'object',
+      properties: {
+        claveProducto: {
+          type: 'string',
+          description: 'La clave o descripción del producto a contar.'
+        },
+        cantidadSistema: {
+          type: 'number',
+          description: 'Cantidad registrada en el sistema.'
+        },
+        cantidadFisico: {
+          type: 'number',
+          description: 'Cantidad contada físicamente.'
+        },
+        cpi: {
+          type: 'number',
+          description: 'Compras pendientes de ingreso relacionadas con el producto.'
+        },
+        vpe: {
+          type: 'number',
+          description: 'Ventas pendientes de entrega de ese producto.'
+        },
+        observacion: {
+          type: 'string',
+          description: 'Observación o explicación de la diferencia, si la hay.'
+        }
+      },
+      required: ['claveProducto', 'cantidadSistema', 'cantidadFisico']
+    },
+    ComportamientoAdicional: 'Calcula la diferencia entre sistema y físico. Si es distinta de cero solicita datos de CPI o VPE. Para la clave CCH pregunta si hay pagos por transferencia o tarjeta. Siempre confirma antes de registrar y guarda cualquier explicación en `observacion`.',
+    EsQuickStarter: true,
+    PromptEspecifico: 'Guía al usuario para obtener clave, cantidades en sistema y físico. Si la diferencia supera ±10 pide CPI o VPE y cualquier observación. Para la caja consulta por pagos con transferencia o tarjeta antes de registrar.',
     rolesPermitidos: ['Administrador', 'Bodeguero', 'Todo en uno'] 
 
   },

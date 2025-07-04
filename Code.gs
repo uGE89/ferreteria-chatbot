@@ -311,6 +311,7 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
       case 'registrarConteo':
         Logger.log('   - Entrando en el caso: "registrarConteo"');
         return registrarConteo(
+          userId,
           functionArgs.claveProducto,
           functionArgs.cantidadSistema,
           functionArgs.cantidadFisico,
