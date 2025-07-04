@@ -115,7 +115,7 @@ function obtenerMovimientosDeCaja() {
 
     Logger.log('Paso 2: Mapeando y estandarizando ítems de Caja...');
     const itemsCaja = movimientosCaja.map(m => {
-      const fechaObj = parseSafeDate(m.FechaSolicitud); // Asumo que la columna de fecha en MovimientosPendientes se llama FechaSolicitud
+      const fechaObj = parseSafeDate(m.FechaHoraSolicitud); // Asumo que la columna de fecha en MovimientosPendientes se llama FechaHoraSolicitud
       const item = {
         id: m.ID_Movimiento,
         tipo: 'Caja', // Tipo fijo
