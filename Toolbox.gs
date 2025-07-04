@@ -260,9 +260,11 @@ function obtenerDescripcionPorClave(clave) {
  * @param {number} cpi - Compras pendientes de ingreso.
  * @param {number} vpe - Ventas pendientes de entrega.
  * @param {string} observacion - Observaciones o justificación de la diferencia.
+ * @param {number} pagosTransferencia - Pagos por transferencia pendientes (solo para caja).
+ * @param {number} pagosTarjeta - Pagos con tarjeta pendientes (solo para caja).
  * @returns {string} Mensaje de confirmación.
  */
-function registrarConteo(userId, claveProducto, cantidadSistema, cantidadFisico, cpi, vpe, observacion) {
+function registrarConteo(userId, claveProducto, cantidadSistema, cantidadFisico, cpi, vpe, observacion, pagosTransferencia, pagosTarjeta) {
   try {
     const nowFormatted = getFormattedTimestamp();
 
@@ -281,11 +283,19 @@ function registrarConteo(userId, claveProducto, cantidadSistema, cantidadFisico,
 
     const descripcion = obtenerDescripcionPorClave(claveFinal) || String(claveProducto);
 
-    const diferencia =
+    let diferencia =
       (parseFloat(cantidadFisico) || 0) -
       (parseFloat(cantidadSistema) || 0) -
       (parseFloat(cpi) || 0) -
       (parseFloat(vpe) || 0);
+
+    // Ajuste especial para caja chica
+    if (claveFinal === 'CCH') {
+      const trans = parseFloat(pagosTransferencia) || 0;
+      const tarjeta = parseFloat(pagosTarjeta) || 0;
+      diferencia -= trans;
+      diferencia -= tarjeta;
+    }
 
     const conteoId = `CONTEO-${new Date().getTime()}-${Math.floor(Math.random() * 1000)}`;
 

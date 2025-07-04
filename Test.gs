@@ -33,6 +33,7 @@ function testSuiteBackend() {
     testLoginAndChatLogic();
     testAdminPanelLogic();
     testRegistrarConteoAlias();
+    testRegistrarConteoCaja();
     testSimulacionLlamadaAI();
 
     Logger.log('\n==============================================');
@@ -275,7 +276,7 @@ function testRegistrarConteoAlias() {
   Logger.log('--- [Prueba 6: registrarConteo con alias y diferencia] ---');
   try {
     Logger.log('   - Probando: registrarConteo() con descripción "Cemento gris"...');
-    const respuesta = registrarConteo(TEST_ADMIN_USER_ID, 'Cemento gris', 20, 18, 1, 0, 'Prueba alias');
+    const respuesta = registrarConteo(TEST_ADMIN_USER_ID, 'Cemento gris', 20, 18, 1, 0, 'Prueba alias', 0, 0);
     Logger.log(`     Respuesta: ${respuesta}`);
     const registros = getSheetData(SHEET_NAMES.CONTEOS);
     const ultimo = registros[registros.length - 1];
@@ -289,6 +290,27 @@ function testRegistrarConteoAlias() {
     Logger.log(`     ❌ ERROR en testRegistrarConteoAlias: ${e.message}`);
   }
   Logger.log('--- [Fin Prueba 6] ---\n');
+}
+
+/**
+ * PRUEBA 7: Verifica registrarConteo para caja chica con pagos pendientes.
+ */
+function testRegistrarConteoCaja() {
+  Logger.log('--- [Prueba 7: registrarConteo para caja] ---');
+  try {
+    const respuesta = registrarConteo(TEST_ADMIN_USER_ID, 'caja chica', 500, 480, 0, 0, 'test caja', 10, 5);
+    Logger.log(`     Respuesta: ${respuesta}`);
+    const registros = getSheetData(SHEET_NAMES.CONTEOS);
+    const ultimo = registros[registros.length - 1];
+    const aliasOk = ultimo.ClaveProducto === "'CCH";
+    const diffEsperada = 480 - 500 - 0 - 0 - 10 - 5;
+    const diffOk = parseFloat(ultimo.Diferencia) === diffEsperada;
+    Logger.log(aliasOk ? '     ✅ Alias caja correcto.' : `     ❌ Alias incorrecto: ${ultimo.ClaveProducto}`);
+    Logger.log(diffOk ? '     ✅ Diferencia caja correcta.' : `     ❌ Diferencia incorrecta: ${ultimo.Diferencia}`);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testRegistrarConteoCaja: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 7] ---\n');
 }
 
 /**

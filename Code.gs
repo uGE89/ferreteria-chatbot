@@ -317,7 +317,9 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
           functionArgs.cantidadFisico,
           functionArgs.cpi,
           functionArgs.vpe,
-          functionArgs.observacion
+          functionArgs.observacion,
+          functionArgs.pagosTransferencia,
+          functionArgs.pagosTarjeta
         );
 
       case 'generarResumenAdmin':
