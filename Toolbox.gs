@@ -235,22 +235,6 @@ function registrarMultiplesConteos(conteos, userId) {
 }
 
 /**
- * Obtiene la descripción de un producto a partir de su clave.
- * @param {string} clave - La clave del producto.
- * @returns {string} La descripción encontrada o cadena vacía si no existe.
- */
-function obtenerDescripcionPorClave(clave) {
-  try {
-    const inventario = getSheetData(SHEET_NAMES.INVENTARIO);
-    const item = inventario.find(p => String(p.Clave) === String(clave));
-    return item ? item.Descripcion : '';
-  } catch (e) {
-    logError('Toolbox', 'obtenerDescripcionPorClave', e.message, e.stack, clave);
-    return '';
-  }
-}
-
-/**
  * Registra un conteo individual de inventario en la hoja 'Conteos'.
  * Mapea nombres comunes de productos a claves específicas antes de registrar.
  * @param {string} userId - ID del usuario que realiza el conteo.
@@ -272,16 +256,18 @@ function registrarConteo(userId, claveProducto, cantidadSistema, cantidadFisico,
     const userName = userProfile ? userProfile.Nombre : 'Desconocido';
     const userSucursal = userProfile ? userProfile.Sucursal : 'Desconocida';
 
-    // Normaliza y mapea descripciones a claves conocidas
-    const claveLower = String(claveProducto).toLowerCase();
-    let claveFinal = claveProducto;
-    if (claveLower.includes('cemento')) {
-      claveFinal = '01';
-    } else if (claveLower.includes('caja')) {
-      claveFinal = 'CCH';
-    }
+  // Normaliza y mapea descripciones a claves conocidas
+  const claveLower = String(claveProducto).toLowerCase();
+  let claveFinal = claveProducto;
+  let descripcion = String(claveProducto);
 
-    const descripcion = obtenerDescripcionPorClave(claveFinal) || String(claveProducto);
+  if (claveLower.includes('cemento')) {
+      claveFinal = '01';
+      descripcion = 'Cemento canal 42.5kg';
+  } else if (claveLower.includes('caja') || claveLower.includes('arqueo')) {
+      claveFinal = 'CCH';
+      descripcion = 'Caja chica';
+  }
 
     let diferencia =
       (parseFloat(cantidadFisico) || 0) -
