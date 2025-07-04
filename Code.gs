@@ -308,17 +308,16 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
         Logger.log('   - Entrando en el caso: "registrarEgresoCaja"');
         return registrarMovimientoCaja('Egreso', functionArgs.monto, functionArgs.concepto, userId);
 
-      // Si `registrarConteo` y `generarResumenAdmin` se usaran en `ejecutarHerramienta`, también deberían ir aquí.
-      // Por ahora, asumo que `registrarConteo` es llamada directamente desde el frontend del modal.
       case 'registrarConteo':
-         Logger.log('   - Entrando en el caso: "registrarConteo" (Esta función típicamente se llama directo del frontend).');
-         // Asume que los argumentos para registrarConteo son un array de conteos.
-         // Esta parte puede requerir ajuste dependiendo de cómo se pase el payload del conteo.
-         if (functionArgs.conteos && Array.isArray(functionArgs.conteos)) {
-             return registrarMultiplesConteos(functionArgs.conteos, userId);
-         } else {
-             throw new Error('Argumentos inválidos para registrarConteo.');
-         }
+        Logger.log('   - Entrando en el caso: "registrarConteo"');
+        return registrarConteo(
+          functionArgs.claveProducto,
+          functionArgs.cantidadSistema,
+          functionArgs.cantidadFisico,
+          functionArgs.cpi,
+          functionArgs.vpe,
+          functionArgs.observacion
+        );
 
       case 'generarResumenAdmin':
          Logger.log('   - Entrando en el caso: "generarResumenAdmin".');

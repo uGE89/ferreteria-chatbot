@@ -226,6 +226,58 @@ function registrarMultiplesConteos(conteos, userId) {
 }
 
 /**
+ * Registra un conteo individual de inventario en la hoja 'Conteos'.
+ * Mapea nombres comunes de productos a claves específicas antes de registrar.
+ * @param {string} claveProducto - La clave o descripción del producto.
+ * @param {number} cantidadSistema - Cantidad existente en el sistema.
+ * @param {number} cantidadFisico - Cantidad contada físicamente.
+ * @param {number} cpi - Compras pendientes de ingreso.
+ * @param {number} vpe - Ventas pendientes de entrega.
+ * @param {string} observacion - Observaciones o justificación de la diferencia.
+ * @returns {string} Mensaje de confirmación.
+ */
+function registrarConteo(claveProducto, cantidadSistema, cantidadFisico, cpi, vpe, observacion) {
+  try {
+    const nowFormatted = getFormattedTimestamp();
+
+    // Normaliza y mapea descripciones a claves conocidas
+    const claveLower = String(claveProducto).toLowerCase();
+    let claveFinal = claveProducto;
+    if (claveLower.includes('cemento')) {
+      claveFinal = '01';
+    } else if (claveLower.includes('caja')) {
+      claveFinal = 'CCH';
+    }
+
+    const diferencia =
+      (parseFloat(cantidadFisico) || 0) -
+      (parseFloat(cantidadSistema) || 0) -
+      (parseFloat(cpi) || 0) -
+      (parseFloat(vpe) || 0);
+
+    const conteoId = `CONTEO-${new Date().getTime()}-${Math.floor(Math.random() * 1000)}`;
+
+    appendRowToSheet(SHEET_NAMES.CONTEOS, {
+      ID_Conteo: conteoId,
+      Fecha: nowFormatted.split(' ')[0],
+      Hora: nowFormatted.split(' ')[1],
+      ClaveProducto: "'" + String(claveFinal),
+      CantidadSistema: cantidadSistema,
+      CantidadFisico: cantidadFisico,
+      CPI: cpi,
+      VPE: vpe,
+      Diferencia: diferencia,
+      Observacion: observacion || ''
+    });
+
+    return `Conteo registrado para el producto ${claveFinal}.`;
+  } catch (e) {
+    logError('Toolbox', 'registrarConteo', e.message, e.stack, JSON.stringify({ claveProducto, cantidadSistema, cantidadFisico, cpi, vpe, observacion }));
+    throw new Error(`Error al registrar conteo: ${e.message}`);
+  }
+}
+
+/**
  * Envía una respuesta de un administrador a un mensaje específico.
  * Se ha modificado para recibir el adminUserId del frontend.
  * @param {string} destinoSesion - ID de la sesión del mensaje original.
