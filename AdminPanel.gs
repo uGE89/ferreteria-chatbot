@@ -115,15 +115,16 @@ function obtenerMovimientosDeCaja() {
 
     Logger.log('Paso 2: Mapeando y estandarizando ítems de Caja...');
     const itemsCaja = movimientosCaja.map(m => {
-      const fechaObj = parseSafeDate(m.FechaHoraSolicitud); // Asumo que la columna de fecha en MovimientosPendientes se llama FechaHoraSolicitud
+      const fechaObj = parseSafeDate(`${m.FechaSolicitud} ${m.HoraSolicitud}`);
       const item = {
         id: m.ID_Movimiento,
-        tipo: 'Caja', // Tipo fijo
-        fecha: fechaObj ? fechaObj.toISOString() : null, // Convertir a ISO String para envío al frontend
+        tipo: 'Caja',
+        fecha: fechaObj ? fechaObj.toISOString() : null,
         usuario: m.UsuarioSolicitanteID,
         asunto: m.Concepto,
         detalle: `Tipo: ${m.Tipo} - Monto: $${m.Monto}`,
-        estado: m.Estado
+        estado: m.Estado,
+        sucursal: m.Sucursal
       };
       return item;
     });

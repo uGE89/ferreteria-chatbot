@@ -125,16 +125,25 @@ function registrarMovimientoCaja(tipo, monto, concepto, userId) {
   try {
     const spreadsheet = SpreadsheetApp.openById(ID_HOJA_PUENTE);
     const sheet = spreadsheet.getSheetByName(SHEET_NAMES.MOVIMIENTOS_PENDIENTES);
-    const movimientoId = `MOV-${new Date().getTime()}-${Math.floor(Math.random() * 1000)}`;
+    const movimientoId = `MOV-${Date.now()}`; // ID simplificado
+
+    const userProfile = obtenerDetallesDeUsuario(userId);
+    const sucursal = userProfile ? userProfile.Sucursal : '';
+
+    const nowFormatted = getFormattedTimestamp();
+    const fecha = nowFormatted.split(' ')[0];
+    const hora = nowFormatted.split(' ')[1];
 
     sheet.appendRow([
       movimientoId, // ID_Movimiento
-      getFormattedTimestamp(), // FechaHoraSolicitud
+      fecha, // FechaSolicitud
+      hora, // HoraSolicitud
       userId, // UsuarioSolicitanteID
       tipo, // Tipo (será 'Ingreso' o 'Egreso')
       monto, // Monto
       concepto, // Concepto
       'Pendiente', // Estado
+      sucursal, // Sucursal del usuario solicitante
       '', // FechaAprobacion (vacío)
       ''  // UsuarioAprobadorID (vacío)
     ]);
