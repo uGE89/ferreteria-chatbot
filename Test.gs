@@ -32,6 +32,7 @@ function testSuiteBackend() {
     testHerramientasAI();
     testLoginAndChatLogic();
     testAdminPanelLogic();
+    testRegistrarConteoAlias();
     testSimulacionLlamadaAI();
 
     Logger.log('\n==============================================');
@@ -208,8 +209,26 @@ function testAdminPanelLogic() {
   try {
     Logger.log('   - Probando: registrarMultiplesConteos()...');
     const conteosDePrueba = [
-      { clave: "P001", producto: "Producto A", sistema: 10, fisico: 9, observacion: "Faltante en prueba" },
-      { clave: "P002", producto: "Producto B", sistema: 5, fisico: 5, observacion: "" }
+      {
+        clave: 'P001',
+        descripcion: 'Producto A',
+        stockSistema: 10,
+        stockFisico: 9,
+        cpi: 0,
+        vpe: 0,
+        razon: 'Ajuste de prueba',
+        observacion: 'Faltante en prueba'
+      },
+      {
+        clave: 'P002',
+        descripcion: 'Producto B',
+        stockSistema: 5,
+        stockFisico: 5,
+        cpi: 0,
+        vpe: 0,
+        razon: '',
+        observacion: ''
+      }
     ];
     const resultadoConteos = registrarMultiplesConteos(conteosDePrueba, TEST_ADMIN_USER_ID);
     Logger.log(`     ✅ Éxito. Respuesta: "${resultadoConteos}"`);
@@ -247,6 +266,29 @@ function testSimulacionLlamadaAI() {
     Logger.log(`❌ ERROR en testSimulacionLlamadaAI: ${e.message}`);
   }
   Logger.log('--- [Fin Prueba 5] ---\n');
+}
+
+/**
+ * PRUEBA 6: Verifica registrarConteo con alias y cálculo de diferencia.
+ */
+function testRegistrarConteoAlias() {
+  Logger.log('--- [Prueba 6: registrarConteo con alias y diferencia] ---');
+  try {
+    Logger.log('   - Probando: registrarConteo() con descripción "Cemento gris"...');
+    const respuesta = registrarConteo('Cemento gris', 20, 18, 1, 0, 'Prueba alias');
+    Logger.log(`     Respuesta: ${respuesta}`);
+    const registros = getSheetData(SHEET_NAMES.CONTEOS);
+    const ultimo = registros[registros.length - 1];
+    Logger.log(`     Último conteo registrado: ${JSON.stringify(ultimo, null, 2)}`);
+    const aliasOk = ultimo.ClaveProducto === "'01";
+    const diffEsperada = 18 - 20 - 1 - 0;
+    const diffOk = parseFloat(ultimo.Diferencia) === diffEsperada;
+    Logger.log(aliasOk ? '     ✅ Alias manejado correctamente.' : `     ❌ Alias incorrecto: ${ultimo.ClaveProducto}`);
+    Logger.log(diffOk ? '     ✅ Diferencia calculada correctamente.' : `     ❌ Diferencia incorrecta: ${ultimo.Diferencia}`);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testRegistrarConteoAlias: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 6] ---\n');
 }
 
 /**
