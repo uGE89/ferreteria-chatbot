@@ -65,6 +65,8 @@ Cuando el primer mensaje del día sea "__inicio" o similar, saludá con este ún
 - La confirmación es obligatoria por la importancia de los números. Siempre preguntá: *¿Confirmás que contaste X en físico y el sistema dice Y?*
 - **¡ATENCIÓN A LAS JUSTIFICACIONES!** Si el usuario da una razón para la diferencia en el mismo mensaje (ej: *...sobra por falta de ingreso de factura, ...la diferencia es la limosna*), DEBES capturar esa información en el parámetro \`observacion\` de la función.
 
+- Si alguien intenta registrar un conteo escribiendo directamente en el chat, indicale que use el botón “Registrar Conteos” para abrir el formulario y evitar errores.
+- Si tiene dudas, mostrále la "Guía de Usuario: Nuevo Módulo de Registro de Conteo de Inventario".
 ### Para Problemas y Sugerencias (registrarProblema, registrarSugerencia)
 - Sé más rápido y directo. En cuanto tengas el tema y el detalle, invoca la función directamente.
 - **NO pidas una confirmación extra.** Después de llamar la función, simplemente informa al usuario lo que hiciste.
@@ -88,6 +90,59 @@ Tu objetivo es que los registros en la hoja de Tareas sean accionables. Un "tema
 - **Límites de Autoridad:** No podés autorizar permisos, vacaciones, renuncias o aumentos. Si te lo piden, respondé: *Eso lo tiene que autorizar directamente Carlos o el supervisor de turno. Podés dejar el motivo aquí y yo se lo paso.*
 - **Temas Personales:** Si el usuario expresa problemas personales, mostrá empatía pero mantené tu rol. Responde: *Lamento escuchar eso. Recordá que soy un asistente para tareas de la ferretería. Si necesitás apoyo, es bueno hablarlo con alguien de confianza.*
 `.trim();
+
+const GUIA_USUARIO_CONTEO = `
+Guía de Usuario: Nuevo Módulo de Registro de Conteo de Inventario
+Anuncio Importante para todo el personal:
+Para mejorar la precisión y el orden en nuestro control de inventario, el método de registro ha sido actualizado.
+
+A partir de ahora, el registro de conteo a través del chat ya no está disponible. Todos los conteos deben realizarse exclusivamente a través del formulario dedicado para trabajar de forma más precisa y ordenada.
+
+¿Cómo usar el nuevo módulo de conteo?
+1. Acceso al Módulo
+En la pantalla principal, dentro de los "Iniciadores rápidos", encontrarás un botón para esta función. Al presionarlo, se abrirá la nueva pantalla de registro.
+
+2. Buscar Artículos
+Barra de Búsqueda: Para encontrar un producto, simplemente escribe su nombre o clave en la barra de búsqueda superior y presiona Enter.
+
+Filtros:
+
+Conteos hoy: Muestra una lista sugerida de artículos para contar durante el día. Esta lista puede variar diariamente.
+
+Todos: Muestra el catálogo completo de artículos.
+
+3. Entendiendo la Tabla de Conteo
+Una vez que buscas un artículo, verás varias columnas. Es crucial que entiendas qué significa cada una:
+
+Sistema: Es la cantidad de unidades que teóricamente existen en el sistema. Este campo se puede editar si es necesario.
+
+Físico: Aquí debes registrar las unidades que contaste físicamente en la bodega o estante.
+
+CPI (Compras Pendientes de Ingreso): Anota aquí los productos que ya recibiste pero que aún no han sido ingresados al inventario del sistema (ej. una compra o traspaso pendiente).
+
+VPE (Venta Pendiente de Entrega): Utilízalo para productos que ya fueron vendidos pero que el cliente aún no ha retirado.
+
+Diferencia: Esta columna se calcula sola y te muestra si hay un sobrante o faltante.
+
+Razón: Si existe una diferencia, selecciona aquí la causa que mejor la explique. Puedes dejarlo en blanco si lo desconoces.
+
+4. Guardar tu Trabajo
+Cuando hayas terminado de ingresar los datos de uno o varios artículos, haz clic en el botón verde "Registrar Conteos Completados" en la parte inferior.
+
+Aparecerá un mensaje para que confirmes la acción antes de guardar definitivamente.
+
+Puntos Clave a Recordar
+No pierdes tu progreso: Si ya ingresaste conteos para un artículo y luego buscas otro, los datos del primero se mantienen en memoria hasta que decidas guardarlos.
+
+Limpiar una fila: Si te equivocaste, puedes limpiar todos los campos que escribiste en una fila usando el ícono de flecha circular a la derecha.
+
+Cerrar sin guardar: Si intentas cerrar el módulo con cambios pendientes, el sistema te mostrará una advertencia. Si no deseas registrar los cambios, simplemente selecciona la opción para cerrar.
+
+Artículos nuevos: La base de datos de artículos se actualiza manualmente. Si un producto es muy reciente, es posible que no aparezca en la lista de inmediato.
+
+¿Para qué sirve el chat ahora?
+El chat sigue siendo tu asistente principal para consultas rápidas, reportar problemas, hacer sugerencias o solicitar tareas. Aunque no tenga todas las respuestas, cada pregunta que haces nos ayuda a entrenarlo para que sea más útil en el futuro.
+`;
 
 
 // =================================================================
