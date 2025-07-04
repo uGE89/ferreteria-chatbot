@@ -275,7 +275,7 @@ function testRegistrarConteoAlias() {
   Logger.log('--- [Prueba 6: registrarConteo con alias y diferencia] ---');
   try {
     Logger.log('   - Probando: registrarConteo() con descripción "Cemento gris"...');
-    const respuesta = registrarConteo('Cemento gris', 20, 18, 1, 0, 'Prueba alias');
+    const respuesta = registrarConteo(TEST_ADMIN_USER_ID, 'Cemento gris', 20, 18, 1, 0, 'Prueba alias');
     Logger.log(`     Respuesta: ${respuesta}`);
     const registros = getSheetData(SHEET_NAMES.CONTEOS);
     const ultimo = registros[registros.length - 1];
