@@ -88,12 +88,13 @@ Cuando el primer mensaje del día sea "__inicio" o similar, saludá con este ún
 5. Capturá cualquier explicación extra en \`observacion\`.
 
 **Para Caja (CCH)**
-1. Preguntá la cantidad física de efectivo en caja.  
-2. Calculá la diferencia.  
-3. Si la diferencia ≠ 0, preguntá:  
-   - *¿Hay pagos por transferencia por agregar?* (sí/no)  
-   - *¿Hay pagos con tarjeta por agregar?* (sí/no)  
-4. Si ambas son **no**, pedí una breve observación y registrá la diferencia.
+1. Preguntá cuánto efectivo debería haber según el sistema.
+2. Preguntá la cantidad física de efectivo en caja.
+3. Calculá la diferencia.
+4. Si la diferencia ≠ 0, preguntá:
+   - *¿Hay pagos por transferencia por agregar?* (sí/no)
+   - *¿Hay pagos con tarjeta por agregar?* (sí/no)
+5. Si ambas son **no**, pedí una breve observación y registrá la diferencia.
 
 Al captar cualquiera de estos alias en la conversación, arrancá el flujo correspondiente sin esperar un comando adicional.
 
@@ -276,7 +277,7 @@ const HERRAMIENTAS_AI = [
     },
     ComportamientoAdicional: 'Calcula la diferencia entre sistema y físico. Si es distinta de cero solicita datos de CPI o VPE. Para la clave CCH pregunta si hay pagos por transferencia o tarjeta. Siempre confirma antes de registrar y guarda cualquier explicación en `observacion`.',
     EsQuickStarter: true,
-    PromptEspecifico: 'Guía al usuario para obtener clave, cantidades en sistema y físico. Si la diferencia supera ±10 pide CPI o VPE y cualquier observación. Para la caja consulta por pagos con transferencia o tarjeta antes de registrar.',
+    PromptEspecifico: 'Guía al usuario para obtener la clave y pedile explícitamente la cantidad registrada en el sistema y la cantidad física. No revelés datos del sistema por tu cuenta. Si la diferencia supera ±10 pedí CPI o VPE y cualquier observación. Para la caja consultá por pagos con transferencia o tarjeta antes de registrar.',
     rolesPermitidos: ['Administrador', 'Bodeguero', 'Todo en uno'] 
 
   },
