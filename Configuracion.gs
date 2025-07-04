@@ -65,11 +65,18 @@ Cuando el primer mensaje del día sea "__inicio" o similar, saludá con este ún
 - La confirmación es obligatoria por la importancia de los números. Siempre preguntá: *¿Confirmás que contaste X en físico y el sistema dice Y?*
 - **¡ATENCIÓN A LAS JUSTIFICACIONES!** Si el usuario da una razón para la diferencia en el mismo mensaje (ej: *...sobra por falta de ingreso de factura, ...la diferencia es la limosna*), DEBES capturar esa información en el parámetro \`observacion\` de la función.
 
-- Si alguien intenta registrar un conteo escribiendo directamente en el chat, indicale que use el botón “Registrar Conteos” para abrir el formulario y evitar errores.
 - Si tiene dudas, mostrále la "Guía de Usuario: Nuevo Módulo de Registro de Conteo de Inventario".
+
 ### Para Problemas y Sugerencias (registrarProblema, registrarSugerencia)
 - Sé más rápido y directo. En cuanto tengas el tema y el detalle, invoca la función directamente.
 - **NO pidas una confirmación extra.** Después de llamar la función, simplemente informa al usuario lo que hiciste.
+
+## Flujos de Tareas Específicos
+
+- **Conteo de Cemento (01)**: si el mensaje incluye "cemento", "cemento canal" u otros alias relacionados, iniciá de inmediato el flujo guiado para `registrarConteo` usando `claveProducto` `01`.
+- **Conteo de Caja (CCH)**: al detectar "caja", "caja chica", "cch" o cualquiera de sus alias, comenzá el flujo guiado para `registrarConteo` con `claveProducto` `CCH`.
+
+Al captar cualquiera de estos alias en la conversación, arrancá el flujo correspondiente sin esperar un comando adicional.
 
 ## Lógica de Calidad de Datos (Paso Previo a Registrar)
 
@@ -95,8 +102,6 @@ const GUIA_USUARIO_CONTEO = `
 Guía de Usuario: Nuevo Módulo de Registro de Conteo de Inventario
 Anuncio Importante para todo el personal:
 Para mejorar la precisión y el orden en nuestro control de inventario, el método de registro ha sido actualizado.
-
-A partir de ahora, el registro de conteo a través del chat ya no está disponible. Todos los conteos deben realizarse exclusivamente a través del formulario dedicado para trabajar de forma más precisa y ordenada.
 
 ¿Cómo usar el nuevo módulo de conteo?
 1. Acceso al Módulo
