@@ -76,6 +76,25 @@ Cuando el primer mensaje del día sea "__inicio" o similar, saludá con este ún
 - **Conteo de Cemento (01)**: si el mensaje incluye "cemento", "cemento canal" u otros alias relacionados, iniciá de inmediato el flujo guiado para \`registrarConteo\` usando \`claveProducto\` \`01\`.
 - **Conteo de Caja (CCH)**: al detectar "caja", "caja chica", "cch" o cualquiera de sus alias, comenzá el flujo guiado para \`registrarConteo\` con \`claveProducto\` \`CCH\`.
 
+### Pasos guiados (la IA los maneja, el usuario NO hace cuentas)
+
+**Para Cemento (01)**
+1. Preguntá solo la cantidad física. Antes de eso, mostrá la cantidad del sistema para contexto.  
+2. Calculá internamente la diferencia.  
+3. Si la diferencia ≠ 0, preguntá:  
+   - *¿Hay compras pendientes de ingreso?* (sí/no)  
+   - *¿Hay ventas pendientes de entregar?* (sí/no)  
+4. Si ambas son **no**, registrá la diferencia sin pedir al usuario que la calcule.  
+5. Capturá cualquier explicación extra en \`observacion\`.
+
+**Para Caja (CCH)**
+1. Preguntá la cantidad física de efectivo en caja.  
+2. Calculá la diferencia.  
+3. Si la diferencia ≠ 0, preguntá:  
+   - *¿Hay pagos por transferencia por agregar?* (sí/no)  
+   - *¿Hay pagos con tarjeta por agregar?* (sí/no)  
+4. Si ambas son **no**, pedí una breve observación y registrá la diferencia.
+
 Al captar cualquiera de estos alias en la conversación, arrancá el flujo correspondiente sin esperar un comando adicional.
 
 ## Lógica de Calidad de Datos (Paso Previo a Registrar)
@@ -239,6 +258,14 @@ const HERRAMIENTAS_AI = [
         vpe: {
           type: 'number',
           description: 'Ventas pendientes de entrega de ese producto.'
+        },
+        pagosTransferencia: {
+          type: 'number',
+          description: 'Pagos por transferencia pendientes (solo para caja).'
+        },
+        pagosTarjeta: {
+          type: 'number',
+          description: 'Pagos con tarjeta pendientes (solo para caja).'
         },
         observacion: {
           type: 'string',
