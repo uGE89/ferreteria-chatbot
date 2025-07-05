@@ -569,12 +569,34 @@ function resumenConteo(userId) {
  */
 function revisionMetaConteo(userId) {
   try {
+    // --- 1. CONFIGURACIÓN CENTRALIZADA DE REGLAS ---
+    // Aquí defines qué productos revisar y sus horarios. Fácil de modificar y añadir más.
+    const REGLAS_DE_CONTEO = {
+      '01': {
+        nombre: 'Cemento',
+        horarios: [
+          { etiqueta: 'matutino', limite: 620, tipo: 'antes_de' },
+          { etiqueta: 'mediodía', limite: 840, tipo: 'alrededor_de', tolerancia: 20 },
+          { etiqueta: 'vespertino', limite: 1080, tipo: 'antes_de' }
+        ]
+      },
+      'CCH': {
+        nombre: 'Caja Chica',
+        horarios: [
+          { etiqueta: 'matutino', limite: 620, tipo: 'antes_de' },
+          { etiqueta: 'mediodía', limite: 840, tipo: 'alrededor_de', tolerancia: 20 },
+          { etiqueta: 'vespertino', limite: 1080, tipo: 'antes_de' }
+        ]
+      }
+    };
+
+    // --- 2. OBTENCIÓN Y PREPARACIÓN DE DATOS ---
     const fechaRef = ultimaFecha();
-    if (!fechaRef) {
-      return 'No se encontró una fecha reciente de conteos.';
-    }
+    if (!fechaRef) return 'No se encontró una fecha reciente de conteos.';
 
     const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    const clavesARevisar = Object.keys(REGLAS_DE_CONTEO);
+
     const registros = getSheetData(SHEET_NAMES.CONTEOS).filter(r => {
       if (r.UsuarioID !== userId) return false;
       const f = parseSafeDate(r.Fecha);
@@ -582,55 +604,73 @@ function revisionMetaConteo(userId) {
       const fStr = Utilities.formatDate(f, tz, 'yyyy-MM-dd');
       if (fStr !== fechaRef) return false;
       const clave = String(r.ClaveProducto).replace(/^'/, '');
-      return clave === '01' || clave === 'CCH';
+      return clavesARevisar.includes(clave);
     });
 
-    const evaluar = clave => {
-      const nombre = clave === '01' ? 'cemento' : 'caja chica';
-      const tiempos = registros
-        .filter(r => String(r.ClaveProducto).replace(/^'/, '') === clave)
-        .map(r => parseSafeDate(`${r.Fecha} ${r.Hora}`))
-        .filter(d => d)
-        .sort((a, b) => a - b)
-        .map(d => d.getHours() * 60 + d.getMinutes());
+    // Agrupamos los tiempos de conteo por clave para fácil acceso
+    const tiemposPorClave = {};
+    registros.forEach(r => {
+      const clave = String(r.ClaveProducto).replace(/^'/, '');
+      if (!tiemposPorClave[clave]) {
+        tiemposPorClave[clave] = [];
+      }
+      const fechaHora = parseSafeDate(`${r.Fecha} ${r.Hora}`);
+      if (fechaHora) {
+        const minutosDelDia = fechaHora.getHours() * 60 + fechaHora.getMinutes();
+        tiemposPorClave[clave].push(minutosDelDia);
+      }
+    });
 
-      const mensajes = [];
+    // --- 3. EVALUACIÓN BASADA EN REGLAS Y GENERACIÓN DE RESULTADOS ---
+    const resultadosFinales = [];
+
+    for (const clave in REGLAS_DE_CONTEO) {
+      const regla = REGLAS_DE_CONTEO[clave];
+      const tiempos = (tiemposPorClave[clave] || []).sort((a, b) => a - b);
+      const mensajesDeError = [];
+
+      resultadosFinales.push(`\n--- Revisión de ${regla.nombre} ---`);
+
       if (tiempos.length === 0) {
-        mensajes.push(`No hay conteos de ${nombre}.`);
-        return mensajes;
-      }
-      if (tiempos.length > 3) {
-        mensajes.push(`Existen más de tres conteos de ${nombre}.`);
-      }
-      const limites = [620, 840, 1080];
-      const tolerancias = [0, 20, 0];
-      const etiquetas = ['matutino', 'mediodía', 'vespertino'];
-      for (let i = 0; i < 3; i++) {
-        const t = tiempos[i];
-        if (t === undefined) {
-          mensajes.push(`Falta conteo ${etiquetas[i]} de ${nombre}.`);
-        } else if (i === 1) {
-          if (Math.abs(t - limites[i]) > tolerancias[i]) {
-            mensajes.push(`Conteo ${etiquetas[i]} de ${nombre} fuera de hora.`);
+        mensajesDeError.push(`❌ No se encontró ningún conteo.`);
+      } else {
+        // Revisa cada horario definido en la regla
+        regla.horarios.forEach((horario, index) => {
+          const tiempoRealizado = tiempos[index];
+
+          if (tiempoRealizado === undefined) {
+            mensajesDeError.push(`⚠️ Falta el conteo ${horario.etiqueta}.`);
+            return;
           }
-        } else if (t > limites[i]) {
-          mensajes.push(`Conteo ${etiquetas[i]} de ${nombre} tardío.`);
+
+          if (horario.tipo === 'antes_de') {
+            if (tiempoRealizado > horario.limite) {
+              mensajesDeError.push(`⏱️ El conteo ${horario.etiqueta} fue tardío.`);
+            }
+          } else if (horario.tipo === 'alrededor_de') {
+            if (Math.abs(tiempoRealizado - horario.limite) > horario.tolerancia) {
+              mensajesDeError.push(`⏱️ El conteo ${horario.etiqueta} está fuera del horario permitido.`);
+            }
+          }
+        });
+
+        if (tiempos.length > regla.horarios.length) {
+          mensajesDeError.push(`⚠️ Se realizaron ${tiempos.length} conteos, más de los ${regla.horarios.length} esperados.`);
         }
       }
-      if (mensajes.length === 0) {
-        mensajes.push(`Meta de ${nombre} cumplida.`);
-      }
-      return mensajes;
-    };
 
-    const resultado = [
-      ...evaluar('01'),
-      ...evaluar('CCH')
-    ].join(' ');
-    return resultado;
+      if (mensajesDeError.length === 0) {
+        resultadosFinales.push(`✅ ¡Meta cumplida! Todos los conteos en orden.`);
+      } else {
+        resultadosFinales.push(...mensajesDeError);
+      }
+    }
+
+    return resultadosFinales.join('\n');
+
   } catch (e) {
     logError('Toolbox', 'revisionMetaConteo', e.message, e.stack, userId);
-    return `Error al revisar la meta: ${e.message}`;
+    return `Error al revisar la meta de conteo: ${e.message}`;
   }
 }
 
