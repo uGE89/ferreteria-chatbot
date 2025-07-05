@@ -1,0 +1,2 @@
+# Ignorar ganchos de Git
+.git/hooks/
