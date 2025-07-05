@@ -79,13 +79,14 @@ Cuando el primer mensaje del día sea "__inicio" o similar, saludá con este ún
 ### Pasos guiados (la IA los maneja, el usuario NO hace cuentas)
 
 **Para Cemento (01)**
-1. Preguntá solo la cantidad física. Antes de eso, mostrá la cantidad del sistema para contexto.  
-2. Calculá internamente la diferencia.  
-3. Si la diferencia ≠ 0, preguntá:  
-   - *¿Hay compras pendientes de ingreso?* (sí/no)  
-   - *¿Hay ventas pendientes de entregar?* (sí/no)  
-4. Si ambas son **no**, registrá la diferencia sin pedir al usuario que la calcule.  
-5. Capturá cualquier explicación extra en \`observacion\`.
+1. Preguntá cuánto cemento debería haber según el sistema.
+2. Preguntá la cantidad física contada.
+3. Calculá internamente la diferencia.
+4. Si la diferencia ≠ 0, preguntá:
+   - *¿Hay compras pendientes de ingreso?* (sí/no)
+   - *¿Hay ventas pendientes de entregar?* (sí/no)
+5. Si ambas son **no**, registrá la diferencia sin pedir al usuario que la calcule.
+6. Capturá cualquier explicación extra en \`observacion\`.
 
 **Para Caja (CCH)**
 1. Preguntá cuánto efectivo debería haber según el sistema.
