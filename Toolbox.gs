@@ -525,3 +525,77 @@ function resumenConteo(userId) {
     return `Error al generar el resumen: ${e.message}`;
   }
 }
+
+/**
+ * Revisa si el usuario cumplió la meta diaria de conteos.
+ * Se evalúan las claves 01 y CCH en la fecha más reciente.
+ * @param {string} userId - ID del usuario.
+ * @returns {string} Mensaje sobre el estado de los conteos.
+ */
+function revisionMetaConteo(userId) {
+  try {
+    const fechaRef = ultimaFecha();
+    if (!fechaRef) {
+      return 'No se encontró una fecha reciente de conteos.';
+    }
+
+    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    const registros = getSheetData(SHEET_NAMES.CONTEOS).filter(r => {
+      if (r.UsuarioID !== userId) return false;
+      const f = parseSafeDate(r.Fecha);
+      if (!f) return false;
+      const fStr = Utilities.formatDate(f, tz, 'yyyy-MM-dd');
+      if (fStr !== fechaRef) return false;
+      const clave = String(r.ClaveProducto).replace(/^'/, '');
+      return clave === '01' || clave === 'CCH';
+    });
+
+    const evaluar = clave => {
+      const nombre = clave === '01' ? 'cemento' : 'caja chica';
+      const tiempos = registros
+        .filter(r => String(r.ClaveProducto).replace(/^'/, '') === clave)
+        .map(r => parseSafeDate(`${r.Fecha} ${r.Hora}`))
+        .filter(d => d)
+        .sort((a, b) => a - b)
+        .map(d => d.getHours() * 60 + d.getMinutes());
+
+      const mensajes = [];
+      if (tiempos.length === 0) {
+        mensajes.push(`No hay conteos de ${nombre}.`);
+        return mensajes;
+      }
+      if (tiempos.length > 3) {
+        mensajes.push(`Existen más de tres conteos de ${nombre}.`);
+      }
+      const limites = [620, 840, 1080];
+      const tolerancias = [0, 20, 0];
+      const etiquetas = ['matutino', 'mediodía', 'vespertino'];
+      for (let i = 0; i < 3; i++) {
+        const t = tiempos[i];
+        if (t === undefined) {
+          mensajes.push(`Falta conteo ${etiquetas[i]} de ${nombre}.`);
+        } else if (i === 1) {
+          if (Math.abs(t - limites[i]) > tolerancias[i]) {
+            mensajes.push(`Conteo ${etiquetas[i]} de ${nombre} fuera de hora.`);
+          }
+        } else if (t > limites[i]) {
+          mensajes.push(`Conteo ${etiquetas[i]} de ${nombre} tardío.`);
+        }
+      }
+      if (mensajes.length === 0) {
+        mensajes.push(`Meta de ${nombre} cumplida.`);
+      }
+      return mensajes;
+    };
+
+    const resultado = [
+      ...evaluar('01'),
+      ...evaluar('CCH')
+    ].join(' ');
+    return resultado;
+  } catch (e) {
+    logError('Toolbox', 'revisionMetaConteo', e.message, e.stack, userId);
+    return `Error al revisar la meta: ${e.message}`;
+  }
+}
+
