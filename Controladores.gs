@@ -45,7 +45,7 @@ function cargarDatosIniciales(userId, pin) {
     const rolUsuario = perfil.Rol;
     const sessionId = 'SESS-' + Date.now() + '-' + Utilities.getUuid().substring(0, 8);
 
-    appendRowToSheet('SesionesChat', {
+    appendRowToSheet(SHEET_NAMES.SESIONES, {
       SesionID: sessionId,
       UsuarioID: perfil.UsuarioID,
       FechaInicio: getFormattedTimestamp(),
