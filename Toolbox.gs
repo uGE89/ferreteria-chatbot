@@ -347,3 +347,39 @@ function enviarMensajeAdministrador(destinoSesion, destinoUsuarioId, contenido, 
     throw new Error(`Error al enviar mensaje: ${e.message}`);
   }
 }
+
+/**
+ * Devuelve la fecha más reciente de la hoja 'Conteos'.
+ * @returns {string} Fecha en formato 'yyyy-MM-dd' o cadena vacía.
+ */
+function ultimaFecha() {
+  try {
+    const registros = getSheetData(SHEET_NAMES.CONTEOS);
+    if (!registros || registros.length === 0) {
+      return '';
+    }
+
+    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    let fechaMax = null;
+
+    registros.forEach(r => {
+      const texto = r.Fecha;
+      let fecha = parseSafeDate(texto);
+      if (!fecha) {
+        try {
+          fecha = Utilities.parseDate(texto, tz, 'dd/MM/yyyy');
+        } catch (e) {
+          fecha = null;
+        }
+      }
+      if (fecha && (!fechaMax || fecha.getTime() > fechaMax.getTime())) {
+        fechaMax = fecha;
+      }
+    });
+
+    return fechaMax ? Utilities.formatDate(fechaMax, tz, 'yyyy-MM-dd') : '';
+  } catch (e) {
+    logError('Toolbox', 'ultimaFecha', e.message, e.stack);
+    return '';
+  }
+}
