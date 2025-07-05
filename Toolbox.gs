@@ -361,25 +361,36 @@ function ultimaFecha() {
       return '';
     }
 
-    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
-    let fechaMax = null;
-
-    registros.forEach(r => {
-      const texto = r.Fecha;
-      let fecha = parseSafeDate(texto);
+    // Función interna para parsear fechas de forma segura
+    const parseDateRobust = (textoFecha) => {
+      if (!textoFecha) return null;
+      let fecha = parseSafeDate(textoFecha);
       if (!fecha) {
         try {
-          fecha = Utilities.parseDate(texto, tz, 'dd/MM/yyyy');
+          fecha = new Date(textoFecha.split('/').reverse().join('-'));
+          if (isNaN(fecha.getTime())) fecha = null;
         } catch (e) {
           fecha = null;
         }
       }
-      if (fecha && (!fechaMax || fecha.getTime() > fechaMax.getTime())) {
-        fechaMax = fecha;
-      }
-    });
+      return fecha;
+    };
 
-    return fechaMax ? Utilities.formatDate(fechaMax, tz, 'yyyy-MM-dd') : '';
+    // Usamos map y filter para procesar las fechas de forma más limpia
+    const fechasValidas = registros
+      .map(r => parseDateRobust(r.Fecha))
+      .filter(d => d);
+
+    if (fechasValidas.length === 0) {
+      return '';
+    }
+
+    // Encontramos el valor máximo usando Math.max sobre los timestamps
+    const fechaMax = new Date(Math.max(...fechasValidas.map(d => d.getTime())));
+
+    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    return Utilities.formatDate(fechaMax, tz, 'yyyy-MM-dd');
+
   } catch (e) {
     logError('Toolbox', 'ultimaFecha', e.message, e.stack);
     return '';
