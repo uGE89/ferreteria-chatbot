@@ -493,38 +493,68 @@ function resumenConteo(userId) {
     });
 
     if (registros.length === 0) {
-      return 'No hay conteos registrados para esa fecha.';
+      return `No tienes conteos registrados para la fecha ${fechaRef}.`;
     }
+
+    const diferenciasAgrupadas = {};
+    registros.forEach(r => {
+      const clave = String(r.ClaveProducto).replace(/^'/, '');
+      const descripcion = r.DescripcionProducto || '';
+      const diferencia = parseFloat(r.Diferencia) || 0;
+
+      if (diferencia === 0) return;
+
+      if (diferenciasAgrupadas[clave]) {
+        diferenciasAgrupadas[clave].total += diferencia;
+      } else {
+        diferenciasAgrupadas[clave] = {
+          total: diferencia,
+          descripcion: descripcion
+        };
+      }
+    });
 
     const sobrantes = [];
     const faltantes = [];
 
-    registros.forEach(r => {
-      const diff = parseFloat(r.Diferencia) || 0;
-      if (diff === 0) return;
-      const clave = String(r.ClaveProducto).replace(/^'/, '');
-      let texto = String(diff);
-      if (Math.abs(diff) > 1) {
-        texto = `*${texto}*`;
-      }
-      if (diff > 0) {
-        sobrantes.push(`${clave} (${texto})`);
-      } else {
-        faltantes.push(`${clave} (${texto})`);
-      }
-    });
+    for (const clave in diferenciasAgrupadas) {
+      const producto = diferenciasAgrupadas[clave];
+      const totalDiferencia = producto.total;
 
-    let resumen = `Fecha ${fechaRef}\n`;
+      if (totalDiferencia === 0) continue;
+
+      const nombreProducto = producto.descripcion || clave;
+      let textoDiferencia = String(totalDiferencia);
+
+      if (Math.abs(totalDiferencia) > 1) {
+        textoDiferencia = `*${textoDiferencia}*`;
+      }
+
+      if (totalDiferencia > 0) {
+        sobrantes.push(`${nombreProducto} (+${textoDiferencia})`);
+      } else {
+        faltantes.push(`${nombreProducto} (${textoDiferencia})`);
+      }
+    }
+
+    let resumen = `📝 *Resumen de Conteo del Día ${fechaRef}*\n\n`;
+
+    if (sobrantes.length === 0 && faltantes.length === 0) {
+      return `✅ *Resumen de Conteo del Día ${fechaRef}*\n\n¡Excelente! No se encontraron diferencias en tu conteo.`;
+    }
+
     if (sobrantes.length > 0) {
-      resumen += `Sobrantes: ${sobrantes.join(', ')}\n`;
+      resumen += `🟢 *Sobrantes:*\n${sobrantes.join('\n')}\n\n`;
     }
     if (faltantes.length > 0) {
-      resumen += `Faltantes: ${faltantes.join(', ')}`;
+      resumen += `🔴 *Faltantes:*\n${faltantes.join('\n')}`;
     }
+
     return resumen.trim();
+
   } catch (e) {
     logError('Toolbox', 'resumenConteo', e.message, e.stack, userId);
-    return `Error al generar el resumen: ${e.message}`;
+    return `Error al generar el resumen de conteo: ${e.message}`;
   }
 }
 
