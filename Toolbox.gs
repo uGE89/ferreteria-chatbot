@@ -118,10 +118,11 @@ const userName = userProfile ? userProfile.Nombre : 'Desconocido';
  * @param {string} tipo - El tipo de movimiento ('Ingreso' o 'Egreso').
  * @param {number} monto - La cantidad del dinero.
  * @param {string} concepto - La razón o descripción del movimiento.
+ * @param {string} contacto - Persona o entidad relacionada con el movimiento.
  * @param {string} userId - ID del usuario que solicita el movimiento.
  * @returns {string} Mensaje de confirmación.
  */
-function registrarMovimientoCaja(tipo, monto, concepto, userId) {
+function registrarMovimientoCaja(tipo, monto, concepto, contacto, userId) {
   try {
     const spreadsheet = SpreadsheetApp.openById(ID_HOJA_PUENTE);
     const sheet = spreadsheet.getSheetByName(SHEET_NAMES.MOVIMIENTOS_PENDIENTES);
@@ -142,16 +143,17 @@ function registrarMovimientoCaja(tipo, monto, concepto, userId) {
       tipo, // Tipo (será 'Ingreso' o 'Egreso')
       monto, // Monto
       concepto, // Concepto
+      contacto, // Contacto
       'Pendiente', // Estado
       sucursal, // Sucursal del usuario solicitante
       '', // FechaAprobacion (vacío)
       ''  // UsuarioAprobadorID (vacío)
     ]);
 
-    return `¡Solicitud registrada! Un supervisor debe aprobar el ${tipo.toLowerCase()} de $${monto} por "${concepto}".`;
+    return `¡Solicitud registrada! Un supervisor debe aprobar el ${tipo.toLowerCase()} de $${monto} para ${contacto} por "${concepto}".`;
 
   } catch (e) {
-    logError('Toolbox', 'registrarMovimientoCaja', e.message, e.stack, JSON.stringify({ tipo, monto, concepto, userId }));
+    logError('Toolbox', 'registrarMovimientoCaja', e.message, e.stack, JSON.stringify({ tipo, monto, concepto, contacto, userId }));
     throw new Error(`Error al registrar la solicitud de movimiento: ${e.message}`);
   }
 }

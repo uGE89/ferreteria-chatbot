@@ -111,7 +111,7 @@ function testLoginAndChatLogic() {
   // Prueba de registrarMovimientoCaja
   try {
     Logger.log('   - Probando: registrarMovimientoCaja() (ejecución directa).');
-    const resultadoMovimiento = registrarMovimientoCaja('Ingreso', 100.50, 'Ingreso de prueba desde test suite', TEST_NORMAL_USER_ID);
+    const resultadoMovimiento = registrarMovimientoCaja('Ingreso', 100.50, 'Ingreso de prueba desde test suite', 'Cliente Test', TEST_NORMAL_USER_ID);
     Logger.log(`     ✅ Éxito. Respuesta: "${resultadoMovimiento}"`);
   } catch (e) {
     Logger.log(`     ❌ ERROR en registrarMovimientoCaja: ${e.message}`);
