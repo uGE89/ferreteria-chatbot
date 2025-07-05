@@ -34,6 +34,7 @@ function testSuiteBackend() {
     testAdminPanelLogic();
     testRegistrarConteoAlias();
     testRegistrarConteoCaja();
+    testResumenChatUsuario();
     testSimulacionLlamadaAI();
 
     Logger.log('\n==============================================');
@@ -311,6 +312,20 @@ function testRegistrarConteoCaja() {
     Logger.log(`     ❌ ERROR en testRegistrarConteoCaja: ${e.message}`);
   }
   Logger.log('--- [Fin Prueba 7] ---\n');
+}
+
+/**
+ * PRUEBA 8: Invoca resumenChatUsuario y muestra el resumen.
+ */
+function testResumenChatUsuario() {
+  Logger.log('--- [Prueba 8: resumenChatUsuario] ---');
+  try {
+    const resumen = resumenChatUsuario(TEST_NORMAL_USER_ID);
+    Logger.log(`     Resumen obtenido: ${resumen}`);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testResumenChatUsuario: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 8] ---\n');
 }
 
 /**

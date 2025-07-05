@@ -383,3 +383,88 @@ function ultimaFecha() {
     return '';
   }
 }
+
+/**
+ * Genera un resumen corto del chat de un usuario en la fecha previa.
+ * Usa la fecha obtenida con ultimaFecha o la última sesión registrada.
+ * @param {string} userId - ID del usuario a resumir.
+ * @returns {string} Resumen generado por la IA o mensaje de error.
+ */
+function resumenChatUsuario(userId) {
+  try {
+    let fechaBase = ultimaFecha();
+    const sesiones = getSheetData(SHEET_NAMES.SESIONES).filter(s => s.UsuarioID === userId);
+    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+
+    if (!fechaBase) {
+      let fechaMax = null;
+      sesiones.forEach(s => {
+        const f = parseSafeDate(s.FechaInicio);
+        if (f && (!fechaMax || f.getTime() > fechaMax.getTime())) {
+          fechaMax = f;
+        }
+      });
+      if (fechaMax) {
+        fechaBase = Utilities.formatDate(fechaMax, tz, 'yyyy-MM-dd');
+      }
+    }
+
+    if (!fechaBase) {
+      return 'No se encontró historial para resumir.';
+    }
+
+    const sesionesFiltradas = sesiones.filter(s => {
+      const f = parseSafeDate(s.FechaInicio);
+      if (!f) return false;
+      const fStr = Utilities.formatDate(f, tz, 'yyyy-MM-dd');
+      return fStr === fechaBase;
+    });
+
+    let texto = '';
+    sesionesFiltradas.forEach(s => {
+      if (s.HistorialConversacion && s.HistorialConversacion.length > 2) {
+        try {
+          const hist = JSON.parse(s.HistorialConversacion);
+          hist.forEach(m => {
+            if (m.content) texto += m.content + '\n';
+          });
+        } catch (e) {
+          logError('Toolbox', 'resumenChatUsuario', 'Historial corrupto', e.stack, s.HistorialConversacion, userId);
+        }
+      }
+    });
+
+    if (texto.trim() === '') {
+      return 'No se encontró historial para resumir.';
+    }
+
+    const mensajes = [
+      { role: 'system', content: 'Resumí brevemente esta conversación.' },
+      { role: 'user', content: texto }
+    ];
+    const payload = {
+      model: MODELO_DEFAULT,
+      messages: mensajes,
+      temperature: TEMPERATURA_AI,
+      max_tokens: 150
+    };
+    const opciones = {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + OPENAI_API_KEY },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+    const respuesta = UrlFetchApp.fetch(OPENAI_API_URL, opciones);
+    const codigo = respuesta.getResponseCode();
+    if (codigo !== 200) {
+      logError('Toolbox', 'resumenChatUsuario', `Error API ${codigo}`, null, texto, userId);
+      return 'Error al generar el resumen.';
+    }
+    const json = JSON.parse(respuesta.getContentText());
+    return json.choices?.[0]?.message?.content || 'No se pudo obtener resumen.';
+  } catch (e) {
+    logError('Toolbox', 'resumenChatUsuario', e.message, e.stack, userId);
+    return `Error al generar el resumen: ${e.message}`;
+  }
+}
