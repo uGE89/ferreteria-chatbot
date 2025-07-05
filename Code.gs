@@ -302,11 +302,11 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
 
       case 'registrarIngresoCaja':
         Logger.log('   - Entrando en el caso: "registrarIngresoCaja"');
-        return registrarMovimientoCaja('Ingreso', functionArgs.monto, functionArgs.concepto, userId);
+        return registrarMovimientoCaja('Ingreso', functionArgs.monto, functionArgs.concepto, functionArgs.contacto, userId);
 
       case 'registrarEgresoCaja':
         Logger.log('   - Entrando en el caso: "registrarEgresoCaja"');
-        return registrarMovimientoCaja('Egreso', functionArgs.monto, functionArgs.concepto, userId);
+        return registrarMovimientoCaja('Egreso', functionArgs.monto, functionArgs.concepto, functionArgs.contacto, userId);
 
       case 'registrarConteo':
         Logger.log('   - Entrando en el caso: "registrarConteo"');

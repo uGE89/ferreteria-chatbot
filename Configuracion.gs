@@ -331,7 +331,11 @@ const HERRAMIENTAS_AI = [
         concepto: {
           type: 'string',
           description: "La razón o descripción breve del ingreso. Ej: 'Abono cliente Construcciones S.A.', 'Venta de contado tornillos'."
-        }
+        },
+      contacto: {
+        type: 'string',
+        description: 'Nombre de quien entrega o recibe el dinero.'
+      },
       },
       required: ['monto', 'concepto', 'contacto']
     },
@@ -358,7 +362,11 @@ const HERRAMIENTAS_AI = [
         concepto: {
           type: 'string',
           description: "La razón o descripción breve del gasto. Ej: 'Compra de papelería para oficina', 'Pago de almuerzo personal'."
-        }
+        },
+      contacto: {
+        type: 'string',
+        description: 'Nombre de quien entrega o recibe el dinero.'
+      },
       },
       required: ['monto', 'concepto', 'contacto']
     },
