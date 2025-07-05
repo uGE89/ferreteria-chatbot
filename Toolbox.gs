@@ -468,3 +468,60 @@ function resumenChatUsuario(userId) {
     return `Error al generar el resumen: ${e.message}`;
   }
 }
+
+/**
+ * Genera un resumen de sobrantes y faltantes del último conteo de un usuario.
+ * @param {string} userId - ID del usuario.
+ * @returns {string} Texto con las claves y diferencias encontradas.
+ */
+function resumenConteo(userId) {
+  try {
+    const fechaRef = ultimaFecha();
+    if (!fechaRef) {
+      return 'No se encontró una fecha reciente de conteos.';
+    }
+
+    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    const registros = getSheetData(SHEET_NAMES.CONTEOS).filter(r => {
+      if (r.UsuarioID !== userId) return false;
+      const f = parseSafeDate(r.Fecha);
+      if (!f) return false;
+      const fStr = Utilities.formatDate(f, tz, 'yyyy-MM-dd');
+      return fStr === fechaRef;
+    });
+
+    if (registros.length === 0) {
+      return 'No hay conteos registrados para esa fecha.';
+    }
+
+    const sobrantes = [];
+    const faltantes = [];
+
+    registros.forEach(r => {
+      const diff = parseFloat(r.Diferencia) || 0;
+      if (diff === 0) return;
+      const clave = String(r.ClaveProducto).replace(/^'/, '');
+      let texto = String(diff);
+      if (Math.abs(diff) > 1) {
+        texto = `*${texto}*`;
+      }
+      if (diff > 0) {
+        sobrantes.push(`${clave} (${texto})`);
+      } else {
+        faltantes.push(`${clave} (${texto})`);
+      }
+    });
+
+    let resumen = `Fecha ${fechaRef}\n`;
+    if (sobrantes.length > 0) {
+      resumen += `Sobrantes: ${sobrantes.join(', ')}\n`;
+    }
+    if (faltantes.length > 0) {
+      resumen += `Faltantes: ${faltantes.join(', ')}`;
+    }
+    return resumen.trim();
+  } catch (e) {
+    logError('Toolbox', 'resumenConteo', e.message, e.stack, userId);
+    return `Error al generar el resumen: ${e.message}`;
+  }
+}
