@@ -56,7 +56,7 @@ function cargarDatosIniciales(userId, pin) {
 
     const welcomeMessage = PROMPT_SISTEMA_GENERAL.split('\n').filter(line => line.includes('¡Hola!') || line.includes('•'));
     
-    const quickStarters = HERRAMIENTAS_AI
+  const quickStarters = HERRAMIENTAS_AI
       .filter(tool => tool.EsQuickStarter === true)
       .filter(tool => {
         const rolesPermitidos = Array.isArray(tool.rolesPermitidos) ? tool.rolesPermitidos : ['Todos'];
@@ -74,6 +74,24 @@ function cargarDatosIniciales(userId, pin) {
       mensajeAnuncio: welcomeMessage,
       quickStarters: quickStarters
     };
+
+    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    const today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+    const props = PropertiesService.getScriptProperties();
+    const propKey = 'LAST_DAILY_START_' + perfil.UsuarioID;
+    const lastStart = props.getProperty(propKey);
+    if (lastStart !== today) {
+      props.setProperty(propKey, today);
+      const resumenChat = resumenChatUsuario(perfil.UsuarioID);
+      const resumenInv = resumenConteo(perfil.UsuarioID);
+      const revision = revisionMetaConteo(perfil.UsuarioID);
+      responseData.mensajeAnuncio = [
+        ...welcomeMessage,
+        resumenChat,
+        resumenInv,
+        revision
+      ];
+    }
 
     return responseData;
 
