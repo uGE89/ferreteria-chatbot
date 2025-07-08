@@ -61,6 +61,23 @@ function getFormattedTimestamp() {
   return Utilities.formatDate(now, timezone, 'dd/MM/yyyy HH:mm:ss');
 }
 
+/**
+ * Limita un historial de mensajes al número máximo permitido.
+ * @param {Array<object>} historial - Lista de mensajes.
+ * @param {number} [limite=MAX_MENSAJES_HISTORIAL] - Cantidad máxima de mensajes.
+ * @param {string} [origen='Code'] - Módulo que llama la función.
+ * @param {string} [userId='N/A'] - ID del usuario relacionado.
+ * @returns {Array<object>} Historial recortado si fue necesario.
+ */
+function limitarHistorial(historial, limite = MAX_MENSAJES_HISTORIAL, origen = 'Code', userId = 'N/A') {
+  if (Array.isArray(historial) && historial.length > limite) {
+    const eliminados = historial.length - limite;
+    logError(origen, 'limitarHistorial', `Historial recortado (${eliminados} mensajes)`, '', '', userId);
+    return historial.slice(-limite);
+  }
+  return historial;
+}
+
 
 // --- LÓGICA DE NEGOCIO Y API DE IA ---
 
@@ -110,17 +127,19 @@ function enviarAOpenAI(sessionId, userId, payload) {
       chatHistory.push({ role: 'system', content: finalSystemPrompt });
     }
 
-    if (payload.texto) {
-      chatHistory.push({ role: 'user', content: payload.texto });
-    } else if (payload.tool_response) {
-      const toolResponse = payload.tool_response;
-      chatHistory.push({
-        role: 'tool',
-        tool_call_id: toolResponse.tool_call_id,
-        name: toolResponse.function_name,
-        content: toolResponse.result
-      });
-    }
+  if (payload.texto) {
+    chatHistory.push({ role: 'user', content: payload.texto });
+  } else if (payload.tool_response) {
+    const toolResponse = payload.tool_response;
+    chatHistory.push({
+      role: 'tool',
+      tool_call_id: toolResponse.tool_call_id,
+      name: toolResponse.function_name,
+      content: toolResponse.result
+    });
+  }
+
+    chatHistory = limitarHistorial(chatHistory, MAX_MENSAJES_HISTORIAL, 'Code', userId);
 
     const contextoRelevante = buscarContextoRelevante(payload.texto || '', userId);
     const historyForRequest = chatHistory.map(m => Object.assign({}, m));
@@ -169,6 +188,8 @@ function enviarAOpenAI(sessionId, userId, payload) {
     } else {
       throw new Error("La respuesta de la IA no tuvo un formato esperado.");
     }
+
+    chatHistory = limitarHistorial(chatHistory, MAX_MENSAJES_HISTORIAL, 'Code', userId);
 
     updateRowInSheet(SHEET_NAMES.SESIONES, 'SesionID', sessionId, {
       HistorialConversacion: JSON.stringify(chatHistory),
