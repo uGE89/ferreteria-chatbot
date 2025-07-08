@@ -122,11 +122,17 @@ function enviarAOpenAI(sessionId, userId, payload) {
       });
     }
 
+    const contextoRelevante = buscarContextoRelevante(payload.texto || '', userId);
+    const historyForRequest = chatHistory.map(m => Object.assign({}, m));
+    if (historyForRequest[0]) {
+      historyForRequest[0].content = (contextoRelevante ? contextoRelevante + '\n\n' : '') + historyForRequest[0].content;
+    }
+
     const tools = getAITools();
 
     const requestPayload = {
         model: MODELO_DEFAULT,
-        messages: chatHistory,
+        messages: historyForRequest,
         temperature: TEMPERATURA_AI,
         max_tokens: MAX_TOKENS_AI,
         tools: tools,
@@ -169,6 +175,14 @@ function enviarAOpenAI(sessionId, userId, payload) {
       UltimaActividad: getFormattedTimestamp()
     });
 
+    if ((chatHistory.length - 1) % 6 === 0) {
+      const bloque = chatHistory.slice(-6).map(m => m.content).join(' ');
+      const vec = generarEmbedding(bloque);
+      if (vec) {
+        almacenarVector(bloque, vec, userId);
+      }
+    }
+
     return aiResponse;
 
   } catch (e) {
@@ -191,7 +205,7 @@ function enviarAOpenAI(sessionId, userId, payload) {
 function buscarArticulo(query) {
   try {
     // 1. Leemos directamente de la hoja, sin caché.
-    const inventory = getSheetData(SHEET_NAMES.INVENTARIO); 
+    const inventory = getSheetData(SHEET_NAMES.INVENTARIO);
 
     if (!query || query.trim() === '') return [];
 
@@ -204,15 +218,15 @@ function buscarArticulo(query) {
         if (!item || !item.Descripcion) {
           return false;
         }
-        
+
         // 3. Construimos el texto de búsqueda de forma segura.
         const searchableText = `${item.Descripcion} ${item.Clave || ''}`.toLowerCase();
-        
+
         return searchTerms.every(term => searchableText.includes(term));
       })
       // Se mantiene el .map() porque el propósito de esta función es devolver solo las descripciones.
       .map(item => item.Descripcion);
-      
+
   } catch (e) {
     logError('Code', 'buscarArticulo', e.message, e.stack, query);
     return [];
@@ -368,7 +382,7 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
  */
 function getAITools() {
   Logger.log('--- Iniciando getAITools ---');
-  
+
   if (!HERRAMIENTAS_AI || HERRAMIENTAS_AI.length === 0) {
     Logger.log('Advertencia: La constante HERRAMIENTAS_AI está vacía o no definida. No se configurarán herramientas.');
     return [];
@@ -378,7 +392,7 @@ function getAITools() {
     Logger.log(`Procesando herramienta [${index}]: NombreFuncion: ${tool.NombreFuncion}`);
     Logger.log(`  Descripción: ${tool.Descripcion.substring(0, 50)}...`); // Log parcial para evitar truncamiento
     // No loguear el SchemaParametros completo si es muy grande, o si contiene datos sensibles.
-    // Logger.log(`  SchemaParametros: ${JSON.stringify(tool.SchemaParametros)}`); 
+    // Logger.log(`  SchemaParametros: ${JSON.stringify(tool.SchemaParametros)}`);
 
     return {
       type: "function",

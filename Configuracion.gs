@@ -8,6 +8,7 @@ const OPENAI_API_KEY = PropertiesService.getScriptProperties().getProperty('OPEN
 const MODELO_DEFAULT = 'gpt-4o-mini';
 const TEMPERATURA_AI = 0.7;
 const MAX_TOKENS_AI = 1500; // Aumentado ligeramente para dar más espacio a las respuestas
+const EMBEDDING_MODEL = 'text-embedding-3-small';
 
 
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
@@ -28,7 +29,8 @@ const SHEET_NAMES = {
   MOVIMIENTOS_PENDIENTES: 'MovimientosPendientes',
   CONFIGURACION_AI: 'ConfiguracionAI',
   PROMPTS_AI: 'PromptsAI',
-  HERRAMIENTAS_AI: 'HerramientasAI'
+  HERRAMIENTAS_AI: 'HerramientasAI',
+  MEMORIA_VECTORIAL: 'MemoriaVectorial'
 };
 
 
@@ -166,7 +168,7 @@ const HERRAMIENTAS_AI = [
     ComportamientoAdicional: 'Antes de llamar, asegúrate de que el asunto y el detalle sean específicos y accionables. Haz preguntas de seguimiento si la información es vaga.',
     EsQuickStarter: true,
     PromptEspecifico: 'Prompt específico para registrar problemas: Cuando el usuario diga "registrar problema", asegúrate de obtener el asunto y todos los detalles. Luego, informa al usuario que el problema ha sido registrado. NO pidas confirmación.',
-    rolesPermitidos: ['Todos'] 
+    rolesPermitidos: ['Todos']
 
   },
 
@@ -194,7 +196,7 @@ const HERRAMIENTAS_AI = [
     ComportamientoAdicional: 'Antes de llamar, asegúrate de que la sugerencia sea concreta y accionable. Haz preguntas de seguimiento si la idea es muy general.',
     EsQuickStarter: true,
     PromptEspecifico: 'Prompt específico para registrar sugerencias: Cuando el usuario diga "dejar una sugerencia", asegúrate de obtener el asunto y todos los detalles. Luego, informa al usuario que la sugerencia ha sido registrada. NO pidas confirmación.',
-    rolesPermitidos: ['Todos'] 
+    rolesPermitidos: ['Todos']
 
   },
 
@@ -246,7 +248,7 @@ const HERRAMIENTAS_AI = [
     ComportamientoAdicional: 'Calcula la diferencia entre sistema y físico. Si es distinta de cero solicita datos de CPI o VPE. Para la clave CCH pregunta si hay pagos por transferencia o tarjeta. Siempre confirma antes de registrar y guarda cualquier explicación en `observacion`.',
     EsQuickStarter: true,
     PromptEspecifico: 'Guía al usuario para obtener la clave y pedile explícitamente la cantidad registrada en el sistema y la cantidad física. No revelés datos del sistema por tu cuenta. Si la diferencia supera ±10 pedí CPI o VPE y cualquier observación. Para la caja consultá por pagos con transferencia o tarjeta antes de registrar.',
-    rolesPermitidos: ['Administrador', 'Bodeguero', 'Todo en uno'] 
+    rolesPermitidos: ['Administrador', 'Bodeguero', 'Todo en uno']
 
   },
 
@@ -278,7 +280,7 @@ const HERRAMIENTAS_AI = [
     ComportamientoAdicional: 'Ofrece crear una tarea pendiente cuando el usuario menciona acciones a futuro. NO pidas confirmación después de la creación.',
     EsQuickStarter: false,
     PromptEspecifico: 'Prompt específico para tareas: Cuando el usuario sugiera una acción a futuro, pregúntale si quiere que se registre como tarea pendiente. Recopila el título, descripción y, si es posible, una fecha límite.',
-    rolesPermitidos: ['Todos'] 
+    rolesPermitidos: ['Todos']
   },
 
   // ===============================================================
@@ -309,7 +311,7 @@ const HERRAMIENTAS_AI = [
     ComportamientoAdicional: '', // Sin comportamiento adicional específico para esta.
     EsQuickStarter: true,
     PromptEspecifico: 'Has determinado que el usuario quiere registrar un ingreso. Tu siguiente paso es pedirle el monto y el concepto de forma clara y directa, usando un tono amigable y servicial.',
-    rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno'] 
+    rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
   },
 
   // ===============================================================
@@ -340,7 +342,7 @@ const HERRAMIENTAS_AI = [
     ComportamientoAdicional: '', // Sin comportamiento adicional específico para esta.
     EsQuickStarter: true,
     PromptEspecifico: 'Has determinado que el usuario quiere registrar un gasto. Tu siguiente paso es pedirle el monto y el concepto del gasto. Sé directo y eficiente.',
-    rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno'] 
+    rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
 
   }
 ];
