@@ -92,7 +92,22 @@ function enviarAOpenAI(sessionId, userId, payload) {
     }
 
     if (chatHistory.length === 0) {
-      chatHistory.push({ role: 'system', content: PROMPT_SISTEMA_GENERAL });
+      const userProfile = getUserProfile(userId);
+      const roleDetails = getRoleDetails(userProfile.Rol);
+      const branchDetails = getBranchDetails(userProfile.Sucursal);
+
+      let finalSystemPrompt = PROMPT_SISTEMA_GENERAL
+        .replace('{userName}', userProfile.Nombre)
+        .replace('{userNotes}', userProfile.NotasAdicionales || 'N/A')
+        .replace('{userRole}', userProfile.Rol)
+        .replace('{roleDescription}', roleDetails.DescripcionGeneral || 'N/A')
+        .replace('{roleResponsibilities}', roleDetails.ResponsabilidadesClave || 'N/A')
+        .replace('{roleTools}', roleDetails.HerramientasComunes || 'N/A')
+        .replace('{userBranch}', userProfile.Sucursal)
+        .replace('{branchDescription}', branchDetails.Descripcion || 'N/A')
+        .replace('{branchGoals}', branchDetails.MetasActuales || 'N/A');
+
+      chatHistory.push({ role: 'system', content: finalSystemPrompt });
     }
 
     if (payload.texto) {
@@ -393,4 +408,26 @@ function getAITools() {
  * @param {object} producto - El objeto del producto con las propiedades 'Periodo' y 'Dia'.
  * @returns {boolean} - True si debe contarse hoy.
  */
+
+// --- FUNCIONES DE AYUDA PARA CONTEXTO ---
+
+function getUserProfile(userId) {
+  const profile = obtenerDetallesDeUsuario(userId) || {};
+  return {
+    Nombre: profile.Nombre || '',
+    Rol: profile.Rol || '',
+    Sucursal: profile.Sucursal || '',
+    NotasAdicionales: profile.NotasAdicionales || ''
+  };
+}
+
+function getRoleDetails(roleName) {
+  const rolesData = getSheetData(SHEET_NAMES.ROLES);
+  return rolesData.find(r => r.NombreRol === roleName) || {};
+}
+
+function getBranchDetails(branchName) {
+  const branchesData = getSheetData(SHEET_NAMES.SUCURSALES);
+  return branchesData.find(b => b.NombreSucursal === branchName) || {};
+}
 
