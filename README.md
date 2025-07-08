@@ -10,7 +10,7 @@ Este proyecto implementa un backend para una plataforma conversacional interna u
 - `AdminPanel.gs` – Utilidades específicas para el panel de administración.
 - `Toolbox.gs` – Funciones que la IA puede invocar (registrar problemas, sugerencias, conteos, etc.).
 - `DAL.gs` – Capa de acceso a datos para las hojas de cálculo.
-- `Memoria.gs` – Gestión de embeddings y búsqueda de contexto.
+- `Memoria.gs` – Gestión de memoria vectorial y búsqueda de contexto en la hoja `MemoriaVectorial`.
 - `Test.gs` – Suite de pruebas del backend.
 - `index.html` – Interfaz principal que se sirve con `doGet()`.
 - `conteo-modal.html` – Ventana modal usada para registrar conteos desde la interfaz.
@@ -20,7 +20,7 @@ La hoja `MemoriaVectorial` se utiliza para almacenar los embeddings de conversac
 ## Despliegue
 
 1. Crea un proyecto nuevo en [Google Apps Script](https://script.google.com/) y vincúlalo con la hoja de cálculo que actuará como base de datos. Los nombres de las hojas deben coincidir con los definidos en `SHEET_NAMES` dentro de `Configuracion.gs`.
-   Asegúrate de incluir una pestaña llamada `MemoriaVectorial`.
+   Asegúrate de incluir una pestaña llamada `MemoriaVectorial` con las columnas `VectorID`, `UserID`, `Timestamp`, `TextoOriginal` y `EmbeddingVector`.
 2. Copia todos los archivos `.gs` y `.html` de este repositorio en tu proyecto de Apps Script.
 3. Define una **propiedad de script** llamada `OPENAI_API_KEY` con tu clave de OpenAI.
 4. Ajusta el valor de `ID_HOJA_PUENTE` en `Configuracion.gs` para que apunte al ID de tu hoja principal.
