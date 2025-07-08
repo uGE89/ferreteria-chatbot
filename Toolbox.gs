@@ -173,10 +173,12 @@ function generarResumenAdmin() {
       return f && Utilities.formatDate(f, tz, 'yyyy-MM-dd') === today;
     });
 
-    const mensajes = getSheetData(SHEET_NAMES.MENSAJES).filter(m => {
+    let mensajes = getSheetData(SHEET_NAMES.MENSAJES).filter(m => {
       const f = parseSafeDate(m.FechaHora);
       return f && Utilities.formatDate(f, tz, 'yyyy-MM-dd') === today;
     });
+
+    mensajes = limitarHistorial(mensajes, MAX_MENSAJES_HISTORIAL, 'Toolbox');
 
     let listadoMensajes = '';
     mensajes.forEach(m => {
@@ -496,6 +498,8 @@ function resumenChatUsuario(userId) {
         }
       }
     });
+
+    conversationMessages = limitarHistorial(conversationMessages, MAX_MENSAJES_HISTORIAL, 'Toolbox', userId);
 
     if (conversationMessages.length === 0) {
       return 'No se encontró historial para resumir.';

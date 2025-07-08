@@ -13,6 +13,7 @@ const EMBEDDING_MODEL = 'text-embedding-3-small';
 
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 const ID_HOJA_PUENTE = '1nj2UfUPK5xQg6QI68j9ArLss-ptrlaN3PY8NMOr_Jhg';
+const MAX_MENSAJES_HISTORIAL = 40;
 
 // ===============================================================
 // ==== CENTRALIZACIÓN DE NOMBRES DE HOJAS ====
