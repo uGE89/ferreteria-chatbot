@@ -159,28 +159,80 @@ function registrarMovimientoCaja(tipo, monto, concepto, contacto, userId) {
 }
 
 /**
- * Genera un resumen diario para el administrador a partir de los datos de las hojas.
- * @returns {string} El resumen diario.
+ * Genera un resumen diario detallado para el administrador.
+ * Se recopilan los mensajes del día y se envían a la IA para un resumen.
+ * @returns {string} Resumen generado por la IA o mensaje de error.
  */
 function generarResumenAdmin() {
   try {
-    const today = Utilities.formatDate(new Date(), SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    const today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
 
-    const allConteos = getSheetData(SHEET_NAMES.CONTEOS);
-    const conteosHoy = allConteos.filter(c => Utilities.formatDate(new Date(c.Fecha), SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'yyyy-MM-dd') === today);
-    const numConteos = conteosHoy.length;
+    const conteos = getSheetData(SHEET_NAMES.CONTEOS).filter(c => {
+      const f = parseSafeDate(c.Fecha);
+      return f && Utilities.formatDate(f, tz, 'yyyy-MM-dd') === today;
+    });
 
-    const allMessages = getSheetData(SHEET_NAMES.MENSAJES);
-    const problemasPendientes = allMessages.filter(m => m.TipoMensaje === 'Problema' && m.Estado === 'Pendiente');
-    const sugerenciasPendientes = allMessages.filter(m => m.TipoMensaje === 'Sugerencia' && m.Estado === 'Pendiente');
-    const tareasPendientes = allMessages.filter(m => m.TipoMensaje === 'Tarea' && m.Estado === 'Pendiente');
+    const mensajes = getSheetData(SHEET_NAMES.MENSAJES).filter(m => {
+      const f = parseSafeDate(m.FechaHora);
+      return f && Utilities.formatDate(f, tz, 'yyyy-MM-dd') === today;
+    });
 
-    const resumen = `Resumen de Operaciones del día ${today}:\n\n` +
-                    `🛒 Conteos de Inventario: ${numConteos} registros completados.\n` +
-                    `⚠️ Problemas Pendientes: ${problemasPendientes.length} incidentes.\n` +
-                    `💡 Sugerencias Pendientes: ${sugerenciasPendientes.length} nuevas ideas.\n` +
-                    `📝 Tareas Pendientes: ${tareasPendientes.length} tareas por revisar.`;
-    return resumen;
+    let listadoMensajes = '';
+    mensajes.forEach(m => {
+      const hora = Utilities.formatDate(parseSafeDate(m.FechaHora), tz, 'HH:mm');
+      const perfil = obtenerDetallesDeUsuario(m.UsuarioRemitenteID) || {};
+      const area = perfil.Sucursal || perfil.Rol || '';
+      let linea = `${m.NombreRemitente} (${hora}`;
+      linea += area ? `, ${area}` : '';
+      linea += `): "${m.Detalle}"`;
+      if (m.Estado) linea += ` [${m.Estado}]`;
+      if (m.RespuestaAdmin) linea += ` Respuesta: ${m.RespuestaAdmin}`;
+      listadoMensajes += linea + '\n';
+    });
+
+    const resumenDatos =
+      `Conteos realizados: ${conteos.length}\n` +
+      `Problemas pendientes: ${mensajes.filter(m => m.TipoMensaje === 'Problema' && m.Estado === 'Pendiente').length}\n` +
+      `Sugerencias pendientes: ${mensajes.filter(m => m.TipoMensaje === 'Sugerencia' && m.Estado === 'Pendiente').length}\n` +
+      `Tareas pendientes: ${mensajes.filter(m => m.TipoMensaje === 'Tarea' && m.Estado === 'Pendiente').length}`;
+
+    const instrucciones =
+      'Eres el asistente virtual para el supervisor de Ferretería Flores. ' +
+      'Aquí están los reportes y sugerencias enviados hoy por el personal:\n\n' +
+      listadoMensajes +
+      '\nAdemás, estos fueron los conteos completados y tareas pendientes:\n' +
+      resumenDatos +
+      '\n\nPor favor, genera un resumen para el supervisor destacando:\n' +
+      '- Qué problemas y sugerencias se reportaron, quién los dijo y en qué área.\n' +
+      '- Acciones o seguimientos sugeridos.\n' +
+      '- Si hay reportes urgentes o repetidos.\n' +
+      'Un cierre breve y cordial.';
+
+    const payload = {
+      model: MODELO_DEFAULT,
+      messages: [
+        { role: 'system', content: instrucciones }
+      ],
+      temperature: TEMPERATURA_AI,
+      max_tokens: 200
+    };
+
+    const opciones = {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + OPENAI_API_KEY },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+
+    const respuesta = UrlFetchApp.fetch(OPENAI_API_URL, opciones);
+    if (respuesta.getResponseCode() !== 200) {
+      logError('Toolbox', 'generarResumenAdmin', `Error API ${respuesta.getResponseCode()}`, null);
+      return 'Error al generar el resumen.';
+    }
+    const json = JSON.parse(respuesta.getContentText());
+    return json.choices?.[0]?.message?.content || 'No se pudo obtener resumen.';
   } catch (e) {
     logError('Toolbox', 'generarResumenAdmin', e.message, e.stack);
     return `Error al generar resumen: ${e.message}`;
