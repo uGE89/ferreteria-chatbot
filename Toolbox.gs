@@ -485,30 +485,27 @@ function resumenChatUsuario(userId) {
       return fStr === fechaBase;
     });
 
-    let texto = '';
+    let conversationMessages = [];
     sesionesFiltradas.forEach(s => {
       if (s.HistorialConversacion && s.HistorialConversacion.length > 2) {
         try {
           const hist = JSON.parse(s.HistorialConversacion);
-          hist.forEach(m => {
-            if (m.content) texto += m.content + '\n';
-          });
+          conversationMessages.push(...hist.filter(m => m.role === 'user' || m.role === 'assistant'));
         } catch (e) {
           logError('Toolbox', 'resumenChatUsuario', 'Historial corrupto', e.stack, s.HistorialConversacion, userId);
         }
       }
     });
 
-    if (texto.trim() === '') {
+    if (conversationMessages.length === 0) {
       return 'No se encontró historial para resumir.';
     }
 
+    const systemPrompt = 'Eres un supervisor en "Ferretería Flores" en Nicaragua. Tu asistente virtual se llama "Carlos E. Flores". Al inicio de la jornada, estás haciendo un recuento con uno de tus trabajadores sobre las novedades que él reportó el día anterior a través de Carlos.\n\nTu tarea es resumir la conversación que te pasarán a continuación.\n\nInstrucciones:\n1. Empieza con un saludo matutino y casual (ej. "¡Buenas!", "¡Qué tal, oye...!").\n2. Dirígete al trabajador de "vos".\n3. Menciona que revisaste sus reportes con "Carlos".\n4. Resume de forma clara y concisa los puntos que él trató (problemas, conteos, sugerencias, solicitudes).\n5. Mantén un tono de jefe cercano pero profesional. No des soluciones ni autorizaciones, solo confirma que recibiste la información.\n6. Termina con una frase para cerrar el recuento (ej. "Ok, lo tengo presente.", "Gracias, lo revisamos en el día.")';
+
     const mensajes = [
-      {
-        role: 'system',
-        content: 'Eres un supervisor en "Ferretería Flores" en Nicaragua. Tu asistente virtual se llama "Carlos E. Flores". Al inicio de la jornada, estás haciendo un recuento con uno de tus trabajadores sobre las novedades que él reportó el día anterior a través de Carlos.\n\nTu tarea es resumir la conversación que te pasarán a continuación.\n\nInstrucciones:\n1. Empieza con un saludo matutino y casual (ej. "¡Buenas!", "¡Qué tal, oye...!").\n2. Dirígete al trabajador de "vos".\n3. Menciona que revisaste sus reportes con "Carlos".\n4. Resume de forma clara y concisa los puntos que él trató (problemas, conteos, sugerencias, solicitudes).\n5. Mantén un tono de jefe cercano pero profesional. No des soluciones ni autorizaciones, solo confirma que recibiste la información.\n6. Termina con una frase para cerrar el recuento (ej. "Ok, lo tengo presente.", "Gracias, lo revisamos en el día.")'
-      },
-      { role: 'user', content: texto }
+      { role: 'system', content: systemPrompt },
+      ...conversationMessages
     ];
     const payload = {
       model: MODELO_DEFAULT,
@@ -526,7 +523,7 @@ function resumenChatUsuario(userId) {
     const respuesta = UrlFetchApp.fetch(OPENAI_API_URL, opciones);
     const codigo = respuesta.getResponseCode();
     if (codigo !== 200) {
-      logError('Toolbox', 'resumenChatUsuario', `Error API ${codigo}`, null, texto, userId);
+      logError('Toolbox', 'resumenChatUsuario', `Error API ${codigo}`, null, JSON.stringify(conversationMessages), userId);
       return 'Error al generar el resumen.';
     }
     const json = JSON.parse(respuesta.getContentText());
