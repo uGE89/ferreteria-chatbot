@@ -32,3 +32,7 @@ La hoja `MemoriaVectorial` se utiliza para almacenar los embeddings de conversac
 2. Selecciona la función `testSuiteBackend` en el menú desplegable de la barra de herramientas y ejecútala.
 3. Revisa la salida en el registro de ejecuciones para verificar los resultados de cada prueba.
 
+## Errores comunes
+
+- **HTTP 429** – Generalmente indica que se alcanzó un límite de cuota o de tasa. El sistema realiza varios reintentos automáticos. Si el problema persiste, revisá la configuración de la clave y la cuota disponible en OpenAI.
+
