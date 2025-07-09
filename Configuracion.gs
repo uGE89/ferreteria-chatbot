@@ -9,6 +9,8 @@ const MODELO_DEFAULT = 'gpt-4o-mini';
 const TEMPERATURA_AI = 0.7;
 const MAX_TOKENS_AI = 1500; // Aumentado ligeramente para dar más espacio a las respuestas
 const EMBEDDING_MODEL = 'text-embedding-3-small';
+const MAX_TOKENS_HISTORIAL = 3000; // Límite aproximado para el historial enviado a la IA
+const MAX_MENSAJES_HISTORIAL = 40;  // Cantidad máxima de mensajes en el historial
 
 
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
