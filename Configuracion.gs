@@ -317,34 +317,58 @@ const HERRAMIENTAS_AI = [
   // ===============================================================
   // ==== HERRAMIENTA: Registrar Egreso de Caja ====
   // ===============================================================
-  {
-    NombreFuncion: 'registrarEgresoCaja',
-    NombrePantalla: '💸 Registrar Gasto',
-    Descripcion: 'Identifica la intención del usuario de registrar una salida de dinero de la caja. Úsalo cuando el usuario mencione un gasto, una compra, un pago de servicios, viáticos, almuerzos, o cualquier tipo de egreso monetario.',
-    SchemaParametros: {
-      type: 'object',
-      properties: {
-        monto: {
-          type: 'number',
-          description: 'La cantidad numérica del dinero que salió.'
-        },
-        concepto: {
-          type: 'string',
-          description: "La razón o descripción breve del gasto. Ej: 'Compra de papelería para oficina', 'Pago de almuerzo personal'."
-        },
+  {
+    NombreFuncion: 'registrarEgresoCaja',
+    NombrePantalla: '💸 Registrar Gasto',
+    Descripcion: 'Identifica la intención del usuario de registrar una salida de dinero de la caja. Úsalo cuando el usuario mencione un gasto, una compra, un pago de servicios, viáticos, almuerzos, o cualquier tipo de egreso monetario.',
+    SchemaParametros: {
+      type: 'object',
+      properties: {
+        monto: {
+          type: 'number',
+          description: 'La cantidad numérica del dinero que salió.'
+        },
+        concepto: {
+          type: 'string',
+          description: "La razón o descripción breve del gasto. Ej: 'Compra de papelería para oficina', 'Pago de almuerzo personal'."
+        },
       contacto: {
         type: 'string',
         description: 'Nombre de quien entrega o recibe el dinero.'
       },
-      },
-      required: ['monto', 'concepto', 'contacto']
-    },
-    ComportamientoAdicional: '', // Sin comportamiento adicional específico para esta.
-    EsQuickStarter: true,
-    PromptEspecifico: 'Has determinado que el usuario quiere registrar un gasto. Tu siguiente paso es pedirle el monto y el concepto del gasto. Sé directo y eficiente.',
-    rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
+      },
+      required: ['monto', 'concepto', 'contacto']
+    },
+    ComportamientoAdicional: '', // Sin comportamiento adicional específico para esta.
+    EsQuickStarter: true,
+    PromptEspecifico: 'Has determinado que el usuario quiere registrar un gasto. Tu siguiente paso es pedirle el monto y el concepto del gasto. Sé directo y eficiente.',
+    rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
 
-  }
+  },
+
+  // ===============================================================
+  // ==== HERRAMIENTA: Resumen para Administrador ====
+  // ===============================================================
+  {
+    NombreFuncion: 'generarResumenAdmin',
+    NombrePantalla: '📰 Resumen para Administrador',
+    Descripcion: 'Genera un resumen de los mensajes y conteos enviados por el personal en los últimos días.',
+    SchemaParametros: {
+      type: 'object',
+      properties: {
+        dias: {
+          type: 'number',
+          description: 'Cantidad de días hacia atrás para resumir. Máximo 7.'
+        }
+      },
+      required: ['dias']
+    },
+    ComportamientoAdicional: '',
+    EsQuickStarter: true,
+    PromptEspecifico: 'Úsala cuando el administrador pregunte frases como "¿qué hay de nuevo?" o "qué cuentan los trabajadores hoy".',
+    rolesPermitidos: ['Administrador']
+
+  }
 ];
 
 
