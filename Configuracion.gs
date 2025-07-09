@@ -8,8 +8,6 @@ const OPENAI_API_KEY = PropertiesService.getScriptProperties().getProperty('OPEN
 const MODELO_DEFAULT = 'gpt-4o-mini';
 const TEMPERATURA_AI = 0.7;
 const MAX_TOKENS_AI = 1500; // Aumentado ligeramente para dar más espacio a las respuestas
-const EMBEDDING_MODEL = 'text-embedding-3-small';
-const MAX_TOKENS_EMBEDDING = 8191; // Límite oficial del modelo de embedding
 const MAX_TOKENS_HISTORIAL = 3000; // Límite aproximado para el historial enviado a la IA
 const MAX_MENSAJES_HISTORIAL = 40;  // Cantidad máxima de mensajes en el historial
 
@@ -32,8 +30,7 @@ const SHEET_NAMES = {
   MOVIMIENTOS_PENDIENTES: 'MovimientosPendientes',
   CONFIGURACION_AI: 'ConfiguracionAI',
   PROMPTS_AI: 'PromptsAI',
-  HERRAMIENTAS_AI: 'HerramientasAI',
-  MEMORIA_VECTORIAL: 'MemoriaVectorial'
+  HERRAMIENTAS_AI: 'HerramientasAI'
 };
 
 
