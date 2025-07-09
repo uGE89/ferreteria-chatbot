@@ -218,20 +218,12 @@ function generarResumenAdmin() {
       max_tokens: 200
     };
 
-    const opciones = {
-      method: 'post',
-      contentType: 'application/json',
-      headers: { Authorization: 'Bearer ' + OPENAI_API_KEY },
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true
-    };
-
-    const respuesta = UrlFetchApp.fetch(OPENAI_API_URL, opciones);
-    if (respuesta.getResponseCode() !== 200) {
-      logError('Toolbox', 'generarResumenAdmin', `Error API ${respuesta.getResponseCode()}`, null);
+    const apiResult = llamarOpenAI(payload);
+    if (apiResult.code !== 200) {
+      logError('Toolbox', 'generarResumenAdmin', `Error API ${apiResult.code}`, null);
       return 'Error al generar el resumen.';
     }
-    const json = JSON.parse(respuesta.getContentText());
+    const json = JSON.parse(apiResult.text);
     return json.choices?.[0]?.message?.content || 'No se pudo obtener resumen.';
   } catch (e) {
     logError('Toolbox', 'generarResumenAdmin', e.message, e.stack);
@@ -513,20 +505,13 @@ function resumenChatUsuario(userId) {
       temperature: TEMPERATURA_AI,
       max_tokens: 150
     };
-    const opciones = {
-      method: 'post',
-      contentType: 'application/json',
-      headers: { Authorization: 'Bearer ' + OPENAI_API_KEY },
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true
-    };
-    const respuesta = UrlFetchApp.fetch(OPENAI_API_URL, opciones);
-    const codigo = respuesta.getResponseCode();
+    const apiResult = llamarOpenAI(payload);
+    const codigo = apiResult.code;
     if (codigo !== 200) {
       logError('Toolbox', 'resumenChatUsuario', `Error API ${codigo}`, null, JSON.stringify(conversationMessages), userId);
       return 'Error al generar el resumen.';
     }
-    const json = JSON.parse(respuesta.getContentText());
+    const json = JSON.parse(apiResult.text);
     return json.choices?.[0]?.message?.content || 'No se pudo obtener resumen.';
   } catch (e) {
     logError('Toolbox', 'resumenChatUsuario', e.message, e.stack, userId);

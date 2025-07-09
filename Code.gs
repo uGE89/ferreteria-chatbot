@@ -61,6 +61,23 @@ function getFormattedTimestamp() {
   return Utilities.formatDate(now, timezone, 'dd/MM/yyyy HH:mm:ss');
 }
 
+/**
+ * Realiza la llamada HTTP a la API de OpenAI.
+ * @param {object} payload - Datos para enviar a la API.
+ * @returns {{code: number, text: string}} Código y texto de respuesta.
+ */
+function llamarOpenAI(payload) {
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + OPENAI_API_KEY },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+  const resp = UrlFetchApp.fetch(OPENAI_API_URL, options);
+  return { code: resp.getResponseCode(), text: resp.getContentText() };
+}
+
 
 // --- LÓGICA DE NEGOCIO Y API DE IA ---
 
@@ -139,17 +156,21 @@ function enviarAOpenAI(sessionId, userId, payload) {
         tool_choice: "auto"
     };
 
-    const options = {
-        method: "post",
-        contentType: "application/json",
-        headers: { "Authorization": "Bearer " + OPENAI_API_KEY },
-        payload: JSON.stringify(requestPayload),
-        muteHttpExceptions: true
-    };
+    let attempt = 0;
+    let apiResult = llamarOpenAI(requestPayload);
+    while (apiResult.code === 429 && attempt < 2) {
+      Utilities.sleep(2000);
+      attempt++;
+      apiResult = llamarOpenAI(requestPayload);
+    }
 
-    const apiResponse = UrlFetchApp.fetch(OPENAI_API_URL, options);
-    const responseCode = apiResponse.getResponseCode();
-    const responseText = apiResponse.getContentText();
+    const responseCode = apiResult.code;
+    const responseText = apiResult.text;
+
+    if (responseCode === 429) {
+        logError('Code', 'enviarAOpenAI', `Error 429: ${responseText}`, null, JSON.stringify(requestPayload), userId);
+        return { content: 'Demasiadas solicitudes a la API. Intentá nuevamente en unos minutos.' };
+    }
 
     if (responseCode !== 200) {
         logError('Code', 'enviarAOpenAI', `API call failed (${responseCode}): ${responseText}`, null, JSON.stringify(requestPayload), userId);
