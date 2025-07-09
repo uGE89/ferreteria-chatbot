@@ -78,6 +78,39 @@ function llamarOpenAI(payload) {
   return { code: resp.getResponseCode(), text: resp.getContentText() };
 }
 
+function contarTokens(texto) {
+  const chars = String(texto || '').length;
+  return Math.ceil(chars / 4);
+}
+
+function limitarHistorial(historial, limiteTokens = MAX_TOKENS_HISTORIAL, limiteMensajes = MAX_MENSAJES_HISTORIAL) {
+  if (!Array.isArray(historial) || historial.length === 0) return [];
+  const result = [];
+  let tokens = 0;
+  const systemMsg = historial[0];
+  tokens += contarTokens(systemMsg.content);
+  result.unshift(systemMsg);
+  for (let i = historial.length - 1; i > 0; i--) {
+    const m = historial[i];
+    const t = contarTokens(m.content);
+    if (result.length >= limiteMensajes || tokens + t > limiteTokens) {
+      logError('Code', 'limitarHistorial', 'Historial recortado por exceso de tokens');
+      break;
+    }
+    tokens += t;
+    result.splice(1, 0, m);
+  }
+  return result;
+}
+
+function limitarTexto(texto, limiteTokens = MAX_TOKENS_HISTORIAL) {
+  const totalTokens = contarTokens(texto);
+  if (totalTokens <= limiteTokens) return texto;
+  logError('Code', 'limitarTexto', 'Texto recortado por exceso de tokens');
+  const maxChars = limiteTokens * 4;
+  return texto.slice(texto.length - maxChars);
+}
+
 
 // --- LÓGICA DE NEGOCIO Y API DE IA ---
 
@@ -138,6 +171,8 @@ function enviarAOpenAI(sessionId, userId, payload) {
         content: toolResponse.result
       });
     }
+
+    chatHistory = limitarHistorial(chatHistory);
 
     const contextoRelevante = buscarContextoRelevante(payload.texto || '', userId);
     const historyForRequest = chatHistory.map(m => Object.assign({}, m));

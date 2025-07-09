@@ -191,6 +191,8 @@ function generarResumenAdmin() {
       listadoMensajes += linea + '\n';
     });
 
+    listadoMensajes = limitarTexto(listadoMensajes);
+
     const resumenDatos =
       `Conteos realizados: ${conteos.length}\n` +
       `Problemas pendientes: ${mensajes.filter(m => m.TipoMensaje === 'Problema' && m.Estado === 'Pendiente').length}\n` +
@@ -488,6 +490,8 @@ function resumenChatUsuario(userId) {
         }
       }
     });
+
+    conversationMessages = limitarHistorial([{ role: 'system', content: '' }, ...conversationMessages]).slice(1);
 
     if (conversationMessages.length === 0) {
       return 'No se encontró historial para resumir.';
