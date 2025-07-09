@@ -111,6 +111,39 @@ function limitarTexto(texto, limiteTokens = MAX_TOKENS_HISTORIAL) {
   return texto.slice(texto.length - maxChars);
 }
 
+function obtenerHistorialReciente(userId, sesionActual) {
+  try {
+    const sesiones = getSheetData(SHEET_NAMES.SESIONES)
+      .filter(s => s.UsuarioID === userId && s.SesionID !== sesionActual);
+    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    const fechaLimite = new Date();
+    fechaLimite.setDate(fechaLimite.getDate() - 2);
+    const historial = [];
+
+    sesiones.forEach(s => {
+      const f = parseSafeDate(s.FechaInicio);
+      if (!f || f < fechaLimite) return;
+      if (s.HistorialConversacion && s.HistorialConversacion.length > 2) {
+        try {
+          const hist = JSON.parse(s.HistorialConversacion);
+          hist.forEach(m => {
+            if (m.role === 'user' || m.role === 'assistant') {
+              historial.push(m);
+            }
+          });
+        } catch (e) {
+          logError('Code', 'obtenerHistorialReciente', 'Historial corrupto', e.stack, s.HistorialConversacion, userId);
+        }
+      }
+    });
+
+    return limitarHistorial([{ role: 'system', content: '' }, ...historial]).slice(1);
+  } catch (e) {
+    logError('Code', 'obtenerHistorialReciente', e.message, e.stack, userId);
+    return [];
+  }
+}
+
 
 // --- LÓGICA DE NEGOCIO Y API DE IA ---
 
@@ -172,13 +205,9 @@ function enviarAOpenAI(sessionId, userId, payload) {
       });
     }
 
-    chatHistory = limitarHistorial(chatHistory);
-
-    const contextoRelevante = buscarContextoRelevante(payload.texto || '', userId);
+    const historialExtra = obtenerHistorialReciente(userId, sessionId);
+    chatHistory = limitarHistorial([chatHistory[0], ...historialExtra, ...chatHistory.slice(1)]);
     const historyForRequest = chatHistory.map(m => Object.assign({}, m));
-    if (historyForRequest[0]) {
-      historyForRequest[0].content = (contextoRelevante ? contextoRelevante + '\n\n' : '') + historyForRequest[0].content;
-    }
 
     const tools = getAITools();
 
@@ -230,14 +259,6 @@ function enviarAOpenAI(sessionId, userId, payload) {
       HistorialConversacion: JSON.stringify(chatHistory),
       UltimaActividad: getFormattedTimestamp()
     });
-
-    if ((chatHistory.length - 1) % 6 === 0) {
-      const bloque = chatHistory.slice(-6).map(m => m.content).join(' ');
-      const vec = generarEmbedding(bloque);
-      if (vec) {
-        almacenarVector(bloque, vec, userId);
-      }
-    }
 
     return aiResponse;
 
@@ -409,7 +430,7 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
 
       case 'generarResumenAdmin':
          Logger.log('   - Entrando en el caso: "generarResumenAdmin".');
-         return generarResumenAdmin();
+         return generarResumenAdmin(functionArgs.dias);
 
 
       default:

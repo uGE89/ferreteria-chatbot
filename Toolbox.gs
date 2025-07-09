@@ -163,19 +163,18 @@ function registrarMovimientoCaja(tipo, monto, concepto, contacto, userId) {
  * Se recopilan los mensajes del día y se envían a la IA para un resumen.
  * @returns {string} Resumen generado por la IA o mensaje de error.
  */
-function generarResumenAdmin() {
+function resumenAdminPorFecha(fechaRef) {
   try {
     const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
-    const today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
 
     const conteos = getSheetData(SHEET_NAMES.CONTEOS).filter(c => {
       const f = parseSafeDate(c.Fecha);
-      return f && Utilities.formatDate(f, tz, 'yyyy-MM-dd') === today;
+      return f && Utilities.formatDate(f, tz, 'yyyy-MM-dd') === fechaRef;
     });
 
     const mensajes = getSheetData(SHEET_NAMES.MENSAJES).filter(m => {
       const f = parseSafeDate(m.FechaHora);
-      return f && Utilities.formatDate(f, tz, 'yyyy-MM-dd') === today;
+      return f && Utilities.formatDate(f, tz, 'yyyy-MM-dd') === fechaRef;
     });
 
     let listadoMensajes = '';
@@ -222,11 +221,32 @@ function generarResumenAdmin() {
 
     const apiResult = llamarOpenAI(payload);
     if (apiResult.code !== 200) {
-      logError('Toolbox', 'generarResumenAdmin', `Error API ${apiResult.code}`, null);
+      logError('Toolbox', 'resumenAdminPorFecha', `Error API ${apiResult.code}`, null);
       return 'Error al generar el resumen.';
     }
     const json = JSON.parse(apiResult.text);
     return json.choices?.[0]?.message?.content || 'No se pudo obtener resumen.';
+  } catch (e) {
+    logError('Toolbox', 'resumenAdminPorFecha', e.message, e.stack);
+    return `Error al generar resumen: ${e.message}`;
+  }
+}
+
+function generarResumenAdmin(dias) {
+  try {
+    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    let cantidad = parseInt(dias, 10);
+    if (isNaN(cantidad) || cantidad < 1) cantidad = 1;
+    if (cantidad > 7) cantidad = 7;
+    const resultados = [];
+    for (let i = 0; i < cantidad; i++) {
+      const fecha = new Date();
+      fecha.setDate(fecha.getDate() - i);
+      const fechaStr = Utilities.formatDate(fecha, tz, 'yyyy-MM-dd');
+      const resumen = resumenAdminPorFecha(fechaStr);
+      resultados.push(`Resumen ${fechaStr}\n${resumen}`);
+    }
+    return resultados.join('\n\n');
   } catch (e) {
     logError('Toolbox', 'generarResumenAdmin', e.message, e.stack);
     return `Error al generar resumen: ${e.message}`;

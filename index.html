@@ -559,7 +559,8 @@ function procesarDatosIniciales(datos) {
                   <button data-tipo="Caja" class="admin-tab-btn">💰 Caja</button>
                 </div>
                 <input type="date" id="admin-filter-fecha" class="w-full bg-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-3">
-                 <button onclick="google.script.run.withSuccessHandler(resumen => showCustomAlert(resumen, 'info')).withFailureHandler(error => showCustomAlert('Error al cargar resumen: ' + error.message, 'error')).generarResumenAdmin();" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg px-4 py-1.5 text-sm">
+                <input type="number" id="admin-resumen-dias" min="1" max="7" value="1" class="w-full bg-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-3" placeholder="Días a resumir">
+                 <button onclick="google.script.run.withSuccessHandler(resumen => showCustomAlert(resumen, 'info')).withFailureHandler(error => showCustomAlert('Error al cargar resumen: ' + error.message, 'error')).generarResumenAdmin(parseInt(document.getElementById('admin-resumen-dias').value,10));" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg px-4 py-1.5 text-sm">
                     Generar Resumen Diario
                 </button>
             </div>
