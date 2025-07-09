@@ -4,6 +4,12 @@
 
 function generarEmbedding(texto) {
   try {
+    // El modelo admite hasta MAX_TOKENS_EMBEDDING tokens
+    const totalTokens = contarTokens(texto);
+    if (totalTokens > MAX_TOKENS_EMBEDDING) {
+      logError('Memoria', 'generarEmbedding', `Texto supera el límite de ${MAX_TOKENS_EMBEDDING} tokens`);
+      texto = limitarTexto(texto, MAX_TOKENS_EMBEDDING);
+    }
     const url = 'https://api.openai.com/v1/embeddings';
     const payload = {
       model: EMBEDDING_MODEL,
