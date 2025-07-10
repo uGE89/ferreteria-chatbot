@@ -236,9 +236,16 @@ function enviarAOpenAI(sessionId, userId, payload) {
         return { content: 'Demasiadas solicitudes a la API. Intentá nuevamente en unos minutos.' };
     }
 
-    if (responseCode !== 200) {
+    if (responseCode !== 200 && responseCode !== 429) {
         logError('Code', 'enviarAOpenAI', `API call failed (${responseCode}): ${responseText}`, null, JSON.stringify(requestPayload), userId);
-        throw new Error(`El asistente no pudo responder (Error ${responseCode}).`);
+        let detalle = '';
+        try {
+          const errorObj = JSON.parse(responseText);
+          if (errorObj.error && errorObj.error.message) {
+            detalle = ` Detalle: ${errorObj.error.message}`;
+          }
+        } catch (e) {}
+        throw new Error(`El asistente no pudo responder (Error ${responseCode}).${detalle}`);
     }
 
     const responseJson = JSON.parse(responseText);
