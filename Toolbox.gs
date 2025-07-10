@@ -227,12 +227,12 @@ function resumenAdminPorFecha(fechaRef) {
         { role: 'system', content: instrucciones }
       ],
       temperature: TEMPERATURA_AI,
-      max_tokens: 200
+      max_tokens: 400
     };
 
     const apiResult = llamarOpenAI(payload);
     if (apiResult.code !== 200) {
-      logError('Toolbox', 'resumenAdminPorFecha', `Error API ${apiResult.code}`, null);
+      logError('Toolbox', 'resumenAdminPorFecha', `Error API ${apiResult.code}`, null, JSON.stringify(payload));
       return 'Error al generar el resumen.';
     }
     const json = JSON.parse(apiResult.text);
