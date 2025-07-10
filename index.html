@@ -470,7 +470,10 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessage(userInput, 'user');
         messageInput.value = '';
 
-        if (herramientaPendiente && userInput.toLowerCase() === 'sí') {
+        const affirmativePattern = /^(sí|si|claro|dale|ok)/i;
+        const negativePattern = /^(no|cancel)/i;
+
+        if (herramientaPendiente && affirmativePattern.test(userInput)) {
             const pending = herramientaPendiente;
             herramientaPendiente = null;
             showTypingIndicator();
@@ -492,6 +495,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .withFailureHandler(handleAIError)
                 .ejecutarHerramienta(pending.name, pending.args, userId, sessionId);
+        } else if (herramientaPendiente && negativePattern.test(userInput)) {
+            herramientaPendiente = null;
+            addMessage('Operación cancelada.', 'system');
         } else {
             getAIResponse({ texto: userInput });
         }
