@@ -1,3 +1,4 @@
+
 // ===============================================================
 // ==== CONFIGURACIÓN DEL MODELO DE IA ====
 // Estos valores reemplazan la hoja 'ConfiguracionAI' y 'PromptsAI'
@@ -101,24 +102,31 @@ Cuando detectés un alias de un producto con flujo guiado, iniciá de inmediato 
 
 ### Pasos guiados (la IA los maneja, el usuario NO hace cuentas)
 
-**Para Cemento (01)**
-1. Preguntá cuánto cemento debería haber según el sistema.
-2. Preguntá la cantidad física contada.
-3. Calculá internamente la diferencia.
-4. Si la diferencia ≠ 0, preguntá:
-   - *¿Hay compras pendientes de ingreso?* (sí/no)
-   - *¿Hay ventas pendientes de entregar?* (sí/no)
-5. Si ambas son **no**, registrá la diferencia sin pedir al usuario que la calcule.
-6. Capturá cualquier explicación extra en \`observacion\`.
+Para Cemento (01)
+Preguntá cuánto cemento debería haber según el sistema.
 
-**Para Caja (CCH)**
-1. Preguntá cuánto efectivo debería haber según el sistema.
-2. Preguntá la cantidad física de efectivo en caja.
-3. Calculá la diferencia.
-4. Si la diferencia ≠ 0, preguntá:
-   - *¿Hay pagos por transferencia por agregar?* (sí/no)
-   - *¿Hay pagos con tarjeta por agregar?* (sí/no)
-5. Si ambas son **no**, pedí una breve observación y registrá la diferencia.
+Preguntá la cantidad física contada.
+
+Preguntá por la cantidad de compras pendientes de ingreso (CPI). Instruí al usuario a responder "0" si no hay.
+
+Preguntá por la cantidad de ventas pendientes de entregar (VPE). Instruí al usuario a responder "0" si no hay.
+
+Confirmación final: Antes de registrar, mostrá un resumen con todos los datos recopilados (Sistema, Físico, CPI, VPE) y preguntá explícitamente: ¿Es correcto?
+
+Solo si el usuario confirma, llamá a la función registrarConteo. Capturá cualquier explicación extra en el parámetro observacion.
+
+Para Caja (CCH)
+Preguntá cuánto efectivo debería haber según el sistema.
+
+Preguntá la cantidad física de efectivo en caja.
+
+Preguntá por el monto de pagos por transferencia por agregar. Instruí al usuario a responder "0" si no hay.
+
+Preguntá por el monto de pagos con tarjeta por agregar. Instruí al usuario a responder "0" si no hay.
+
+Confirmación final: Mostrá un resumen con todos los montos (Sistema, Físico, Transferencias, Tarjetas) y preguntá explícitamente si la información es correcta.
+
+Solo si el usuario confirma, pedí una breve observación (si es necesaria) y llamá a la función para registrar el conteo.
 
 ## Lógica de Calidad de Datos (Paso Previo a Registrar)
 
@@ -144,69 +152,69 @@ Tu objetivo es que los registros en la hoja de Tareas sean accionables. Un "tema
 // ==== DEFINICIÓN CENTRAL DE LAS HERRAMIENTAS DE LA IA ====
 // =================================================================
 const HERRAMIENTAS_AI = [
-  // ===============================================================
-  // ==== HERRAMIENTA: Registrar Problema ====
-  // ===============================================================
-  {
-    NombreFuncion: 'registrarProblema',
-    NombrePantalla: '⚠️ Registrar Problema',
-    Descripcion: 'Registra un problema o incidente reportado por un empleado. Usa esta función cuando el usuario describa algo que no funciona bien, una queja o una dificultad.',
-    SchemaParametros: {
-      type: 'object',
-      properties: {
-        asunto: {
-          type: 'string',
-          description: 'Título breve o resumen del problema.'
-        },
-        detalle: {
-          type: 'string',
-          description: 'Descripción completa del problema, incluyendo todos los detalles relevantes.'
-        }
-      },
-      required: ['asunto', 'detalle']
-    },
-    ComportamientoAdicional: 'Antes de llamar, asegúrate de que el asunto y el detalle sean específicos y accionables. Haz preguntas de seguimiento si la información es vaga.',
-    EsQuickStarter: true,
-    PromptEspecifico: 'Prompt específico para registrar problemas: Cuando el usuario diga "registrar problema", asegúrate de obtener el asunto y todos los detalles. Luego, informa al usuario que el problema ha sido registrado. NO pidas confirmación.',
-    rolesPermitidos: ['Todos']
+  // ===============================================================
+  // ==== HERRAMIENTA: Registrar Problema ====
+  // ===============================================================
+  {
+    NombreFuncion: 'registrarProblema',
+    NombrePantalla: '⚠️ Registrar Problema',
+    Descripcion: 'Registra un problema o incidente reportado por un empleado. Usa esta función cuando el usuario describa algo que no funciona bien, una queja o una dificultad.',
+    SchemaParametros: {
+      type: 'object',
+      properties: {
+        asunto: {
+          type: 'string',
+          description: 'Título breve o resumen del problema.'
+        },
+        detalle: {
+          type: 'string',
+          description: 'Descripción completa del problema, incluyendo todos los detalles relevantes.'
+        }
+      },
+      required: ['asunto', 'detalle']
+    },
+    ComportamientoAdicional: 'Antes de llamar, asegúrate de que el asunto y el detalle sean específicos y accionables. Haz preguntas de seguimiento si la información es vaga.',
+    EsQuickStarter: true,
+    PromptEspecifico: 'Prompt específico para registrar problemas: Cuando el usuario diga "registrar problema", asegúrate de obtener el asunto y todos los detalles. Luego, informa al usuario que el problema ha sido registrado. NO pidas confirmación.',
+    rolesPermitidos: ['Todos']
 
-  },
+  },
 
-  // ===============================================================
-  // ==== HERRAMIENTA: Registrar Sugerencia ====
-  // ===============================================================
-  {
-    NombreFuncion: 'registrarSugerencia',
-    NombrePantalla: '💡 Dejar una Sugerencia',
-    Descripcion: 'Registra una sugerencia o idea de mejora propuesta por un empleado.',
-    SchemaParametros: {
-      type: 'object',
-      properties: {
-        asunto: {
-          type: 'string',
-          description: 'Título breve o resumen de la sugerencia.'
-        },
-        detalle: {
-          type: 'string',
-          description: 'Descripción completa de la sugerencia.'
-        }
-      },
-      required: ['asunto', 'detalle']
-    },
-    ComportamientoAdicional: 'Antes de llamar, asegúrate de que la sugerencia sea concreta y accionable. Haz preguntas de seguimiento si la idea es muy general.',
-    EsQuickStarter: true,
-    PromptEspecifico: 'Prompt específico para registrar sugerencias: Cuando el usuario diga "dejar una sugerencia", asegúrate de obtener el asunto y todos los detalles. Luego, informa al usuario que la sugerencia ha sido registrada. NO pidas confirmación.',
-    rolesPermitidos: ['Todos']
+  // ===============================================================
+  // ==== HERRAMIENTA: Registrar Sugerencia ====
+  // ===============================================================
+  {
+    NombreFuncion: 'registrarSugerencia',
+    NombrePantalla: '💡 Dejar una Sugerencia',
+    Descripcion: 'Registra una sugerencia o idea de mejora propuesta por un empleado.',
+    SchemaParametros: {
+      type: 'object',
+      properties: {
+        asunto: {
+          type: 'string',
+          description: 'Título breve o resumen de la sugerencia.'
+        },
+        detalle: {
+          type: 'string',
+          description: 'Descripción completa de la sugerencia.'
+        }
+      },
+      required: ['asunto', 'detalle']
+    },
+    ComportamientoAdicional: 'Antes de llamar, asegúrate de que la sugerencia sea concreta y accionable. Haz preguntas de seguimiento si la idea es muy general.',
+    EsQuickStarter: true,
+    PromptEspecifico: 'Prompt específico para registrar sugerencias: Cuando el usuario diga "dejar una sugerencia", asegúrate de obtener el asunto y todos los detalles. Luego, informa al usuario que la sugerencia ha sido registrada. NO pidas confirmación.',
+    rolesPermitidos: ['Todos']
 
-  },
+  },
 
-  // ===============================================================
-  // ==== HERRAMIENTA: Registrar Conteo de Inventario ====
-  // ===============================================================
-  {
-    NombreFuncion: 'registrarConteo',
-    NombrePantalla: '🔢 Registrar Conteo de Inventario',
-    Descripcion: 'Registra un conteo de inventario para un producto específico. Se utiliza para comparar el stock del sistema con el stock físico encontrado.',
+  // ===============================================================
+  // ==== HERRAMIENTA: Registrar Conteo de Inventario ====
+  // ===============================================================
+  {
+    NombreFuncion: 'registrarConteo',
+    NombrePantalla: '🔢 Registrar Conteo de Inventario',
+    Descripcion: 'Registra un conteo de inventario para un producto específico. Se utiliza para comparar el stock del sistema con el stock físico encontrado.',
     SchemaParametros: {
       type: 'object',
       properties: {
@@ -248,75 +256,75 @@ const HERRAMIENTAS_AI = [
     ComportamientoAdicional: 'Calcula la diferencia entre sistema y físico. Si es distinta de cero solicita datos de CPI o VPE. Para la clave CCH pregunta si hay pagos por transferencia o tarjeta. Siempre confirma antes de registrar y guarda cualquier explicación en `observacion`.',
     EsQuickStarter: true,
     PromptEspecifico: 'Guía al usuario para obtener la clave y pedile explícitamente la cantidad registrada en el sistema y la cantidad física. No revelés datos del sistema por tu cuenta. Si la diferencia supera ±10 pedí CPI o VPE y cualquier observación. Para la caja consultá por pagos con transferencia o tarjeta antes de registrar. Una vez confirmados todos los datos, invocá la función `registrarConteo` para guardar el resultado.',
-    rolesPermitidos: ['Administrador', 'Bodeguero', 'Todo en uno']
+    rolesPermitidos: ['Administrador', 'Bodeguero', 'Todo en uno']
 
-  },
+  },
 
-  // ===============================================================
-  // ==== HERRAMIENTA: Crear Tarea Pendiente ====
-  // ===============================================================
-  {
-    NombreFuncion: 'crearTareaPendiente',
-    NombrePantalla: '📝 Crear Tarea Pendiente',
-    Descripcion: 'Crea una tarea o recordatorio pendiente que debe ser atendido en el futuro. Útil para acciones que no son un problema o sugerencia inmediata.',
-    SchemaParametros: {
-      type: 'object',
-      properties: {
-        titulo: {
-          type: 'string',
-          description: 'Título breve de la tarea pendiente.'
-        },
-        descripcion: {
-          type: 'string',
-          description: 'Descripción detallada de la tarea y lo que implica.'
-        },
-        fechaLimite: {
-          type: 'string',
-          description: 'Fecha límite opcional para la tarea, en formato YYYY-MM-DD.'
-        }
-      },
-      required: ['titulo', 'descripcion']
-    },
-    ComportamientoAdicional: 'Ofrece crear una tarea pendiente cuando el usuario menciona acciones a futuro. NO pidas confirmación después de la creación.',
-    EsQuickStarter: false,
-    PromptEspecifico: 'Prompt específico para tareas: Cuando el usuario sugiera una acción a futuro, pregúntale si quiere que se registre como tarea pendiente. Recopila el título, descripción y, si es posible, una fecha límite.',
-    rolesPermitidos: ['Todos']
-  },
+  // ===============================================================
+  // ==== HERRAMIENTA: Crear Tarea Pendiente ====
+  // ===============================================================
+  {
+    NombreFuncion: 'crearTareaPendiente',
+    NombrePantalla: '📝 Crear Tarea Pendiente',
+    Descripcion: 'Crea una tarea o recordatorio pendiente que debe ser atendido en el futuro. Útil para acciones que no son un problema o sugerencia inmediata.',
+    SchemaParametros: {
+      type: 'object',
+      properties: {
+        titulo: {
+          type: 'string',
+          description: 'Título breve de la tarea pendiente.'
+        },
+        descripcion: {
+          type: 'string',
+          description: 'Descripción detallada de la tarea y lo que implica.'
+        },
+        fechaLimite: {
+          type: 'string',
+          description: 'Fecha límite opcional para la tarea, en formato YYYY-MM-DD.'
+        }
+      },
+      required: ['titulo', 'descripcion']
+    },
+    ComportamientoAdicional: 'Ofrece crear una tarea pendiente cuando el usuario menciona acciones a futuro. NO pidas confirmación después de la creación.',
+    EsQuickStarter: false,
+    PromptEspecifico: 'Prompt específico para tareas: Cuando el usuario sugiera una acción a futuro, pregúntale si quiere que se registre como tarea pendiente. Recopila el título, descripción y, si es posible, una fecha límite.',
+    rolesPermitidos: ['Todos']
+  },
 
-  // ===============================================================
-  // ==== HERRAMIENTA: Registrar Ingreso de Caja ====
-  // ===============================================================
-  {
-    NombreFuncion: 'registrarIngresoCaja',
-    NombrePantalla: '💰 Registrar Ingreso',
-    Descripcion: 'Identifica la intención del usuario de registrar una entrada de dinero a la caja. Úsalo cuando el usuario mencione que recibió un pago, un abono, dinero por una venta, o cualquier tipo de ingreso monetario.',
-    SchemaParametros: {
-      type: 'object',
-      properties: {
-        monto: {
-          type: 'number',
-          description: 'La cantidad numérica del dinero que ingresó.'
-        },
-        concepto: {
-          type: 'string',
-          description: "La razón o descripción breve del ingreso. Ej: 'Abono cliente Construcciones S.A.', 'Venta de contado tornillos'."
-        },
+  // ===============================================================
+  // ==== HERRAMIENTA: Registrar Ingreso de Caja ====
+  // ===============================================================
+  {
+    NombreFuncion: 'registrarIngresoCaja',
+    NombrePantalla: '💰 Registrar Ingreso',
+    Descripcion: 'Identifica la intención del usuario de registrar una entrada de dinero a la caja. Úsalo cuando el usuario mencione que recibió un pago, un abono, dinero por una venta, o cualquier tipo de ingreso monetario.',
+    SchemaParametros: {
+      type: 'object',
+      properties: {
+        monto: {
+          type: 'number',
+          description: 'La cantidad numérica del dinero que ingresó.'
+        },
+        concepto: {
+          type: 'string',
+          description: "La razón o descripción breve del ingreso. Ej: 'Abono cliente Construcciones S.A.', 'Venta de contado tornillos'."
+        },
       contacto: {
         type: 'string',
         description: 'Nombre de quien entrega o recibe el dinero.'
       },
-      },
-      required: ['monto', 'concepto', 'contacto']
-    },
-    ComportamientoAdicional: '', // Sin comportamiento adicional específico para esta.
-    EsQuickStarter: true,
-    PromptEspecifico: 'Has determinado que el usuario quiere registrar un ingreso. Tu siguiente paso es pedirle el monto y el concepto de forma clara y directa, usando un tono amigable y servicial.',
-    rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
-  },
+      },
+      required: ['monto', 'concepto', 'contacto']
+    },
+    ComportamientoAdicional: '', // Sin comportamiento adicional específico para esta.
+    EsQuickStarter: true,
+    PromptEspecifico: 'Has determinado que el usuario quiere registrar un ingreso. Tu siguiente paso es pedirle el monto y el concepto de forma clara y directa, usando un tono amigable y servicial.',
+    rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
+  },
 
-  // ===============================================================
-  // ==== HERRAMIENTA: Registrar Egreso de Caja ====
-  // ===============================================================
+  // ===============================================================
+  // ==== HERRAMIENTA: Registrar Egreso de Caja ====
+  // ===============================================================
   {
     NombreFuncion: 'registrarEgresoCaja',
     NombrePantalla: '💸 Registrar Gasto',
