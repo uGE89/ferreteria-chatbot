@@ -88,10 +88,40 @@ function limitarHistorial(historial, limiteTokens = MAX_TOKENS_HISTORIAL, limite
   const result = [];
   let tokens = 0;
   const systemMsg = historial[0];
-  tokens += contarTokens(systemMsg.content);
+  tokens += contarTokens(systemMsg.content || JSON.stringify(systemMsg.tool_calls || ''));
   result.unshift(systemMsg);
+
   for (let i = historial.length - 1; i > 0; i--) {
     const m = historial[i];
+
+    if (m.role === 'tool') {
+      const prev = historial[i - 1];
+      if (!prev || !prev.tool_calls) {
+        logError('Code', 'limitarHistorial', 'tool sin mensaje assistant previo');
+        continue;
+      }
+      const match = prev.tool_calls.find(tc => tc.id === m.tool_call_id);
+      if (!match) {
+        logError('Code', 'limitarHistorial', 'ID de tool_call sin coincidencia');
+        continue;
+      }
+      const tokenPair = contarTokens(m.content) + contarTokens(JSON.stringify(prev.tool_calls));
+      if (result.length + 2 > limiteMensajes || tokens + tokenPair > limiteTokens) {
+        logError('Code', 'limitarHistorial', 'Historial recortado por exceso de tokens');
+        break;
+      }
+      tokens += tokenPair;
+      result.splice(1, 0, m);
+      result.splice(1, 0, prev);
+      i--;
+      continue;
+    }
+
+    if (m.role === 'assistant' && m.tool_calls) {
+      logError('Code', 'limitarHistorial', 'assistant con tool_calls sin respuesta');
+      continue;
+    }
+
     const t = contarTokens(m.content);
     if (result.length >= limiteMensajes || tokens + t > limiteTokens) {
       logError('Code', 'limitarHistorial', 'Historial recortado por exceso de tokens');
@@ -100,6 +130,7 @@ function limitarHistorial(historial, limiteTokens = MAX_TOKENS_HISTORIAL, limite
     tokens += t;
     result.splice(1, 0, m);
   }
+
   return result;
 }
 
