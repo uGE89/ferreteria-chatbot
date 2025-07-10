@@ -742,4 +742,3 @@ function revisionMetaConteo(userId) {
     return `Error al revisar la meta de conteo: ${e.message}`;
   }
 }
-
