@@ -164,24 +164,24 @@
     <div id="content-area" class="flex-1 w-full flex overflow-hidden">
         <div id="chat-column" class="flex flex-col h-full w-full bg-slate-800 rounded-xl overflow-hidden">
             <main id="chat-window" class="flex-1 p-6 overflow-y-auto space-y-6" aria-live="polite">
-                </main>
+            </main>
+            <div id="scoreboard-container" class="p-4 border-t border-slate-700 flex-shrink-0">
+                <div class="bg-slate-900/50 p-4 rounded-xl">
+                    <h3 class="text-sm font-semibold text-slate-300 mb-3">Puntajes y Clasificación</h3>
+                    <div class="flex justify-between items-center bg-slate-700/50 p-2 rounded-lg mb-3">
+                        <p class="font-semibold text-white">Tu Puntaje Actual</p>
+                        <p id="puntos-actuales" class="text-2xl font-bold text-yellow-400">0</p>
+                    </div>
+                    <div id="ranking-list" class="space-y-1 text-sm">
+                        <!-- El ranking se generará aquí -->
+                    </div>
+                </div>
+            </div>
             <div id="quick-starters" class="p-4 border-t border-slate-700 flex-shrink-0">
                 <p class="text-xs text-slate-400 mb-2 font-semibold">Iniciadores rápidos:</p>
                 <div class="flex flex-wrap gap-2"></div>
             </div>
             <div id="suggestions-container" class="px-4 pb-2"></div>
-            <div id="scoreboard" class="p-4 border-t border-slate-700 flex-shrink-0">
-                <p class="text-xs text-slate-400 mb-2 font-semibold">Tu puntaje:</p>
-                <p id="puntos-actuales" class="text-xl font-bold text-yellow-400">0</p>
-                <p class="text-xs text-slate-400 mt-4 mb-2 font-semibold">Clasificación:</p>
-                <div class="tabla-ranking-moderna">
-                    <div class="ranking-header flex justify-between">
-                        <span>Usuario</span>
-                        <span>Puntos</span>
-                    </div>
-                    <div id="tabla-ranking"></div>
-                </div>
-            </div>
             <footer class="p-4 border-t border-slate-700 flex-shrink-0">
                 <form id="chat-form" class="flex items-center gap-3">
                     <input type="text" id="message-input" placeholder="Escribe tu mensaje o reporte aquí..." class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off">
@@ -843,7 +843,7 @@ function renderQuickStarters(starters) {
         google.script.run
             .withSuccessHandler(datos => {
                 if (!Array.isArray(datos)) return;
-                const rankingBody = document.querySelector('#tabla-ranking');
+                const rankingBody = document.querySelector('#ranking-list');
                 if (rankingBody) {
                     rankingBody.innerHTML = datos.map(u => `
                         <div class="ranking-row"><span class="ranking-user">${u.Nombre || u.UsuarioID}</span><span class="ranking-points">${u.Puntos}</span></div>`
