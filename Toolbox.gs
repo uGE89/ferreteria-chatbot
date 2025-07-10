@@ -192,18 +192,29 @@ function resumenAdminPorFecha(fechaRef) {
 
     listadoMensajes = limitarTexto(listadoMensajes);
 
-    const resumenDatos =
-      `Conteos realizados: ${conteos.length}\n` +
-      `Problemas pendientes: ${mensajes.filter(m => m.TipoMensaje === 'Problema' && m.Estado === 'Pendiente').length}\n` +
-      `Sugerencias pendientes: ${mensajes.filter(m => m.TipoMensaje === 'Sugerencia' && m.Estado === 'Pendiente').length}\n` +
-      `Tareas pendientes: ${mensajes.filter(m => m.TipoMensaje === 'Tarea' && m.Estado === 'Pendiente').length}`;
+    const conteosRealizados = conteos.length;
+    const problemasPendientes = mensajes.filter(m => m.TipoMensaje === 'Problema' && m.Estado === 'Pendiente').length;
+    const sugerenciasPendientes = mensajes.filter(m => m.TipoMensaje === 'Sugerencia' && m.Estado === 'Pendiente').length;
+    const tareasPendientes = mensajes.filter(m => m.TipoMensaje === 'Tarea' && m.Estado === 'Pendiente').length;
 
-    const instrucciones =
+    const resumenDatos =
+      `Conteos realizados: ${conteosRealizados}\n` +
+      `Problemas pendientes: ${problemasPendientes}\n` +
+      `Sugerencias pendientes: ${sugerenciasPendientes}\n` +
+      `Tareas pendientes: ${tareasPendientes}`;
+
+    let instrucciones =
       'Eres el asistente virtual para el supervisor de Ferretería Flores. ' +
       'Aquí están los reportes y sugerencias enviados hoy por el personal:\n\n' +
-      listadoMensajes +
-      '\nAdemás, estos fueron los conteos completados y tareas pendientes:\n' +
-      resumenDatos +
+      listadoMensajes;
+
+    if (conteosRealizados !== 0 || problemasPendientes !== 0 || sugerenciasPendientes !== 0 || tareasPendientes !== 0) {
+      instrucciones +=
+        '\nAdemás, estos fueron los conteos completados y tareas pendientes:\n' +
+        resumenDatos;
+    }
+
+    instrucciones +=
       '\n\nPor favor, genera un resumen para el supervisor destacando:\n' +
       '- Qué problemas y sugerencias se reportaron, quién los dijo y en qué área.\n' +
       '- Acciones o seguimientos sugeridos.\n' +
@@ -238,15 +249,53 @@ function generarResumenAdmin(dias) {
     let cantidad = parseInt(dias, 10);
     if (isNaN(cantidad) || cantidad < 1) cantidad = 1;
     if (cantidad > 7) cantidad = 7;
-    const resultados = [];
+
+    const fechaFin = new Date();
+    const fechaInicio = new Date();
+    fechaInicio.setDate(fechaFin.getDate() - (cantidad - 1));
+
+    const encabezado =
+      `📰 Resumen del ${Utilities.formatDate(fechaInicio, tz, 'dd/MM')} al ${Utilities.formatDate(fechaFin, tz, 'dd/MM')}`;
+
+    const mensajes = getSheetData(SHEET_NAMES.MENSAJES);
+    const conteos = getSheetData(SHEET_NAMES.CONTEOS);
+
+    const partes = [];
+    const sinReportes = [];
+
     for (let i = 0; i < cantidad; i++) {
-      const fecha = new Date();
-      fecha.setDate(fecha.getDate() - i);
+      const fecha = new Date(fechaFin);
+      fecha.setDate(fechaFin.getDate() - i);
       const fechaStr = Utilities.formatDate(fecha, tz, 'yyyy-MM-dd');
+
+      const mensajesDia = mensajes.filter(m => {
+        const f = parseSafeDate(m.FechaHora);
+        return f && Utilities.formatDate(f, tz, 'yyyy-MM-dd') === fechaStr;
+      });
+
+      const conteosDia = conteos.filter(c => {
+        const f = parseSafeDate(c.Fecha);
+        return f && Utilities.formatDate(f, tz, 'yyyy-MM-dd') === fechaStr;
+      });
+
+      if (mensajesDia.length === 0 && conteosDia.length === 0) {
+        sinReportes.push(Utilities.formatDate(fecha, tz, 'dd/MM'));
+        continue;
+      }
+
       const resumen = resumenAdminPorFecha(fechaStr);
-      resultados.push(`Resumen ${fechaStr}\n${resumen}`);
+      const fechaLabel = Utilities.formatDate(fecha, tz, 'dd/MM');
+      partes.push(`📅 ${fechaLabel}\n${resumen}`);
     }
-    return resultados.join('\n\n');
+
+    let resultado = encabezado;
+    if (partes.length > 0) {
+      resultado += '\n\n' + partes.join('\n\n');
+    }
+    if (sinReportes.length > 0) {
+      resultado += `\n\nDías sin reportes: ${sinReportes.join(', ')}`;
+    }
+    return resultado;
   } catch (e) {
     logError('Toolbox', 'generarResumenAdmin', e.message, e.stack);
     return `Error al generar resumen: ${e.message}`;
