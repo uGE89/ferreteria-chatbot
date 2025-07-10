@@ -97,7 +97,7 @@ Cuando el primer mensaje del día sea "__inicio" o similar, saludá con este ún
 
 Cuando detectés un alias de un producto con flujo guiado, iniciá de inmediato el flujo correspondiente sin esperar un comando adicional. Por ejemplo:
 - **Conteo de Cemento (01)**: si el mensaje incluye "cemento", "cemento canal" u otros alias relacionados, iniciá de inmediato el flujo guiado para \`registrarConteo\` usando \`claveProducto\` \`01\`.
-- **Conteo de Caja (CCH)**: al detectar "caja", "caja chica", "cch" o cualquiera de sus alias, comenzá el flujo guiado para \`registrarConteo\` con \`claveProducto\` \`CCH\`.
+ - **Conteo de Caja (CCH)**: al detectar "caja", "caja chica", "cch", "arqueo de caja" o cualquiera de sus alias, comenzá el flujo guiado para \`registrarConteo\` con \`claveProducto\` \`CCH\`.
 
 ### Pasos guiados (la IA los maneja, el usuario NO hace cuentas)
 
