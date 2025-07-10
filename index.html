@@ -83,6 +83,33 @@
         .diff-negative { color: #b91c1c; }
         .diff-zero { color: #475569; }
 
+        .tabla-ranking-moderna {
+            font-size: 0.9em;
+        }
+        .tabla-ranking-moderna .ranking-header {
+            color: #7f8c8d;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #34495e;
+        }
+        .tabla-ranking-moderna .ranking-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 4px;
+            border-bottom: 1px solid #2c3e50;
+        }
+        .tabla-ranking-moderna .ranking-row:last-child {
+            border-bottom: none;
+        }
+        .tabla-ranking-moderna .ranking-user {
+            color: #bdc3c7;
+        }
+        .tabla-ranking-moderna .ranking-points {
+            color: #ecf0f1;
+            font-weight: bold;
+        }
+
 /* ... otras reglas ... */
 
 
@@ -147,15 +174,13 @@
                 <p class="text-xs text-slate-400 mb-2 font-semibold">Tu puntaje:</p>
                 <p id="puntos-actuales" class="text-xl font-bold text-yellow-400">0</p>
                 <p class="text-xs text-slate-400 mt-4 mb-2 font-semibold">Clasificación:</p>
-                <table class="min-w-full text-xs text-slate-300">
-                    <thead>
-                        <tr>
-                            <th class="text-left">Usuario</th>
-                            <th class="text-right">Puntos</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-ranking"></tbody>
-                </table>
+                <div class="tabla-ranking-moderna">
+                    <div class="ranking-header flex justify-between">
+                        <span>Usuario</span>
+                        <span>Puntos</span>
+                    </div>
+                    <div id="tabla-ranking"></div>
+                </div>
             </div>
             <footer class="p-4 border-t border-slate-700 flex-shrink-0">
                 <form id="chat-form" class="flex items-center gap-3">
@@ -821,7 +846,7 @@ function renderQuickStarters(starters) {
                 const rankingBody = document.querySelector('#tabla-ranking');
                 if (rankingBody) {
                     rankingBody.innerHTML = datos.map(u => `
-                        <tr><td class="py-0.5">${u.Nombre || u.UsuarioID}</td><td class="py-0.5 text-right">${u.Puntos}</td></tr>`
+                        <div class="ranking-row"><span class="ranking-user">${u.Nombre || u.UsuarioID}</span><span class="ranking-points">${u.Puntos}</span></div>`
                     ).join('');
                 }
                 const actual = datos.find(d => d.UsuarioID === perfilActual.UsuarioID);
