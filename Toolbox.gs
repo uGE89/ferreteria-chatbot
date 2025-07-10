@@ -35,6 +35,7 @@ const userName = userProfile ? userProfile.Nombre : 'Desconocido';
       FechaHoraRespuesta: '',
       AdminRespondiendoID: ''
     });
+    sumarPuntos(userId, 10);
     return `Listo, registré tu problema: "${asunto}". Gracias.`;
   } catch (e) {
     logError('Toolbox', 'registrarProblema', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
@@ -70,6 +71,7 @@ const userName = userProfile ? userProfile.Nombre : 'Desconocido';
       FechaHoraRespuesta: '',
       AdminRespondiendoID: ''
     });
+    sumarPuntos(userId, 15);
     return `Listo, registré tu sugerencia: "${asunto}". Gracias.`;
   } catch (e) {
     logError('Toolbox', 'registrarSugerencia', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
@@ -418,6 +420,8 @@ function registrarConteo(userId, claveProducto, cantidadSistema, cantidadFisico,
       Observacion: observacion || '',
       SucursalUsuario: userSucursal
     });
+
+    sumarPuntos(userId, 50);
 
     return `Conteo registrado para el producto ${claveFinal}.`;
   } catch (e) {
@@ -789,5 +793,73 @@ function revisionMetaConteo(userId) {
   } catch (e) {
     logError('Toolbox', 'revisionMetaConteo', e.message, e.stack, userId);
     return `Error al revisar la meta de conteo: ${e.message}`;
+  }
+}
+
+/**
+ * Suma puntos al usuario indicado.
+ * @param {string} userId - ID del usuario.
+ * @param {number} cantidad - Puntos a añadir.
+ */
+function sumarPuntos(userId, cantidad) {
+  try {
+    const perfil = obtenerDetallesDeUsuario(userId);
+    const puntosActuales = parseInt(perfil?.Puntos, 10) || 0;
+    const nuevosPuntos = puntosActuales + Number(cantidad);
+    const ok = updateRowInSheet(SHEET_NAMES.USUARIOS, 'UsuarioID', userId, {
+      Puntos: nuevosPuntos
+    });
+    if (ok && _usersDataCache) {
+      const u = _usersDataCache.find(us => us.UsuarioID === userId);
+      if (u) u.Puntos = nuevosPuntos;
+    }
+  } catch (e) {
+    logError('Toolbox', 'sumarPuntos', e.message, e.stack, JSON.stringify({ userId, cantidad }));
+  }
+}
+
+/**
+ * Registra una insignia alcanzada por el usuario.
+ * @param {string} userId - ID del usuario.
+ * @param {string} nombreInsignia - Nombre de la insignia.
+ */
+function asignarInsignia(userId, nombreInsignia) {
+  try {
+    const perfil = obtenerDetallesDeUsuario(userId);
+    const lista = perfil?.Insignias ? perfil.Insignias.split(',').map(s => s.trim()).filter(s => s) : [];
+    if (lista.indexOf(nombreInsignia) === -1) {
+      lista.push(nombreInsignia);
+      const texto = lista.join(', ');
+      const ok = updateRowInSheet(SHEET_NAMES.USUARIOS, 'UsuarioID', userId, {
+        Insignias: texto
+      });
+      if (ok && _usersDataCache) {
+        const u = _usersDataCache.find(us => us.UsuarioID === userId);
+        if (u) u.Insignias = texto;
+      }
+    }
+  } catch (e) {
+    logError('Toolbox', 'asignarInsignia', e.message, e.stack, JSON.stringify({ userId, nombreInsignia }));
+  }
+}
+
+/**
+ * Obtiene el ranking de usuarios ordenado por puntaje.
+ * @returns {Array<object>} Lista de usuarios con puntos e insignias.
+ */
+function obtenerRankingPuntos() {
+  try {
+    const usuarios = getSheetData(SHEET_NAMES.USUARIOS);
+    return usuarios
+      .map(u => ({
+        UsuarioID: u.UsuarioID,
+        Nombre: u.Nombre,
+        Puntos: parseInt(u.Puntos, 10) || 0,
+        Insignias: u.Insignias || ''
+      }))
+      .sort((a, b) => b.Puntos - a.Puntos);
+  } catch (e) {
+    logError('Toolbox', 'obtenerRankingPuntos', e.message, e.stack);
+    return [];
   }
 }
