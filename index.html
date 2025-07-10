@@ -225,6 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Estado Global ---
     let perfilActual = null;
     let adminState = { items: [], filters: { tipo: 'Todos', fecha: '' } };
+    let herramientaPendiente = null;
 
     // --- Lógica de Modales (Alert y Confirm) ---
     function showCustomAlert(message, type = 'info', onClose) {
@@ -396,28 +397,39 @@ document.addEventListener('DOMContentLoaded', () => {
             const functionName = toolCall.function.name;
             const functionArgs = JSON.parse(toolCall.function.arguments);
 
-            addMessage(`Ejecutando: ${functionName}...`, 'system');
+            if (functionName === 'registrarConteo') {
+                herramientaPendiente = {
+                    id: toolCall.id,
+                    name: functionName,
+                    args: functionArgs
+                };
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                messageInput.focus();
+            } else {
+                addMessage(`Ejecutando: ${functionName}...`, 'system');
 
-            const userId = perfilActual.UsuarioID;
-            const sessionId = sessionStorage.getItem('sessionId');
+                const userId = perfilActual.UsuarioID;
+                const sessionId = sessionStorage.getItem('sessionId');
 
-            google.script.run
-                .withSuccessHandler(functionResult => {
-                    addMessage(`Resultado: ${functionResult}`, 'system');
-                    actualizarPuntajeYRanking();
+                google.script.run
+                    .withSuccessHandler(functionResult => {
+                        addMessage(`Resultado: ${functionResult}`, 'system');
+                        actualizarPuntajeYRanking();
 
-                    const payloadForNextStep = {
-                        texto: null,
-                        tool_response: {
-                            tool_call_id: toolCall.id,
-                            function_name: functionName,
-                            result: functionResult
-                        }
-                    };
-                    getAIResponse(payloadForNextStep);
-                })
-                .withFailureHandler(handleAIError)
-                .ejecutarHerramienta(functionName, functionArgs, userId, sessionId);
+                        const payloadForNextStep = {
+                            texto: null,
+                            tool_response: {
+                                tool_call_id: toolCall.id,
+                                function_name: functionName,
+                                result: functionResult
+                            }
+                        };
+                        getAIResponse(payloadForNextStep);
+                    })
+                    .withFailureHandler(handleAIError)
+                    .ejecutarHerramienta(functionName, functionArgs, userId, sessionId);
+            }
         } else {
             messageInput.disabled = false;
             sendButton.disabled = false;
@@ -436,10 +448,35 @@ document.addEventListener('DOMContentLoaded', () => {
     chatForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const userInput = messageInput.value.trim();
-        if (userInput) {
-            addMessage(userInput, 'user');
+        if (!userInput) return;
+
+        addMessage(userInput, 'user');
+        messageInput.value = '';
+
+        if (herramientaPendiente && userInput.toLowerCase() === 'sí') {
+            const pending = herramientaPendiente;
+            herramientaPendiente = null;
+            showTypingIndicator();
+            const userId = perfilActual.UsuarioID;
+            const sessionId = sessionStorage.getItem('sessionId');
+            google.script.run
+                .withSuccessHandler(functionResult => {
+                    addMessage(`Resultado: ${functionResult}`, 'system');
+                    actualizarPuntajeYRanking();
+                    const payloadForNextStep = {
+                        texto: null,
+                        tool_response: {
+                            tool_call_id: pending.id,
+                            function_name: pending.name,
+                            result: functionResult
+                        }
+                    };
+                    getAIResponse(payloadForNextStep);
+                })
+                .withFailureHandler(handleAIError)
+                .ejecutarHerramienta(pending.name, pending.args, userId, sessionId);
+        } else {
             getAIResponse({ texto: userInput });
-            messageInput.value = '';
         }
     });
 
