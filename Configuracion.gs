@@ -247,7 +247,7 @@ const HERRAMIENTAS_AI = [
     },
     ComportamientoAdicional: 'Calcula la diferencia entre sistema y físico. Si es distinta de cero solicita datos de CPI o VPE. Para la clave CCH pregunta si hay pagos por transferencia o tarjeta. Siempre confirma antes de registrar y guarda cualquier explicación en `observacion`.',
     EsQuickStarter: true,
-    PromptEspecifico: 'Guía al usuario para obtener la clave y pedile explícitamente la cantidad registrada en el sistema y la cantidad física. No revelés datos del sistema por tu cuenta. Si la diferencia supera ±10 pedí CPI o VPE y cualquier observación. Para la caja consultá por pagos con transferencia o tarjeta antes de registrar.',
+    PromptEspecifico: 'Guía al usuario para obtener la clave y pedile explícitamente la cantidad registrada en el sistema y la cantidad física. No revelés datos del sistema por tu cuenta. Si la diferencia supera ±10 pedí CPI o VPE y cualquier observación. Para la caja consultá por pagos con transferencia o tarjeta antes de registrar. Una vez confirmados todos los datos, invocá la función `registrarConteo` para guardar el resultado.',
     rolesPermitidos: ['Administrador', 'Bodeguero', 'Todo en uno']
 
   },
