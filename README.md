@@ -39,3 +39,7 @@ echo "Sin pruebas automáticas"
 
 - **HTTP 429** – Generalmente indica que se alcanzó un límite de cuota o de tasa. El sistema realiza varios reintentos automáticos. Si el problema persiste, revisá la configuración de la clave y la cuota disponible en OpenAI.
 
+
+## Licencia
+
+Este proyecto se distribuye bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
