@@ -107,7 +107,6 @@ function limitarHistorial(historial, limiteTokens = MAX_TOKENS_HISTORIAL, limite
       }
       const tokenPair = contarTokens(m.content) + contarTokens(JSON.stringify(prev.tool_calls));
       if (result.length + 2 > limiteMensajes || tokens + tokenPair > limiteTokens) {
-        logError('Code', 'limitarHistorial', 'Historial recortado por exceso de tokens');
         break;
       }
       tokens += tokenPair;
@@ -124,7 +123,6 @@ function limitarHistorial(historial, limiteTokens = MAX_TOKENS_HISTORIAL, limite
 
     const t = contarTokens(m.content);
     if (result.length >= limiteMensajes || tokens + t > limiteTokens) {
-      logError('Code', 'limitarHistorial', 'Historial recortado por exceso de tokens');
       break;
     }
     tokens += t;
