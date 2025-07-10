@@ -139,7 +139,7 @@ function limitarTexto(texto, limiteTokens = MAX_TOKENS_HISTORIAL) {
   if (totalTokens <= limiteTokens) return texto;
   logError('Code', 'limitarTexto', 'Texto recortado por exceso de tokens');
   const maxChars = limiteTokens * 4;
-  return texto.slice(texto.length - maxChars);
+  return texto.slice(0, maxChars);
 }
 
 function obtenerHistorialReciente(userId, sesionActual) {
