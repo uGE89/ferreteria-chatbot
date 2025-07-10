@@ -6,7 +6,7 @@
 // En: Configuracion.gs
 const OPENAI_API_KEY = PropertiesService.getScriptProperties().getProperty('OPENAI_API_KEY');
 const MODELO_DEFAULT = 'gpt-4o-mini';
-const TEMPERATURA_AI = 0.7;
+const TEMPERATURA_AI = 0.5;
 const MAX_TOKENS_AI = 1500; // Aumentado ligeramente para dar más espacio a las respuestas
 const MAX_TOKENS_HISTORIAL = 3000; // Límite aproximado para el historial enviado a la IA
 const MAX_MENSAJES_HISTORIAL = 40;  // Cantidad máxima de mensajes en el historial
