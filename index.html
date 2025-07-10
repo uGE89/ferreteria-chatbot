@@ -391,6 +391,23 @@ document.addEventListener('DOMContentLoaded', () => {
             addMessage(data.content, 'ai');
         }
 
+        const registroRegex = /ya registr(?:e|é)/i;
+        if (!data.tool_call && data.content && registroRegex.test(data.content)) {
+            showCustomAlert('El registro no se completó. Por favor, repetí el proceso.', 'error');
+            google.script.run.logError(
+                'Frontend',
+                'handleAIResponse',
+                'Texto de registro sin tool_call',
+                '',
+                data.content,
+                perfilActual?.UsuarioID || 'N/A'
+            );
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.focus();
+            return;
+        }
+
         if (data.tool_call) {
             const toolCall = data.tool_call;
             const functionName = toolCall.function.name;
