@@ -238,7 +238,13 @@ function enviarAOpenAI(sessionId, userId, payload) {
 
     if (responseCode !== 200) {
         logError('Code', 'enviarAOpenAI', `API call failed (${responseCode}): ${responseText}`, null, JSON.stringify(requestPayload), userId);
-        throw new Error(`El asistente no pudo responder (Error ${responseCode}).`);
+        let userMessage = `El asistente no pudo responder (Error ${responseCode}).`;
+        try {
+            const parsed = JSON.parse(responseText);
+            const apiMsg = parsed.error?.message;
+            if (apiMsg) userMessage = `El asistente no pudo responder (${responseCode}): ${apiMsg}`;
+        } catch (e) {}
+        throw new Error(userMessage);
     }
 
     const responseJson = JSON.parse(responseText);
