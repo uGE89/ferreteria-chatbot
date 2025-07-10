@@ -200,29 +200,28 @@ function enviarAOpenAI(sessionId, userId, payload) {
     if (currentSession.HistorialConversacion && currentSession.HistorialConversacion.length > 2) {
       try {
         chatHistory = JSON.parse(currentSession.HistorialConversacion);
+        if (chatHistory[0] && chatHistory[0].role === 'system') {
+          chatHistory.shift();
+        }
       } catch (e) {
         logError('Code', 'enviarAOpenAI', `Error parseando historial: ${e.message}`, e.stack, currentSession.HistorialConversacion, userId);
       }
     }
 
-    if (chatHistory.length === 0) {
-      const userProfile = getUserProfile(userId);
-      const roleDetails = getRoleDetails(userProfile.Rol);
-      const branchDetails = getBranchDetails(userProfile.Sucursal);
+    const userProfile = getUserProfile(userId);
+    const roleDetails = getRoleDetails(userProfile.Rol);
+    const branchDetails = getBranchDetails(userProfile.Sucursal);
 
-      let finalSystemPrompt = PROMPT_SISTEMA_GENERAL
-        .replace('{userName}', userProfile.Nombre)
-        .replace('{userNotes}', userProfile.NotasAdicionales || 'N/A')
-        .replace('{userRole}', userProfile.Rol)
-        .replace('{roleDescription}', roleDetails.DescripcionGeneral || 'N/A')
-        .replace('{roleResponsibilities}', roleDetails.ResponsabilidadesClave || 'N/A')
-        .replace('{roleTools}', roleDetails.HerramientasComunes || 'N/A')
-        .replace('{userBranch}', userProfile.Sucursal)
-        .replace('{branchDescription}', branchDetails.Descripcion || 'N/A')
-        .replace('{branchGoals}', branchDetails.MetasActuales || 'N/A');
-
-      chatHistory.push({ role: 'system', content: finalSystemPrompt });
-    }
+    const finalSystemPrompt = PROMPT_SISTEMA_GENERAL
+      .replace('{userName}', userProfile.Nombre)
+      .replace('{userNotes}', userProfile.NotasAdicionales || 'N/A')
+      .replace('{userRole}', userProfile.Rol)
+      .replace('{roleDescription}', roleDetails.DescripcionGeneral || 'N/A')
+      .replace('{roleResponsibilities}', roleDetails.ResponsabilidadesClave || 'N/A')
+      .replace('{roleTools}', roleDetails.HerramientasComunes || 'N/A')
+      .replace('{userBranch}', userProfile.Sucursal)
+      .replace('{branchDescription}', branchDetails.Descripcion || 'N/A')
+      .replace('{branchGoals}', branchDetails.MetasActuales || 'N/A');
 
     if (payload.texto) {
       chatHistory.push({ role: 'user', content: payload.texto });
@@ -237,7 +236,11 @@ function enviarAOpenAI(sessionId, userId, payload) {
     }
 
     const historialExtra = obtenerHistorialReciente(userId, sessionId);
-    chatHistory = limitarHistorial([chatHistory[0], ...historialExtra, ...chatHistory.slice(1)]);
+    chatHistory = limitarHistorial([
+      { role: 'system', content: finalSystemPrompt },
+      ...historialExtra,
+      ...chatHistory
+    ]);
     const historyForRequest = chatHistory.map(m => Object.assign({}, m));
 
     const tools = getAITools();
@@ -292,8 +295,9 @@ function enviarAOpenAI(sessionId, userId, payload) {
       throw new Error("La respuesta de la IA no tuvo un formato esperado.");
     }
 
+    const historyToSave = chatHistory.filter(m => m.role !== 'system');
     updateRowInSheet(SHEET_NAMES.SESIONES, 'SesionID', sessionId, {
-      HistorialConversacion: JSON.stringify(chatHistory),
+      HistorialConversacion: JSON.stringify(historyToSave),
       UltimaActividad: getFormattedTimestamp()
     });
 
