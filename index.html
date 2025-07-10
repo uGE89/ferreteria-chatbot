@@ -123,11 +123,11 @@
         <p class="text-slate-400 mb-6 text-sm">Ferretería Flores</p>
         <div class="mb-4">
             <input id="inputID" type="text" placeholder="Ingresa tu ID (ej. U001)"
-                   class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 text-center" />
+                   class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition duration-300 text-center" />
         </div>
         <div class="mb-4">
             <input id="inputPIN" type="password" placeholder="Ingresa tu PIN"
-                   class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 text-center" />
+                   class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition duration-300 text-center" />
         </div>
         <button id="btnLogin" class="w-full bg-emerald-500 hover:bg-emerald-600 px-6 py-2.5 rounded-lg text-white font-semibold transition duration-300 disabled:bg-slate-600">
             Entrar
@@ -136,64 +136,59 @@
     </div>
 </div>
 
-<div id="app-container" class="w-full max-w-7xl h-[90vh] max-h-[900px] flex-col gap-4 hidden bg-slate-900 rounded-2xl shadow-2xl p-4">
-    <header class="flex justify-between items-center flex-shrink-0">
-        <div>
+<div id="app-container" class="w-full max-w-7xl h-[90vh] max-h-[900px] flex hidden bg-slate-900 rounded-2xl shadow-2xl overflow-hidden">
+    <aside id="sidebar" class="w-72 bg-slate-800 border-r border-slate-700 flex flex-col">
+        <div class="p-4">
             <h1 id="header-title" class="text-lg font-bold text-white">Plataforma Conversacional Interna V280625</h1>
             <p id="header-subtitle" class="text-xs text-slate-400">Ferretería Flores</p>
-        </div>
-        <div class="flex items-center space-x-4">
-            <div id="user-info-area" class="text-right">
+            <div id="user-info-area" class="mt-4">
                 <p id="user-status" class="text-sm font-medium text-emerald-400">Conectando...</p>
                 <p id="user-id-display" class="text-xs text-slate-400 font-mono"></p>
             </div>
-            <div id="admin-view-switcher" class="flex items-center p-1 bg-slate-700 rounded-lg hidden">
-                <button id="showChatBtn" class="px-3 py-1 rounded-md text-xs font-semibold">
-                    Chat
-                </button>
-                <button id="showAdminPanelBtn" class="px-3 py-1 rounded-md text-xs font-semibold">
-                    Panel
-                </button>
-            </div>
-            <button id="logoutBtn" class="px-3 py-1 rounded text-xs text-slate-400 border border-slate-600 hover:text-red-400 hover:border-red-400 transition">
-                Cerrar sesión
-            </button>
         </div>
-    </header>
-
-    <div id="content-area" class="flex-1 w-full flex overflow-hidden">
-        <div id="chat-column" class="flex flex-col h-full w-full bg-slate-800 rounded-xl overflow-hidden">
-            <main id="chat-window" class="flex-1 p-6 overflow-y-auto space-y-6" aria-live="polite">
-            </main>
-            <div id="scoreboard-container" class="p-4 border-t border-slate-700 flex-shrink-0">
-                <div class="bg-slate-900/50 p-4 rounded-xl">
-                    <h3 class="text-sm font-semibold text-slate-300 mb-3">Puntajes y Clasificación</h3>
-                    <div class="flex justify-between items-center bg-slate-700/50 p-2 rounded-lg mb-3">
-                        <p class="font-semibold text-white">Tu Puntaje Actual</p>
-                        <p id="puntos-actuales" class="text-2xl font-bold text-yellow-400">0</p>
-                    </div>
-                    <div id="ranking-list" class="space-y-1 text-sm">
-                        <!-- El ranking se generará aquí -->
-                    </div>
+        <div id="scoreboard-container" class="p-4 border-t border-slate-700 flex-1 overflow-y-auto">
+            <div class="bg-slate-900/50 p-4 rounded-xl">
+                <h3 class="text-sm font-semibold text-slate-300 mb-3">Puntajes y Clasificación</h3>
+                <div class="flex justify-between items-center bg-slate-700/50 p-2 rounded-lg mb-3">
+                    <p class="font-semibold text-white">Tu Puntaje Actual</p>
+                    <p id="puntos-actuales" class="text-2xl font-bold text-yellow-400">0</p>
+                </div>
+                <div id="ranking-list" class="space-y-1 text-sm">
+                    <!-- El ranking se generará aquí -->
                 </div>
             </div>
-            <div id="quick-starters" class="p-4 border-t border-slate-700 flex-shrink-0">
-                <p class="text-xs text-slate-400 mb-2 font-semibold">Iniciadores rápidos:</p>
-                <div class="flex flex-wrap gap-2"></div>
-            </div>
-            <div id="suggestions-container" class="px-4 pb-2"></div>
-            <footer class="p-4 border-t border-slate-700 flex-shrink-0">
-                <form id="chat-form" class="flex items-center gap-3">
-                    <input type="text" id="message-input" placeholder="Escribe tu mensaje o reporte aquí..." class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off">
-                    <button type="submit" id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg p-2.5 transition disabled:bg-slate-600 flex items-center justify-center" aria-label="Enviar Mensaje">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                    </button>
-                </form>
-            </footer>
         </div>
-
-        <div id="admin-panel" class="hidden flex-col h-full w-full bg-slate-800 rounded-xl overflow-y-auto">
-             </div>
+        <div id="quick-starters" class="p-4 border-t border-slate-700">
+            <p class="text-xs text-slate-400 mb-2 font-semibold">Iniciadores rápidos:</p>
+            <div class="flex flex-wrap gap-2"></div>
+        </div>
+        <button id="logoutBtn" class="m-4 mt-auto px-3 py-1 rounded text-xs text-slate-400 border border-slate-600 hover:text-red-400 hover:border-red-400 transition">
+            Cerrar sesión
+        </button>
+    </aside>
+    <div id="content-area" class="flex-1 flex flex-col">
+        <header class="p-4 border-b border-slate-700 flex justify-end items-center">
+            <div id="admin-view-switcher" class="flex items-center p-1 bg-slate-700 rounded-lg hidden">
+                <button id="showChatBtn" class="px-3 py-1 rounded-md text-xs font-semibold">Chat</button>
+                <button id="showAdminPanelBtn" class="px-3 py-1 rounded-md text-xs font-semibold">Panel</button>
+            </div>
+        </header>
+        <div class="flex-1 flex overflow-hidden">
+            <div id="chat-column" class="flex flex-col flex-1 bg-slate-800 overflow-hidden">
+                <main id="chat-window" class="flex-1 p-6 overflow-y-auto space-y-6" aria-live="polite"></main>
+                <div id="suggestions-container" class="px-4 pb-2"></div>
+                <footer class="p-4 border-t border-slate-700">
+                    <form id="chat-form" class="flex items-center gap-3">
+                        <input type="text" id="message-input" placeholder="Escribe tu mensaje o reporte aquí..." class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500" autocomplete="off">
+                        <button type="submit" id="send-button" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg p-2.5 transition disabled:bg-slate-600 flex items-center justify-center" aria-label="Enviar Mensaje">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                    </form>
+                </footer>
+            </div>
+            <div id="admin-panel" class="hidden flex-col flex-1 bg-slate-800 overflow-y-auto">
+            </div>
+        </div>
     </div>
 </div>
 
@@ -205,7 +200,7 @@
         <div class="bg-slate-800 p-6 rounded-lg shadow-xl text-center max-w-sm w-full">
             <h3 id="custom-alert-title" class="text-xl font-bold mb-4 text-white"></h3>
             <p id="custom-alert-message" class="text-slate-300 mb-6 whitespace-pre-line"></p>
-            <button id="custom-alert-close-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg">
+            <button id="custom-alert-close-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg">
                 Aceptar
             </button>
         </div>
@@ -277,7 +272,7 @@ const suggestionsContainer = document.getElementById('suggestions-container');
         const alertCloseBtn = document.getElementById('custom-alert-close-btn');
 
         alertMessage.textContent = message;
-        alertModal.classList.remove('hidden', 'bg-red-900/75', 'bg-emerald-900/75', 'bg-blue-900/75', 'bg-slate-900/75');
+        alertModal.classList.remove('hidden', 'bg-red-900/75', 'bg-emerald-900/75', 'bg-slate-900/75');
         alertModal.classList.add('flex');
 
         let title = '';
@@ -481,7 +476,7 @@ function procesarDatosIniciales(datos) {
 
         switch (sender) {
             case 'user':
-                bubbleClasses += 'bg-blue-600 text-white rounded-br-lg';
+                bubbleClasses += 'bg-emerald-600 text-white rounded-br-lg';
                 bubbleContent = `<p>${text}</p>`;
                 break;
             case 'ai':
@@ -914,7 +909,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3 id="confirmation-title" class="text-xl font-bold mb-4 text-white"></h3>
                     <div id="confirmation-body" class="text-slate-300 mb-6"></div>
                     <div class="flex justify-center gap-4">
-                        <button id="confirm-btn-primary" class="px-4 py-2 text-white rounded-md bg-blue-600 hover:bg-blue-700"></button>
+                        <button id="confirm-btn-primary" class="px-4 py-2 text-white rounded-md bg-emerald-600 hover:bg-emerald-700"></button>
                         <button id="confirm-btn-secondary" class="px-4 py-2 text-white rounded-md bg-slate-600 hover:bg-slate-700">Cancelar</button>
                     </div>
                 </div>`;
@@ -1446,19 +1441,19 @@ function updateActiveView(viewName) {
     adminPanel.classList.add('hidden');
 
     // Resetear estilos de los botones del switcher
-    showChatBtn.classList.remove('bg-blue-600', 'text-white');
+    showChatBtn.classList.remove('bg-emerald-600', 'text-white');
     showChatBtn.classList.add('text-slate-300', 'hover:bg-slate-600');
-    showAdminPanelBtn.classList.remove('bg-blue-600', 'text-white');
+    showAdminPanelBtn.classList.remove('bg-emerald-600', 'text-white');
     showAdminPanelBtn.classList.add('text-slate-300', 'hover:bg-slate-600');
 
     // Mostrar el panel activo y actualizar el estilo del botón
     if (viewName === 'chat') {
         chatColumn.classList.remove('hidden');
-        showChatBtn.classList.add('bg-blue-600', 'text-white');
+        showChatBtn.classList.add('bg-emerald-600', 'text-white');
         showChatBtn.classList.remove('text-slate-300', 'hover:bg-slate-600');
     } else if (viewName === 'admin') {
         adminPanel.classList.remove('hidden');
-        showAdminPanelBtn.classList.add('bg-blue-600', 'text-white');
+        showAdminPanelBtn.classList.add('bg-emerald-600', 'text-white');
         showAdminPanelBtn.classList.remove('text-slate-300', 'hover:bg-slate-600');
 
         // Opcional: Refrescar el panel de admin cada vez que se muestra
