@@ -289,6 +289,19 @@ const suggestionsContainer = document.getElementById('suggestions-container');
         });
     }
 
+    // Formatea el texto del resumen del chat para una presentación clara
+    function formatearResumenChat(textoOriginal) {
+        // Reemplazar saltos de línea múltiples por uno solo
+        let texto = textoOriginal.replace(/\n{2,}/g, '\n');
+        // Eliminar asteriscos usados para énfasis
+        texto = texto.replace(/\*/g, '');
+        // Quitar espacios innecesarios al inicio y fin de cada línea
+        texto = texto.split('\n').map(linea => linea.trim()).join('\n');
+        // Normalizar espacios duplicados
+        texto = texto.replace(/\s{2,}/g, ' ');
+        return texto.trim();
+    }
+
     // --- LOGOUT BUTTON ---
     logoutBtn.addEventListener('click', async () => {
         const confirmed = await showCustomConfirm("¿Seguro que querés cerrar sesión?");
@@ -560,7 +573,7 @@ function procesarDatosIniciales(datos) {
                 </div>
                 <input type="date" id="admin-filter-fecha" class="w-full bg-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-3">
                 <input type="number" id="admin-resumen-dias" min="1" max="7" value="1" class="w-full bg-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 mb-3" placeholder="Días a resumir">
-                 <button onclick="google.script.run.withSuccessHandler(resumen => showCustomAlert(resumen, 'info')).withFailureHandler(error => showCustomAlert('Error al cargar resumen: ' + error.message, 'error')).generarResumenAdmin(parseInt(document.getElementById('admin-resumen-dias').value,10));" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg px-4 py-1.5 text-sm">
+                 <button onclick="google.script.run.withSuccessHandler(resumen => showCustomAlert(formatearResumenChat(resumen), 'info')).withFailureHandler(error => showCustomAlert('Error al cargar resumen: ' + error.message, 'error')).generarResumenAdmin(parseInt(document.getElementById('admin-resumen-dias').value,10));" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg px-4 py-1.5 text-sm">
                     Generar Resumen
                 </button>
             </div>
