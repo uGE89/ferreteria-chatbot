@@ -14,6 +14,14 @@ Este proyecto implementa un backend para una plataforma conversacional interna u
 - `index.html` – Interfaz principal que se sirve con `doGet()`.
 - `conteo-modal.html` – Ventana modal usada para registrar conteos desde la interfaz.
 
+## Sistema de gamificación
+
+Cada usuario tiene campos de **Puntos** e **Insignias** en la hoja `Usuarios`.
+Al registrar problemas, sugerencias o conteos se otorgan 10, 15 y 50 puntos respectivamente.
+Las insignias se guardan con la función `asignarInsignia(userId, nombreInsignia)`.
+En la interfaz se muestra el puntaje actual y una tabla de clasificación,
+obtenida con `obtenerRankingPuntos()`.
+
 
 ## Despliegue
 

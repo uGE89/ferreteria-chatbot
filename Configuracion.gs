@@ -377,74 +377,94 @@ const HERRAMIENTAS_AI = [
 // Reemplaza la lectura de la hoja 'Usuarios' para mayor velocidad.
 // ===============================================================
 const USUARIOS = [
-  {
-    UsuarioID: 'U001',
-    Rol: 'Administrador',
-    Sucursal: 'Central',
-    Activo: true,
-    PIN: '1111'
-  },
-  {
-    UsuarioID: 'U002',
-    Rol: 'Todo en uno',
-    Sucursal: 'Bodegon',
-    Activo: true,
-    PIN: '2222'
-  },
-  {
-    UsuarioID: 'U003',
-    Rol: 'Bodeguero',
-    Sucursal: 'Central',
-    Activo: true,
-    PIN: '3333'
-  },
-  {
-    UsuarioID: 'U004',
-    Rol: 'Bodeguero',
-    Sucursal: 'Cotran',
-    Activo: true,
-    PIN: '4444'
-  },
-  {
-    UsuarioID: 'U005',
-    Rol: 'Todo en uno',
-    Sucursal: 'Coperna',
-    Activo: true,
-    PIN: '5555'
-  },
-  {
-    UsuarioID: 'U006',
-    Rol: 'Todo en uno',
-    Sucursal: 'SucursalPrueba',
-    Activo: true,
-    PIN: '6666'
-  },
-  {
-    UsuarioID: 'U007',
-    Rol: 'Vendedor',
-    Sucursal: 'Cotran',
-    Activo: true,
-    PIN: '7777'
-  },
-  {
-    UsuarioID: 'U008',
-    Rol: 'Supervisor',
-    Sucursal: 'Central',
-    Activo: true,
-    PIN: '8888'
-  },
-  {
-    UsuarioID: 'U009',
-    Rol: 'Vendedor',
-    Sucursal: 'Cotran',
-    Activo: true,
-    PIN: '9999'
-  },
-  {
-    UsuarioID: 'U010',
-    Rol: 'Vendedor',
-    Sucursal: 'Central',
-    Activo: true,
-    PIN: '1010'
-  }
+  {
+    UsuarioID: 'U001',
+    Rol: 'Administrador',
+    Sucursal: 'Central',
+    Activo: true,
+    PIN: '1111',
+    Puntos: 0,
+    Insignias: ''
+  },
+  {
+    UsuarioID: 'U002',
+    Rol: 'Todo en uno',
+    Sucursal: 'Bodegon',
+    Activo: true,
+    PIN: '2222',
+    Puntos: 0,
+    Insignias: ''
+  },
+  {
+    UsuarioID: 'U003',
+    Rol: 'Bodeguero',
+    Sucursal: 'Central',
+    Activo: true,
+    PIN: '3333',
+    Puntos: 0,
+    Insignias: ''
+  },
+  {
+    UsuarioID: 'U004',
+    Rol: 'Bodeguero',
+    Sucursal: 'Cotran',
+    Activo: true,
+    PIN: '4444',
+    Puntos: 0,
+    Insignias: ''
+  },
+  {
+    UsuarioID: 'U005',
+    Rol: 'Todo en uno',
+    Sucursal: 'Coperna',
+    Activo: true,
+    PIN: '5555',
+    Puntos: 0,
+    Insignias: ''
+  },
+  {
+    UsuarioID: 'U006',
+    Rol: 'Todo en uno',
+    Sucursal: 'SucursalPrueba',
+    Activo: true,
+    PIN: '6666',
+    Puntos: 0,
+    Insignias: ''
+  },
+  {
+    UsuarioID: 'U007',
+    Rol: 'Vendedor',
+    Sucursal: 'Cotran',
+    Activo: true,
+    PIN: '7777',
+    Puntos: 0,
+    Insignias: ''
+  },
+  {
+    UsuarioID: 'U008',
+    Rol: 'Supervisor',
+    Sucursal: 'Central',
+    Activo: true,
+    PIN: '8888',
+    Puntos: 0,
+    Insignias: ''
+  },
+  {
+    UsuarioID: 'U009',
+    Rol: 'Vendedor',
+    Sucursal: 'Cotran',
+    Activo: true,
+    PIN: '9999',
+    Puntos: 0,
+    Insignias: ''
+  },
+  {
+    UsuarioID: 'U010',
+    Rol: 'Vendedor',
+    Sucursal: 'Central',
+    Activo: true,
+    PIN: '1010',
+    Puntos: 0,
+    Insignias: ''
+  }
 ];
