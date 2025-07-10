@@ -688,7 +688,7 @@ function procesarDatosIniciales(datos) {
 quickStartersContainer.addEventListener('click', (e) => {
     // Nos aseguramos de que el clic fue en un botón de inicio rápido
     if (e.target.tagName === 'BUTTON' && e.target.classList.contains('quick-starter-btn')) {
-        
+
         // Obtenemos el nombre de la función que guardamos en el atributo 'data-function-name' del botón
         const functionName = e.target.dataset.functionName;
         const buttonText = e.target.textContent;
@@ -696,16 +696,16 @@ quickStartersContainer.addEventListener('click', (e) => {
         // ==========================================================
         // ==== ¡NUEVA LÓGICA INTELIGENTE! ====
         // ==========================================================
-        
+
         // Comprobamos si el botón presionado es el de registrar conteo
         if (functionName === 'registrarConteo') {
-            
+
             // Si es el de conteo, llamamos directamente a la función que abre el modal
             console.log("Botón de conteo detectado. Abriendo modal directamente.");
             abrirModalDeConteo();
-            
+
         } else {
-            
+
             // Si es cualquier otro botón, mantenemos el comportamiento original:
             // Lo enviamos como un mensaje al chat para que la IA lo procese.
             console.log(`Botón regular detectado: "${buttonText}". Enviando al chat.`);
@@ -792,11 +792,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- VARIABLES Y REFERENCIAS DOM DEL MODAL ---
     // Asegúrate de que el botón que abre tu modal tenga el id 'abrirModalConteoBtn' o ajústalo aquí.
-    const openModalBtn = document.getElementById('abrirModalConteoBtn'); 
+    const openModalBtn = document.getElementById('abrirModalConteoBtn');
     // Usamos #modal-container como overlay y contenedor del contenido
     const modalOverlay = document.getElementById('modal-container');
     const modalContainer = modalOverlay; // El div que cargará el HTML del modal
-    
+
     // Variables globales para el estado del modal
     let editedData = {};
     let inventoryData = []; // Caché de los datos del inventario cargados
@@ -809,7 +809,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalPages = 1;
 
     // --- LÓGICA PRINCIPAL ---
-    
+
     // Función para abrir y preparar el modal
     function abrirModalDeConteo() {
         showSpinner(true);
@@ -862,7 +862,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 cargarYRenderizarInventario();
             });
         });
-        
+
         // Listener para acciones en lote
         document.getElementById('apply-batch-reason-btn').addEventListener('click', aplicarRazonEnLote);
 
@@ -880,7 +880,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function cargarYRenderizarInventario() {
         const query = document.getElementById('search-inventory-input').value;
         showTableSpinner(true);
-        
+
         google.script.run
             .withSuccessHandler(data => {
                 inventoryData = data;
@@ -963,7 +963,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const rows = pageItems.map(item => createRow(item));
         tableBody.replaceChildren(...rows);
-        
+
 
         document.getElementById('select-all-checkbox').addEventListener('change', toggleSelectAll);
         tableBody.querySelectorAll('.row-checkbox').forEach(cb => cb.addEventListener('change', actualizarVisibilidadAccionesLote));
@@ -995,7 +995,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nextBtn.addEventListener('click', () => renderPage(currentPage + 1));
         controls.appendChild(nextBtn);
     }
-    
+
     // --- FUNCIONES AUXILIARES DEL MODAL ---
 
     function manejarInputFila(row) {
@@ -1038,14 +1038,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
+
     function calcularYMostrarDiferencia(row) {
         const sistema = parseFloat(row.querySelector('input[data-type="stockSistema"]').value) || 0;
         const fisico = parseFloat(row.querySelector('input[data-type="stockFisico"]').value) || 0;
         const cpi = parseFloat(row.querySelector('input[data-type="cpi"]').value) || 0;
         const vpe = parseFloat(row.querySelector('input[data-type="vpe"]').value) || 0;
         const diferencia = fisico - sistema - vpe - cpi;
-        
+
         const diferenciaSpan = row.querySelector('.difference-value');
         diferenciaSpan.textContent = diferencia.toFixed(2);
 
@@ -1065,7 +1065,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function registrarConteos() {
         const conteosValidos = Object.values(editedData).filter(d => d.stockFisico !== '');
-        
+
         if (conteosValidos.length === 0) {
             mostrarConfirmacion({
                 title: "Sin cambios para registrar",
@@ -1128,7 +1128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             forceCloseModal();
         }
     }
-    
+
     function forceCloseModal() {
         editedData = {};
         inventoryData = [];
@@ -1174,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const anySelected = document.querySelectorAll('.row-checkbox:checked').length > 0;
         document.getElementById('batch-action-container').classList.toggle('hidden', !anySelected);
     }
-    
+
     function aplicarRazonEnLote() {
         const reason = document.getElementById('batch-reason-select').value;
         if (!reason) return;
@@ -1216,7 +1216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bodyEl.innerHTML = config.body;
         primaryBtn.textContent = config.primaryText;
         primaryBtn.className = `px-4 py-2 text-white rounded-md ${config.primaryClass}`;
-        
+
         if(config.showSecondary === false) {
             secondaryBtn.classList.add('hidden');
         } else {
@@ -1238,7 +1238,7 @@ document.addEventListener('DOMContentLoaded', () => {
              if (config.onSecondaryClick) config.onSecondaryClick();
              else modal.classList.add('hidden');
         });
-        
+
         modal.classList.remove('hidden');
     }
 
@@ -1250,7 +1250,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-gray-500">Cargando datos...</td></tr>`;
         }
     }
-    
+
     // Asigna el evento al botón principal que abre el modal
     if(openModalBtn) {
         openModalBtn.addEventListener('click', abrirModalDeConteo);
@@ -1275,12 +1275,12 @@ document.addEventListener('DOMContentLoaded', () => {
         google.script.run
             .withSuccessHandler(itemsIniciales => {
                 console.log("Refresco - Mensajes recibidos:", itemsIniciales);
-                
+
                 // Guardamos los primeros datos
                 const safeItemsIniciales = Array.isArray(itemsIniciales) ? itemsIniciales : [];
                 let combinedItems = safeItemsIniciales.map(d => ({...d, fecha: d.fecha ? new Date(d.fecha) : null}));
                 adminState.items = combinedItems;
-                
+
                 // Renderizamos la lista solo con mensajes para una carga rápida inicial
                 renderFilteredAdminItems();
 
@@ -1290,23 +1290,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.log("Refresco - Caja recibida:", itemsDeCaja);
                         const safeItemsDeCaja = Array.isArray(itemsDeCaja) ? itemsDeCaja : [];
                         const nuevosItems = safeItemsDeCaja.map(d => ({...d, fecha: d.fecha ? new Date(d.fecha) : null}));
-                        
+
                         // Fusionamos los arrays
                         adminState.items = [...combinedItems, ...nuevosItems];
-                        
+
                         // Re-ordenamos la lista combinada
                         adminState.items.sort((a, b) => {
                             const dateA = (a.fecha instanceof Date && !isNaN(a.fecha.getTime())) ? a.fecha.getTime() : 0;
                             const dateB = (b.fecha instanceof Date && !isNaN(b.fecha.getTime())) ? b.fecha.getTime() : 0;
                             return dateB - dateA; // De más reciente a más antiguo
                         });
-                        
+
                         console.log("Refresco - Estado final fusionado:", adminState.items);
                         // Volvemos a dibujar la lista de ítems ya con todo fusionado y ordenado
-                        renderFilteredAdminItems(); 
+                        renderFilteredAdminItems();
                     })
                     .withFailureHandler(err => console.error("Error en el Paso B (Caja):", err))
-                    .obtenerMovimientosDeCaja(); 
+                    .obtenerMovimientosDeCaja();
             })
             .withFailureHandler(err => console.error("Error en el Paso A (Mensajes):", err))
             .obtenerPanelAdminData_SoloMensajes();
@@ -1349,11 +1349,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Lógica para el botón de PANEL ---
         btnShowPanel.addEventListener('click', () => {
             if (btnShowPanel.classList.contains('active')) return;
-            
+
             // Ocultar la columna del chat
             chatColumn.classList.add('hidden');
             chatColumn.classList.remove('flex');
-            
+
             // Mostrar el panel de admin
             adminPanel.classList.remove('hidden');
             adminPanel.classList.add('flex');
@@ -1387,7 +1387,7 @@ function updateActiveView(viewName) {
         adminPanel.classList.remove('hidden');
         showAdminPanelBtn.classList.add('bg-blue-600', 'text-white');
         showAdminPanelBtn.classList.remove('text-slate-300', 'hover:bg-slate-600');
-        
+
         // Opcional: Refrescar el panel de admin cada vez que se muestra
         if (typeof refrescarPanelAdmin === 'function') {
             refrescarPanelAdmin();

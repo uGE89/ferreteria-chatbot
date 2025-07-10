@@ -30,7 +30,7 @@ function cargarDatosIniciales(userId, pin) {
       logError('Backend', 'cargarDatosIniciales', `Usuario ${userId} validado, pero no encontrado en la hoja 'Usuarios' o sin Nombre asignado.`);
       return { ok: false, msg: 'Error al recuperar los detalles del perfil del usuario.' };
     }
-    
+
     // 5. Creamos el perfil final combinando los datos.
     // ======> ¡AQUÍ ESTÁ LA CORRECCIÓN DEL TYPO! <======
     const perfil = {
@@ -55,7 +55,7 @@ function cargarDatosIniciales(userId, pin) {
     });
 
     const welcomeMessage = PROMPT_SISTEMA_GENERAL.split('\n').filter(line => line.includes('¡Hola!') || line.includes('•'));
-    
+
   const quickStarters = HERRAMIENTAS_AI
       .filter(tool => tool.EsQuickStarter === true)
       .filter(tool => {
@@ -66,7 +66,7 @@ function cargarDatosIniciales(userId, pin) {
         NombrePantalla: tool.NombrePantalla,
         NombreFuncion: tool.NombreFuncion
       }));
-    
+
     let responseData = {
       ok: true,
       perfil: perfil,

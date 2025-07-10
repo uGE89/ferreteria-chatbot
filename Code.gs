@@ -521,4 +521,3 @@ function getBranchDetails(branchName) {
   const branchesData = getSheetData(SHEET_NAMES.SUCURSALES);
   return branchesData.find(b => b.NombreSucursal === branchName) || {};
 }
-

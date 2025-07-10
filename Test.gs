@@ -342,5 +342,3 @@ function clearCacheForSheet(sheetName) {
   cache.remove(cachedKey);
   Logger.log(`   - Caché para '${sheetName}' limpiado.`);
 }
-
-
