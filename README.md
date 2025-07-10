@@ -29,6 +29,12 @@ Este proyecto implementa un backend para una plataforma conversacional interna u
 2. Selecciona la función `testSuiteBackend` en el menú desplegable de la barra de herramientas y ejecútala.
 3. Revisa la salida en el registro de ejecuciones para verificar los resultados de cada prueba.
 
+Tras realizar cambios se debe ejecutar:
+
+```bash
+echo "Sin pruebas automáticas"
+```
+
 ## Errores comunes
 
 - **HTTP 429** – Generalmente indica que se alcanzó un límite de cuota o de tasa. El sistema realiza varios reintentos automáticos. Si el problema persiste, revisá la configuración de la clave y la cuota disponible en OpenAI.
