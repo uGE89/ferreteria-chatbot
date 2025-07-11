@@ -85,38 +85,43 @@ function contarTokens(texto) {
 
 function limitarHistorial(historial, limiteTokens = MAX_TOKENS_HISTORIAL, limiteMensajes = MAX_MENSAJES_HISTORIAL) {
   if (!Array.isArray(historial) || historial.length === 0) return [];
+
+  // --- NUEVA LÓGICA DE SANITIZACIÓN ---
+  // Filtramos el historial para eliminar secuencias de tool_calls rotas ANTES de limitar.
+  const historialSano = [];
+  for (let i = 0; i < historial.length; i++) {
+    const mensajeActual = historial[i];
+    // Si un mensaje del asistente tiene un tool_call...
+    if (mensajeActual.role === 'assistant' && mensajeActual.tool_calls) {
+      const siguienteMensaje = historial[i + 1];
+      // ...verificamos si el siguiente mensaje es una respuesta válida de la herramienta.
+      if (siguienteMensaje && siguienteMensaje.role === 'tool' && siguienteMensaje.tool_call_id === mensajeActual.tool_calls[0].id) {
+        // Si la secuencia es válida, agregamos ambos mensajes.
+        historialSano.push(mensajeActual);
+        historialSano.push(siguienteMensaje);
+        i++; // Saltamos el siguiente mensaje ya que lo hemos procesado.
+      } else {
+        // Si no hay una respuesta de herramienta válida, descartamos el tool_call roto.
+        logError('Code', 'limitarHistorial (Sanitización)', 'Se encontró y eliminó un tool_call sin respuesta válida.', '', JSON.stringify(mensajeActual));
+      }
+    } else {
+      // Si no es un tool_call, simplemente lo agregamos.
+      historialSano.push(mensajeActual);
+    }
+  }
+  // --- FIN DE LA LÓGICA DE SANITIZACIÓN ---
+
+  // Ahora, el resto de la función trabaja con el historial ya sanitizado.
   const result = [];
   let tokens = 0;
-  const systemMsg = historial[0];
-  tokens += contarTokens(systemMsg.content || JSON.stringify(systemMsg.tool_calls || ''));
+  const systemMsg = historialSano[0];
+  tokens += contarTokens(systemMsg.content || '');
   result.unshift(systemMsg);
 
-  for (let i = historial.length - 1; i > 0; i--) {
-    const m = historial[i];
+  for (let i = historialSano.length - 1; i > 0; i--) {
+    const m = historialSano[i];
+    const t = contarTokens(m.content || JSON.stringify(m.tool_calls || ''));
 
-    if (m.role === 'tool') {
-      const prev = historial[i - 1];
-      if (!prev || !prev.tool_calls) {
-        logError('Code', 'limitarHistorial', 'tool sin mensaje assistant previo');
-        continue;
-      }
-      const match = prev.tool_calls.find(tc => tc.id === m.tool_call_id);
-      if (!match) {
-        logError('Code', 'limitarHistorial', 'ID de tool_call sin coincidencia');
-        continue;
-      }
-      const tokenPair = contarTokens(m.content) + contarTokens(JSON.stringify(prev.tool_calls));
-      if (result.length + 2 > limiteMensajes || tokens + tokenPair > limiteTokens) {
-        break;
-      }
-      tokens += tokenPair;
-      result.splice(1, 0, m);
-      result.splice(1, 0, prev);
-      i--;
-      continue;
-    }
-
-    const t = contarTokens(m.content);
     if (result.length >= limiteMensajes || tokens + t > limiteTokens) {
       break;
     }
