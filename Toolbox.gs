@@ -442,13 +442,14 @@ function registrarConteo(userId, claveProducto, cantidadSistema, cantidadFisico,
  * @returns {string} Mensaje de confirmación.
  */
 function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarjeta, razon) {
+  let diferencia;
   try {
     const now = getFormattedTimestamp();
     const userProfile = obtenerDetallesDeUsuario(userId);
     const userName = userProfile ? userProfile.Nombre : 'Desconocido';
     const conteoId = `ARQ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-    const diferencia =
+    diferencia =
       (parseFloat(saldoSistema) || 0) -
       (parseFloat(contado) || 0) -
       (parseFloat(transferencia) || 0) -
