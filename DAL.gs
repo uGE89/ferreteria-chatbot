@@ -174,7 +174,7 @@ function getSheetDataById(spreadsheetId, sheetName) {
 
 
 // Variable para guardar los usuarios en memoria durante una sola ejecución
-let _usersDataCache = null;
+var _usersDataCache = null;
 
 /**
  * Obtiene los detalles de un usuario específico. Usa un caché en memoria
