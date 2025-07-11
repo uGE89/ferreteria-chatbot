@@ -444,7 +444,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         };
                         getAIResponse(payloadForNextStep);
                     })
-                    .withFailureHandler(handleAIError)
+                    .withFailureHandler(error => {
+                        hideTypingIndicator();
+                        showCustomAlert(`Ocurrió un error al procesar tu solicitud: ${error.message}.`, 'error');
+                        messageInput.disabled = false;
+                        sendButton.disabled = false;
+                        messageInput.focus();
+                        const tool_response = {
+                            tool_call_id: toolCall.id,
+                            function_name: functionName,
+                            result: `Error al ejecutar la herramienta: ${error.message}`
+                        };
+                        getAIResponse({ texto: null, tool_response });
+                    })
                     .ejecutarHerramienta(functionName, functionArgs, userId, sessionId);
             }
         } else {
@@ -493,7 +505,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                     getAIResponse(payloadForNextStep);
                 })
-                .withFailureHandler(handleAIError)
+                .withFailureHandler(error => {
+                    hideTypingIndicator();
+                    showCustomAlert(`Ocurrió un error al procesar tu solicitud: ${error.message}.`, 'error');
+                    messageInput.disabled = false;
+                    sendButton.disabled = false;
+                    messageInput.focus();
+                    const tool_response = {
+                        tool_call_id: pending.id,
+                        function_name: pending.name,
+                        result: `Error al ejecutar la herramienta: ${error.message}`
+                    };
+                    getAIResponse({ texto: null, tool_response });
+                })
                 .ejecutarHerramienta(pending.name, pending.args, userId, sessionId);
         } else if (herramientaPendiente && negativePattern.test(userInput)) {
             herramientaPendiente = null;
