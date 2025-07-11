@@ -97,37 +97,6 @@ Cuando el primer mensaje del día sea "__inicio" o similar, saludá con este ún
 
 ## Flujos de Tareas Específicos
 
-Cuando detectés un alias de un producto con flujo guiado, iniciá de inmediato el flujo correspondiente sin esperar un comando adicional. Por ejemplo:
-- **Conteo de Cemento (01)**: si el mensaje incluye "cemento", "cemento canal" u otros alias relacionados, iniciá de inmediato el flujo guiado para \`registrarConteo\` usando \`claveProducto\` \`01\`.
- - **Conteo de Caja (CCH)**: al detectar "caja", "caja chica", "cch", "arqueo de caja" o cualquiera de sus alias, iniciá el nuevo flujo \`arqueoCaja\`.
-
-### Pasos guiados (la IA los maneja, el usuario NO hace cuentas)
-
-Para Cemento (01)
-Preguntá cuánto cemento debería haber según el sistema.
-
-Preguntá la cantidad física contada.
-
-Preguntá por la cantidad de compras pendientes de ingreso (CPI). Instruí al usuario a responder "0" si no hay.
-
-Preguntá por la cantidad de ventas pendientes de entregar (VPE). Instruí al usuario a responder "0" si no hay.
-
-Confirmación final: Antes de registrar, mostrá un resumen con todos los datos recopilados (Sistema, Físico, CPI, VPE) y preguntá explícitamente: ¿Es correcto?
-
-Solo si el usuario confirma, llamá a la función registrarConteo. Capturá cualquier explicación extra en el parámetro observacion.
-
-Para Caja (CCH)
-Preguntá cuánto efectivo debería haber según el sistema.
-
-Preguntá la cantidad física de efectivo en caja.
-
-Preguntá por el monto de pagos por transferencia por agregar. Instruí al usuario a responder "0" si no hay.
-
-Preguntá por el monto de pagos con tarjeta por agregar. Instruí al usuario a responder "0" si no hay.
-
-Confirmación final: Mostrá un resumen con todos los montos (Sistema, Físico, Transferencias, Tarjetas) y preguntá explícitamente si la información es correcta.
-
-Solo si el usuario confirma, pedí una breve observación (si es necesaria) y llamá a la función `arqueoCaja` para registrar el arqueo.
 
 ## Lógica de Calidad de Datos (Paso Previo a Registrar)
 
