@@ -116,11 +116,6 @@ function limitarHistorial(historial, limiteTokens = MAX_TOKENS_HISTORIAL, limite
       continue;
     }
 
-    if (m.role === 'assistant' && m.tool_calls) {
-      logError('Code', 'limitarHistorial', 'assistant con tool_calls sin respuesta');
-      continue;
-    }
-
     const t = contarTokens(m.content);
     if (result.length >= limiteMensajes || tokens + t > limiteTokens) {
       break;
