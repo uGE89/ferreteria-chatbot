@@ -294,7 +294,7 @@ const HERRAMIENTAS_AI = [
     },
     ComportamientoAdicional: '', // Sin comportamiento adicional específico para esta.
     EsQuickStarter: true,
-    PromptEspecifico: 'Has determinado que el usuario quiere registrar un ingreso. Tu siguiente paso es pedirle el monto y el concepto de forma clara y directa, usando un tono amigable y servicial.',
+  PromptEspecifico: 'Has determinado que el usuario quiere registrar un ingreso. Tu siguiente paso es pedirle el monto, el concepto y el nombre del contacto de forma clara y directa, usando un tono amigable y servicial.',
     rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
   },
 
@@ -325,7 +325,7 @@ const HERRAMIENTAS_AI = [
     },
     ComportamientoAdicional: '', // Sin comportamiento adicional específico para esta.
     EsQuickStarter: true,
-    PromptEspecifico: 'Has determinado que el usuario quiere registrar un gasto. Tu siguiente paso es pedirle el monto y el concepto del gasto. Sé directo y eficiente.',
+  PromptEspecifico: 'Has determinado que el usuario quiere registrar un gasto. Tu siguiente paso es pedirle el monto, el concepto y el nombre del contacto. Sé directo y eficiente.',
   rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
 
   },
