@@ -58,7 +58,7 @@
         .diff-positive { color: #22c55e; }
         .diff-negative { color: #ef4444; }
         .diff-zero { color: #64748b; }
-        
+
         /* Animación para resaltar fila */
         @keyframes highlight-fade {
             from { background-color: #f59e0b40; }
@@ -98,7 +98,7 @@
             <h1 class="text-xl font-bold text-white">Ferretería Flores</h1>
             <p class="text-xs text-emerald-400">Plataforma Interna</p>
         </div>
-        
+
         <div id="sidebar-scroll-area" class="flex-grow flex flex-col space-y-6 overflow-y-auto pr-2 -mr-2">
             <div id="user-info-area" class="flex-shrink-0 text-center bg-slate-800 p-4 rounded-xl shadow-lg">
                 <p id="user-name-display" class="text-lg font-semibold text-white">Cargando...</p>
@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         loginMsg.textContent = "Validando...";
         btnLogin.disabled = true;
-        
+
         google.script.run
             .withSuccessHandler(procesarDatosIniciales)
             .withFailureHandler(err => {
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userDetailsDisplay.textContent = `Sucursal: ${perfilActual.Sucursal} | Rol: ${perfilActual.Rol}`;
         renderQuickStarters(datos.quickStarters);
         actualizarPuntajeYRanking();
-        
+
         if (datos.mensajeAnuncio && Array.isArray(datos.mensajeAnuncio)) {
             datos.mensajeAnuncio.forEach((msg, i) => setTimeout(() => addMessage(msg, 'system'), 500 * (i + 1)));
         }
@@ -362,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function hideTypingIndicator() {
         document.getElementById('typing-indicator')?.remove();
     }
-    
+
     function getAIResponse(payload) {
         messageInput.disabled = true;
         sendButton.disabled = true;
@@ -519,7 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const button = document.createElement('button');
             button.className = "w-full text-left bg-slate-800 hover:bg-slate-700 text-slate-200 p-3 rounded-lg flex items-center transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500";
             button.dataset.functionName = starter.NombreFuncion;
-            
+
             const iconName = icons[starter.NombreFuncion] || icons.default;
             button.innerHTML = `<span class="material-symbols-outlined mr-3">${iconName}</span> <span class="font-medium text-sm">${starter.NombrePantalla}</span>`;
 
@@ -544,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
         google.script.run
             .withSuccessHandler(datos => {
                 if (!Array.isArray(datos)) return;
-                
+
                 const currentUserData = datos.find(u => u.UsuarioID === perfilActual.UsuarioID);
                 if (currentUserData) {
                     puntosActuales.textContent = (currentUserData.Puntos || 0).toLocaleString('es-NI');
@@ -617,7 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderFilteredAdminItems();
             });
         });
-        
+
         adminPanel.querySelector('#generar-resumen-btn').addEventListener('click', () => {
             const dias = parseInt(document.getElementById('admin-resumen-dias').value, 10) || 1;
             google.script.run
@@ -647,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderFilteredAdminItems() {
         const container = document.getElementById('admin-items-container');
         if (!container) return;
-        
+
         let itemsToShow = [...adminState.items];
         if (adminState.filters.tipo !== 'Todos') {
             itemsToShow = itemsToShow.filter(item => item.tipo === adminState.filters.tipo);
@@ -678,7 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>`;
         }).join('');
-        
+
         container.querySelectorAll('.btn-marcar-revisado').forEach(btn => {
             btn.addEventListener('click', () => {
                 const itemId = btn.dataset.itemId;
@@ -737,7 +737,7 @@ document.addEventListener('DOMContentLoaded', () => {
         suggestionsContainer.innerHTML = '';
         messageInput.focus();
     }
-    
+
     // --- Lógica de Logout ---
     logoutBtn.addEventListener('click', async () => {
         const confirmed = await showCustomConfirm("¿Seguro que quieres cerrar sesión?");
@@ -810,11 +810,11 @@ document.addEventListener('DOMContentLoaded', () => {
         inventoryData = [];
         renderizarTabla();
     }
-    
+
     function jumpToItem() {
         const searchTerm = document.getElementById('quick-find-input').value.trim().toUpperCase();
         if (!searchTerm) return;
-        
+
         const itemIndex = inventoryData.findIndex(item => item.Clave.toUpperCase() === searchTerm);
 
         if (itemIndex === -1) {
@@ -916,7 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
         prevBtn.disabled = pageNumber === 1;
         prevBtn.addEventListener('click', () => renderPage(currentPage - 1));
         controls.appendChild(prevBtn);
-        
+
         const pageInfo = document.createElement('span');
         pageInfo.className = 'px-3 py-1 text-sm text-slate-400';
         pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
