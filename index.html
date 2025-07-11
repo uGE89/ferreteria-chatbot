@@ -226,6 +226,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let perfilActual = null;
     let adminState = { items: [], filters: { tipo: 'Todos', fecha: '' } };
     let herramientaPendiente = null;
+    let quickStarterEnUso = null;
+    let intentosFallidos = {};
 
     // --- Lógica de Modales (Alert y Confirm) ---
     function showCustomAlert(message, type = 'info', onClose) {
@@ -394,24 +396,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const registroRegex = /(?:ya\s+)?(?:registr(?:e|é)|qued(?:o|ó)\s+registrado|registro\s+completado)/i;
         if (!data.tool_call && data.content && registroRegex.test(data.content)) {
-            showCustomAlert('El registro no se completó. Por favor, repetí el proceso.', 'error');
+            const herramienta = quickStarterEnUso?.nombreFuncion || 'N/D';
+            const claveIntento = `${sessionStorage.getItem('sessionId')}-${herramienta}`;
+            const intentos = (intentosFallidos[claveIntento] || 0) + 1;
+            intentosFallidos[claveIntento] = intentos;
             google.script.run.logError(
                 'Frontend',
                 'handleAIResponse',
                 'Texto de registro sin tool_call',
                 '',
-                data.content,
+                `${herramienta} | intento ${intentos} | ${data.content}`,
                 perfilActual?.UsuarioID || 'N/A'
             );
             messageInput.disabled = false;
             sendButton.disabled = false;
             messageInput.focus();
+            if (quickStarterEnUso) {
+                showCustomConfirm(`El registro no se completó. ¿Reintentar \"${quickStarterEnUso.nombrePantalla}\"?`, 'Reintentar', 'Cancelar')
+                    .then(reintentar => {
+                        if (reintentar) {
+                            getAIResponse({ texto: quickStarterEnUso.nombrePantalla, tool_name: quickStarterEnUso.nombreFuncion });
+                        }
+                    });
+            } else {
+                showCustomAlert('El registro no se completó. Por favor, repetí el proceso.', 'error');
+            }
             return;
         }
 
         if (data.tool_call) {
             const toolCall = data.tool_call;
             const functionName = toolCall.function.name;
+            quickStarterEnUso = null;
             let functionArgs;
             try {
                 functionArgs = JSON.parse(toolCall.function.arguments);
@@ -498,6 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         addMessage(userInput, 'user');
         messageInput.value = '';
+        quickStarterEnUso = null;
 
         const affirmativePattern = /^(sí|si|claro|dale|ok)/i;
         const negativePattern = /^(no|cancel)/i;
@@ -577,6 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else {
                     addMessage(starter.NombrePantalla, 'user');
+                    quickStarterEnUso = { nombreFuncion: starter.NombreFuncion, nombrePantalla: starter.NombrePantalla };
                     getAIResponse({ texto: starter.NombrePantalla, tool_name: starter.NombreFuncion });
                 }
             });
