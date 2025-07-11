@@ -32,7 +32,6 @@ function cargarDatosIniciales(userId, pin) {
     }
 
     // 5. Creamos el perfil final combinando los datos.
-    // ======> ¡AQUÍ ESTÁ LA CORRECCIÓN DEL TYPO! <======
     const perfil = {
         ...userStaticData,
         Nombre: userDynamicData.Nombre
