@@ -99,7 +99,7 @@ Cuando el primer mensaje del día sea "__inicio" o similar, saludá con este ún
 
 Cuando detectés un alias de un producto con flujo guiado, iniciá de inmediato el flujo correspondiente sin esperar un comando adicional. Por ejemplo:
 - **Conteo de Cemento (01)**: si el mensaje incluye "cemento", "cemento canal" u otros alias relacionados, iniciá de inmediato el flujo guiado para \`registrarConteo\` usando \`claveProducto\` \`01\`.
- - **Conteo de Caja (CCH)**: al detectar "caja", "caja chica", "cch", "arqueo de caja" o cualquiera de sus alias, comenzá el flujo guiado para \`registrarConteo\` con \`claveProducto\` \`CCH\`.
+ - **Conteo de Caja (CCH)**: al detectar "caja", "caja chica", "cch", "arqueo de caja" o cualquiera de sus alias, iniciá el nuevo flujo \`arqueoCaja\`.
 
 ### Pasos guiados (la IA los maneja, el usuario NO hace cuentas)
 
@@ -127,7 +127,7 @@ Preguntá por el monto de pagos con tarjeta por agregar. Instruí al usuario a r
 
 Confirmación final: Mostrá un resumen con todos los montos (Sistema, Físico, Transferencias, Tarjetas) y preguntá explícitamente si la información es correcta.
 
-Solo si el usuario confirma, pedí una breve observación (si es necesaria) y llamá a la función para registrar el conteo.
+Solo si el usuario confirma, pedí una breve observación (si es necesaria) y llamá a la función `arqueoCaja` para registrar el arqueo.
 
 ## Lógica de Calidad de Datos (Paso Previo a Registrar)
 
@@ -254,9 +254,9 @@ const HERRAMIENTAS_AI = [
       },
       required: ['claveProducto', 'cantidadSistema', 'cantidadFisico']
     },
-    ComportamientoAdicional: 'Calcula la diferencia entre sistema y físico. Si es distinta de cero solicita datos de CPI o VPE. Para la clave CCH pregunta si hay pagos por transferencia o tarjeta. Siempre confirma antes de registrar y guarda cualquier explicación en `observacion`.',
+    ComportamientoAdicional: 'Calcula la diferencia entre sistema y físico. Si es distinta de cero solicita datos de CPI o VPE. Siempre confirma antes de registrar y guarda cualquier explicación en `observacion`.',
     EsQuickStarter: true,
-    PromptEspecifico: 'Guía al usuario para obtener la clave y pedile explícitamente la cantidad registrada en el sistema y la cantidad física. No revelés datos del sistema por tu cuenta. Si la diferencia supera ±10 pedí CPI o VPE y cualquier observación. Para la caja consultá por pagos con transferencia o tarjeta antes de registrar. Una vez confirmados todos los datos, invocá la función `registrarConteo` para guardar el resultado.',
+    PromptEspecifico: 'Guía al usuario para obtener la clave y pedile explícitamente la cantidad registrada en el sistema y la cantidad física. No revelés datos del sistema por tu cuenta. Si la diferencia supera ±10 pedí CPI o VPE y cualquier observación. Una vez confirmados todos los datos, invocá la función `registrarConteo` para guardar el resultado.',
     rolesPermitidos: ['Administrador', 'Bodeguero', 'Todo en uno']
 
   },
@@ -376,9 +376,9 @@ const HERRAMIENTAS_AI = [
       },
       required: ['saldoSistema', 'confirmacionRegistros']
     },
-    ComportamientoAdicional: 'Esta función no registra el arqueo final. Su propósito es iniciar un modo de conversación especial y de varios turnos. Una vez activado, el bot seguirá el PromptEspecifico para guiar al usuario, calcular los totales y, al final del proceso, llamará a la función registrarConteo con los datos recopilados.',
+    ComportamientoAdicional: 'Esta función no registra el arqueo final. Su propósito es iniciar un modo de conversación especial y de varios turnos. Una vez activado, el bot seguirá el PromptEspecifico para guiar al usuario, calcular los totales y, al final del proceso, invocará nuevamente la función arqueoCaja, la cual ejecutará registrarArqueoCaja y guardará todo en la hoja ArqueoCaja.',
     EsQuickStarter: true,
-    PromptEspecifico: 'Una vez activado este flujo, tu misión es ser un asistente que ayuda al usuario a contar. No pidas totales, pide los detalles y tú haces las sumas. Haz una breve explicacion de cómo funciona el proceso. 1. Pide el Total de la columna Calculado en "Corte de Caja" de Sicar conocido como Saldo del Sistema, pregunta  si todos los ingresos y retiros hechos hasta el momento ya fueron registrados para garantizar un proceso sin errores 2. Iniciar Conteo de Efectivo: Ya tienes el saldo del sistema. Tu siguiente paso es decir: "Perfecto. Ahora vamos a contar el efectivo. No lo sumes, solo decime la cantidad de billetes que tenés (ej: 10 de 500, 20 de 100), y yo hago el cálculo por vos." 3. Calcular Efectivo: Cuando el usuario te dé los billetes, calcula el subtotal, anúncialo y luego pide las monedas. Suma todo y confirma el Total de Efectivo Contado. 4. Contar Otros Métodos: Continúa con la misma dinámica para Vales y Tarjetas, pidiendo los montos individuales y sumándolos por categoría. 5. Presentar Resumen Final: Muestra una comparación clara entre el Saldo del Sistema y el Total Contado (la suma de todo lo que ayudaste a contar). Anuncia el resultado final: si hay un faltante o un sobrante y de cuánto es. 6. Obtener Justificación y Registrar: Si hay una diferencia, pregunta por la razón. Una vez que tengas la justificación, confirma con el usuario y llama a la función registrarConteo con claveProducto: "CCH", cantidadSistema, cantidadFisico (el total que calculaste) y la observacion del usuario.',
+    PromptEspecifico: 'Una vez activado este flujo, tu misión es ser un asistente que ayuda al usuario a contar. No pidas totales, pide los detalles y tú haces las sumas. Haz una breve explicacion de cómo funciona el proceso. 1. Pide el Total de la columna Calculado en "Corte de Caja" de Sicar conocido como Saldo del Sistema, pregunta  si todos los ingresos y retiros hechos hasta el momento ya fueron registrados para garantizar un proceso sin errores 2. Iniciar Conteo de Efectivo: Ya tienes el saldo del sistema. Tu siguiente paso es decir: "Perfecto. Ahora vamos a contar el efectivo. No lo sumes, solo decime la cantidad de billetes que tenés (ej: 10 de 500, 20 de 100), y yo hago el cálculo por vos." 3. Calcular Efectivo: Cuando el usuario te dé los billetes, calcula el subtotal, anúncialo y luego pide las monedas. Suma todo y confirma el Total de Efectivo Contado. 4. Contar Otros Métodos: Continúa con la misma dinámica para Vales y Tarjetas, pidiendo los montos individuales y sumándolos por categoría. 5. Presentar Resumen Final: Muestra una comparación clara entre el Saldo del Sistema y el Total Contado (la suma de todo lo que ayudaste a contar). Anuncia el resultado final: si hay un faltante o un sobrante y de cuánto es. 6. Obtener Justificación y Registrar: Si hay una diferencia, pregunta por la razón. Una vez que tengas la justificación, confirma con el usuario y llama nuevamente a `arqueoCaja` para que esta registre todo con `registrarArqueoCaja` en la hoja `ArqueoCaja`.',
     rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
 
   },
