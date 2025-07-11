@@ -475,7 +475,6 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
           functionArgs.contado,
           functionArgs.transferencia,
           functionArgs.tarjeta,
-          functionArgs.diferencia,
           functionArgs.razonDiferencia
         );
 
