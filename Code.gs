@@ -527,7 +527,9 @@ function getAITools() {
         name: tool.NombreFuncion,
         description: tool.Descripcion,
         parameters: tool.SchemaParametros
-      }
+      },
+      ComportamientoAdicional: tool.ComportamientoAdicional,
+      PromptEspecifico: tool.PromptEspecifico
     };
   });
 
