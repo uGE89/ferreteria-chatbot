@@ -381,6 +381,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        if (!payload.tool_name && quickStarterEnUso) {
+            payload.tool_name = quickStarterEnUso.nombreFuncion;
+        }
+
         google.script.run
             .withSuccessHandler(handleAIResponse)
             .withFailureHandler(handleAIError)
@@ -514,7 +518,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         addMessage(userInput, 'user');
         messageInput.value = '';
-        quickStarterEnUso = null;
 
         const affirmativePattern = /^(sí|si|claro|dale|ok)/i;
         const negativePattern = /^(no|cancel)/i;
