@@ -560,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else {
                     addMessage(starter.NombrePantalla, 'user');
-                    getAIResponse({ texto: starter.NombrePantalla });
+                    getAIResponse({ texto: starter.NombrePantalla, tool_name: starter.NombreFuncion });
                 }
             });
             quickStartersContainer.appendChild(button);

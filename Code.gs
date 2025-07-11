@@ -228,15 +228,29 @@ function enviarAOpenAI(sessionId, userId, payload) {
       });
     }
 
+    const selectedToolName = payload.tool_name;
+    let tools = [];
+    let promptExtra = '';
+
+    if (selectedToolName) {
+      const tool = getAIToolByName(selectedToolName);
+      if (tool) {
+        tools.push(tool);
+        if (tool.PromptEspecifico) promptExtra += tool.PromptEspecifico;
+        if (tool.ComportamientoAdicional) {
+          if (promptExtra) promptExtra += '\n';
+          promptExtra += tool.ComportamientoAdicional;
+        }
+      }
+    }
+
     const historialExtra = obtenerHistorialReciente(userId, sessionId);
     chatHistory = limitarHistorial([
-      { role: 'system', content: finalSystemPrompt },
+      { role: 'system', content: finalSystemPrompt + (promptExtra ? '\n' + promptExtra : '') },
       ...historialExtra,
       ...chatHistory
     ]);
     const historyForRequest = chatHistory.map(m => Object.assign({}, m));
-
-    const tools = getAITools();
 
     const requestPayload = {
         model: MODELO_DEFAULT,
@@ -530,6 +544,26 @@ function getAITools() {
 
   Logger.log(`--- getAITools finalizado: Se configuraron ${tools.length} herramientas. ---`);
   return tools;
+}
+
+/**
+ * Obtiene una herramienta específica por su nombre para OpenAI.
+ * @param {string} name - Nombre de la función buscada.
+ * @returns {object|null} Objeto de herramienta o null si no existe.
+ */
+function getAIToolByName(name) {
+  const tool = HERRAMIENTAS_AI.find(t => t.NombreFuncion === name);
+  if (!tool) return null;
+  return {
+    type: "function",
+    function: {
+      name: tool.NombreFuncion,
+      description: tool.Descripcion,
+      parameters: tool.SchemaParametros
+    },
+    ComportamientoAdicional: tool.ComportamientoAdicional,
+    PromptEspecifico: tool.PromptEspecifico
+  };
 }
 
 // --- LÓGICA DE CALENDARIO DE CONTEO Y REGISTRO DE CONTEOS ---
