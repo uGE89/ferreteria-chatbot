@@ -423,10 +423,49 @@ function registrarConteo(userId, claveProducto, cantidadSistema, cantidadFisico,
 
     sumarPuntos(userId, 50);
 
-    return `Conteo registrado para el producto ${claveFinal}.`;
+  return `Conteo registrado para el producto ${claveFinal}.`;
   } catch (e) {
     logError('Toolbox', 'registrarConteo', e.message, e.stack, JSON.stringify({ claveProducto, cantidadSistema, cantidadFisico, cpi, vpe, observacion }));
     throw new Error(`Error al registrar conteo: ${e.message}`);
+  }
+}
+
+/**
+ * Registra un arqueo de caja en la hoja 'ArqueoCaja'.
+ * @param {string} userId - ID del usuario que realiza el arqueo.
+ * @param {number} saldoSistema - Monto que debería haber según el sistema.
+ * @param {number} contado - Total contado en efectivo.
+ * @param {number} transferencia - Pagos por transferencia.
+ * @param {number} tarjeta - Pagos con tarjeta.
+ * @param {number} diferencia - Diferencia encontrada.
+ * @param {string} razon - Razón de la diferencia.
+ * @returns {string} Mensaje de confirmación.
+ */
+function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarjeta, diferencia, razon) {
+  try {
+    const now = getFormattedTimestamp();
+    const userProfile = obtenerDetallesDeUsuario(userId);
+    const userName = userProfile ? userProfile.Nombre : 'Desconocido';
+    const conteoId = `ARQ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    appendRowToSheet(SHEET_NAMES.ARQUEO_CAJA, {
+      ID_Conteo: conteoId,
+      Fecha: now.split(' ')[0],
+      Hora: now.split(' ')[1],
+      UsuarioID: userId,
+      NombreUsuario: userName,
+      'Saldo sistema': saldoSistema,
+      Contado: contado,
+      Transferencia: transferencia,
+      Tarjeta: tarjeta,
+      Diferencia: diferencia,
+      'Razón diferencia': razon || ''
+    });
+
+    return 'Arqueo registrado correctamente.';
+  } catch (e) {
+    logError('Toolbox', 'registrarArqueoCaja', e.message, e.stack, JSON.stringify({ userId, saldoSistema, contado, transferencia, tarjeta, diferencia, razon }));
+    throw new Error(`Error al registrar el arqueo: ${e.message}`);
   }
 }
 

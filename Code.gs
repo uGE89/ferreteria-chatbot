@@ -467,6 +467,18 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
           functionArgs.pagosTarjeta
         );
 
+      case 'arqueoCaja':
+        Logger.log('   - Entrando en el caso: "arqueoCaja"');
+        return registrarArqueoCaja(
+          userId,
+          functionArgs.saldoSistema,
+          functionArgs.contado,
+          functionArgs.transferencia,
+          functionArgs.tarjeta,
+          functionArgs.diferencia,
+          functionArgs.razonDiferencia
+        );
+
       case 'generarResumenAdmin':
          Logger.log('   - Entrando en el caso: "generarResumenAdmin".');
          return generarResumenAdmin(functionArgs.dias);
