@@ -437,16 +437,20 @@ function registrarConteo(userId, claveProducto, cantidadSistema, cantidadFisico,
  * @param {number} contado - Total contado en efectivo.
  * @param {number} transferencia - Pagos por transferencia.
  * @param {number} tarjeta - Pagos con tarjeta.
- * @param {number} diferencia - Diferencia encontrada.
  * @param {string} razon - Razón de la diferencia.
- * @returns {string} Mensaje de confirmación.
+ * @returns {string} Mensaje de confirmación que incluye la diferencia.
  */
-function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarjeta, diferencia, razon) {
+function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarjeta, razon) {
   try {
     const now = getFormattedTimestamp();
     const userProfile = obtenerDetallesDeUsuario(userId);
     const userName = userProfile ? userProfile.Nombre : 'Desconocido';
     const conteoId = `ARQ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    const diferencia = saldoSistema - contado - transferencia - tarjeta;
+    if (Math.abs(diferencia) > 5 && !razon) {
+      throw new Error('Se requiere una explicación para diferencias mayores a 5');
+    }
 
     appendRowToSheet(SHEET_NAMES.ARQUEO_CAJA, {
       ID_Conteo: conteoId,
@@ -462,7 +466,7 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
       'Razón diferencia': razon || ''
     });
 
-    return 'Arqueo registrado correctamente.';
+    return `Arqueo registrado. Diferencia: ${diferencia}`;
   } catch (e) {
     logError('Toolbox', 'registrarArqueoCaja', e.message, e.stack, JSON.stringify({ userId, saldoSistema, contado, transferencia, tarjeta, diferencia, razon }));
     throw new Error(`Error al registrar el arqueo: ${e.message}`);
