@@ -392,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addMessage(data.content, 'ai');
         }
 
-        const registroRegex = /ya registr(?:e|é)/i;
+        const registroRegex = /(?:ya\s+)?(?:registr(?:e|é)|qued(?:o|ó)\s+registrado|registro\s+completado)/i;
         if (!data.tool_call && data.content && registroRegex.test(data.content)) {
             showCustomAlert('El registro no se completó. Por favor, repetí el proceso.', 'error');
             google.script.run.logError(
