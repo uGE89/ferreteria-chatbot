@@ -445,17 +445,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         getAIResponse(payloadForNextStep);
                     })
                     .withFailureHandler(error => {
-                        hideTypingIndicator();
-                        showCustomAlert(`Ocurrió un error al procesar tu solicitud: ${error.message}.`, 'error');
-                        messageInput.disabled = false;
-                        sendButton.disabled = false;
-                        messageInput.focus();
-                        const tool_response = {
-                            tool_call_id: toolCall.id,
-                            function_name: functionName,
-                            result: `Error al ejecutar la herramienta: ${error.message}`
+                        const errorMessage = `Error al ejecutar la herramienta ${functionName}: ${error.message}`;
+                        addMessage(`Resultado: ${errorMessage}`, 'system');
+                        const payloadForNextStep = {
+                            texto: null,
+                            tool_response: {
+                                tool_call_id: toolCall.id,
+                                function_name: functionName,
+                                result: errorMessage
+                            }
                         };
-                        getAIResponse({ texto: null, tool_response });
+                        getAIResponse(payloadForNextStep);
                     })
                     .ejecutarHerramienta(functionName, functionArgs, userId, sessionId);
             }
