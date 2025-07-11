@@ -23,7 +23,7 @@ function cargarDatosIniciales(userId, pin) {
     }
 
     // 4. Leemos la hoja SÓLO para obtener el Nombre.
-    const usersFromSheet = getSheetData('Usuarios');
+    const usersFromSheet = getSheetData(SHEET_NAMES.USUARIOS);
     const userDynamicData = usersFromSheet.find(u => u.UsuarioID === userId);
 
     if (!userDynamicData || !userDynamicData.Nombre) {
