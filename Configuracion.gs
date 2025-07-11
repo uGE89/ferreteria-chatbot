@@ -358,14 +358,14 @@ const HERRAMIENTAS_AI = [
         },
         razonDiferencia: {
           type: 'string',
-          description: "La justificación o explicación si existe una diferencia entre el saldo del sistema y el total contado. Es obligatorio si la diferencia es mayor a 5."
+          description: "La justificación o explicación si existe una diferencia. Si no hay diferencia, este campo debe ser una cadena vacía o 'Sin diferencia'."
         }
       },
-      required: ['saldoSistema', 'contado', 'transferencia', 'tarjeta']
+      required: ['saldoSistema', 'contado', 'transferencia', 'tarjeta', 'razonDiferencia'] // Hacemos 'razonDiferencia' requerida.
     },
     ComportamientoAdicional: 'Esta función se llama al FINAL del proceso de arqueo. El asistente debe guiar al usuario para obtener todos los valores (sistema, contado, transferencia, tarjeta) y la razón de la diferencia (si aplica) ANTES de invocar esta herramienta.',
     EsQuickStarter: true,
-    PromptEspecifico: 'Una vez activado este flujo, tu misión es ser un asistente que ayuda al usuario a contar. No pidas totales, pide los detalles y tú haces las sumas. Haz una breve explicacion de cómo funciona el proceso. 1. Pide el Total de la columna Calculado en "Corte de Caja" de Sicar conocido como Saldo del Sistema, pregunta  si todos los ingresos y retiros hechos hasta el momento ya fueron registrados para garantizar un proceso sin errores 2. Iniciar Conteo de Efectivo: Ya tienes el saldo del sistema. Tu siguiente paso es decir: "Perfecto. Ahora vamos a contar el efectivo. No lo sumes, solo decime la cantidad de billetes que tenés (ej: 10 de 500, 20 de 100), y yo hago el cálculo por vos." 3. Calcular Efectivo: Cuando el usuario te dé los billetes, calcula el subtotal, anúncialo y luego pide las monedas. Suma todo y confirma el Total de Efectivo Contado. 4. Contar Otros Métodos: Continúa con la misma dinámica para Vales y Tarjetas, pidiendo los montos individuales y sumándolos por categoría. 5. Presentar Resumen Final: Muestra una comparación clara entre el Saldo del Sistema y el Total Contado (la suma de todo lo que ayudaste a contar). Anuncia el resultado final: si hay un faltante o un sobrante y de cuánto es. 6. Obtener Justificación y Registrar: Si hay una diferencia, pregunta por la razón. Una vez que tengas la justificación, confirma con el usuario y llama nuevamente a `arqueoCaja` para que esta registre todo con `registrarArqueoCaja` en la hoja `ArqueoCaja`.',
+    PromptEspecifico: 'Para ejecutar esta función, sigue estrictamente los 6 pasos del flujo de Arqueo de Caja definidos en el PROMPT_SISTEMA_GENERAL. No llames a esta función hasta que tengas todos los parámetros requeridos.',
     rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
 
   },
