@@ -336,24 +336,36 @@ const HERRAMIENTAS_AI = [
   {
     NombreFuncion: 'arqueoCaja',
     NombrePantalla: '🧮 Arqueo de Caja',
-    Descripcion: 'Inicia un proceso guiado e interactivo para realizar un arqueo o corte de caja. Usa esta función cuando el usuario quiera cuadrar su caja. A diferencia de un registro simple, esta herramienta ayuda al usuario a calcular los totales, actuando como un asistente.',
+    Descripcion: 'Registra el resultado final de un arqueo de caja después de haber recopilado todos los montos (sistema, efectivo, transferencias, tarjetas) y la justificación si hubo una diferencia.',
     SchemaParametros: {
       type: 'object',
       properties: {
         saldoSistema: {
           type: 'number',
-          description: "El monto total que la columna 'Calculado' del reporte 'Corte de Caja' indica que debería haber en caja."
+          description: "El monto total que el sistema indica que debería haber en caja."
         },
-        confirmacionRegistros: {
-          type: 'boolean',
-          description: 'El usuario debe confirmar que todos los ingresos y retiros del día ya han sido registrados en el sistema. Debe ser \'true\' para proceder.'
+        contado: {
+          type: 'number',
+          description: "El monto total contado en efectivo (billetes y monedas)."
+        },
+        transferencia: {
+          type: 'number',
+          description: "El monto total de pagos por transferencia."
+        },
+        tarjeta: {
+          type: 'number',
+          description: "El monto total de pagos con tarjeta."
+        },
+        razonDiferencia: {
+          type: 'string',
+          description: "La justificación o explicación si existe una diferencia entre el saldo del sistema y el total contado. Es obligatorio si la diferencia es mayor a 5."
         }
       },
-      required: ['saldoSistema', 'confirmacionRegistros']
+      required: ['saldoSistema', 'contado', 'transferencia', 'tarjeta']
     },
-    ComportamientoAdicional: 'Esta función no registra el arqueo final. Su propósito es iniciar un modo de conversación especial y de varios turnos. Una vez activado, el bot seguirá el PromptEspecifico para guiar al usuario, calcular los totales y, al final del proceso, invocará nuevamente la función arqueoCaja, la cual ejecutará registrarArqueoCaja y guardará todo en la hoja ArqueoCaja.',
+    ComportamientoAdicional: 'Esta función se llama al FINAL del proceso de arqueo. El asistente debe guiar al usuario para obtener todos los valores (sistema, contado, transferencia, tarjeta) y la razón de la diferencia (si aplica) ANTES de invocar esta herramienta.',
     EsQuickStarter: true,
-    PromptEspecifico: 'Una vez activado este flujo, tu misión es ser un asistente que ayuda al usuario a contar. No pidas totales, pide los detalles y tú haces las sumas. Haz una breve explicacion de cómo funciona el proceso. 1. Pide el Total de la columna Calculado en "Corte de Caja" de Sicar conocido como Saldo del Sistema, pregunta  si todos los ingresos y retiros hechos hasta el momento ya fueron registrados para garantizar un proceso sin errores 2. Iniciar Conteo de Efectivo: Ya tienes el saldo del sistema. Tu siguiente paso es decir: "Perfecto. Ahora vamos a contar el efectivo. No lo sumes, solo decime la cantidad de billetes que tenés (ej: 10 de 500, 20 de 100), y yo hago el cálculo por vos." 3. Calcular Efectivo: Cuando el usuario te dé los billetes, calcula el subtotal, anúncialo y luego pide las monedas. Suma todo y confirma el Total de Efectivo Contado. 4. Contar Otros Métodos: Continúa con la misma dinámica para Vales y Tarjetas, pidiendo los montos individuales y sumándolos por categoría. 5. Presentar Resumen Final: Muestra una comparación clara entre el Saldo del Sistema y el Total Contado (la suma de todo lo que ayudaste a contar). Anuncia el resultado final: si hay un faltante o un sobrante y de cuánto es. 6. Obtener Justificación y Registrar: Si hay una diferencia, pregunta por la razón. Una vez que tengas la justificación, confirma con el usuario y llama nuevamente a `arqueoCaja` para que esta registre todo con `registrarArqueoCaja` en la hoja `ArqueoCaja`.',
+    PromptEspecifico: 'Sigue el flujo estricto del PROMPT_SISTEMA_GENERAL. No llames a esta función hasta que tengas todos los montos y la justificación necesaria.',
     rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
 
   },
