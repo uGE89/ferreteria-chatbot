@@ -96,13 +96,7 @@ Cuando el primer mensaje del día sea "__inicio" o similar, saludá con este ún
 - **NO pidas una confirmación extra.** Después de llamar la función, simplemente informa al usuario lo que hiciste.
 
 ### Para Arqueo de Caja (Herramienta 'arqueoCaja')
-- **Esta tarea SÍ se hace de forma guiada en el chat.** No la confundas con un conteo de inventario.
-- **Flujo clave y obligatorio:**
-  1. Pide y obtén del usuario todos los montos: saldo del sistema, efectivo contado, transferencias y tarjetas.
-  2. Una vez que tengas los números, **TÚ DEBES CALCULAR la diferencia**: (Sistema - Contado - Transferencias - Tarjetas).
-  3. Si la diferencia calculada es CERO, informa que todo cuadra y pide confirmación final para registrar. El parámetro 'razonDiferencia' será "Sin diferencia".
-  4. Si la diferencia calculada es **DISTINTA DE CERO**, anuncia el monto exacto de la diferencia (ej: *"Ok, veo un faltante de 50"*) y pide OBLIGATORIAMENTE la justificación.
-  5. SOLO cuando tengas todos los montos Y la justificación (o se haya confirmado que no hay diferencia), llama a la función `arqueoCaja`.
+- Para esta tarea, sigue las instrucciones detalladas y el flujo de conversación obligatorio definido en el `PromptEspecifico` de la herramienta `arqueoCaja`.
 
 ### Para Ingresos, Egresos y Tareas (registrarIngresoCaja, registrarEgresoCaja, crearTareaPendiente)
 - Para registrar un ingreso o un gasto, pide el monto, el concepto y el contacto. Una vez los tengas, llama a la función correspondiente. No pidas confirmación.
@@ -340,7 +334,7 @@ const HERRAMIENTAS_AI = [
   {
     NombreFuncion: 'arqueoCaja',
     NombrePantalla: '🧮 Arqueo de Caja',
-    Descripcion: 'Registra el resultado final de un arqueo de caja después de haber recopilado todos los montos (sistema, efectivo, transferencias, tarjetas) y la justificación si hubo una diferencia.',
+    Descripcion: 'Inicia y gestiona un proceso de conversación guiado para realizar un arqueo de caja, recopilando todos los montos necesarios para luego llamar a la función de registro.',
     SchemaParametros: {
       type: 'object',
       properties: {
@@ -362,16 +356,34 @@ const HERRAMIENTAS_AI = [
         },
         razonDiferencia: {
           type: 'string',
-          description: "La justificación o explicación si existe una diferencia. Si no hay diferencia, este campo debe ser una cadena vacía o 'Sin diferencia'."
+          description: "La justificación obligatoria si existe una diferencia entre el saldo del sistema y el total contado. Si no hay diferencia, este valor debe ser 'Sin diferencia'."
         }
       },
-      required: ['saldoSistema', 'contado', 'transferencia', 'tarjeta', 'razonDiferencia'] // Hacemos 'razonDiferencia' requerida.
+      required: ['saldoSistema', 'contado', 'transferencia', 'tarjeta', 'razonDiferencia']
     },
-    ComportamientoAdicional: 'Esta función se llama al FINAL del proceso de arqueo. El asistente debe guiar al usuario para obtener todos los valores (sistema, contado, transferencia, tarjeta) y la razón de la diferencia (si aplica) ANTES de invocar esta herramienta.',
+    ComportamientoAdicional: 'Esta función se invoca al final de un proceso de conversación. El asistente debe guiar al usuario para obtener todos los valores antes de llamar a esta herramienta.',
     EsQuickStarter: true,
-    PromptEspecifico: 'Para ejecutar esta función, sigue estrictamente los 6 pasos del flujo de Arqueo de Caja definidos en el PROMPT_SISTEMA_GENERAL. No llames a esta función hasta que tengas todos los parámetros requeridos.',
-    rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
+    // --- PROMPT ESPECÍFICO MEJORADO ---
+    PromptEspecifico: `
+# MODO: Asistente de Arqueo de Caja
 
+Has activado el flujo de arqueo. Tu única misión ahora es guiar al usuario para obtener 5 datos clave. No te desvíes de estos pasos.
+
+**Flujo de Conversación Obligatorio:**
+
+1.  **Obtener \`saldoSistema\`:** Inicia preguntando únicamente por el saldo del sistema. Ejemplo: *"Dale, vamos a hacer el arqueo. Para empezar, pasame el saldo que el sistema dice que debería haber."*
+2.  **Obtener \`contado\`:** Una vez tengas el saldo del sistema, pregunta por el total de efectivo contado. Ejemplo: *"Ok, ya tengo el del sistema. Ahora, ¿cuánto contaste en efectivo?"*
+3.  **Obtener \`transferencia\`:** Luego, pregunta por el total de transferencias. Ejemplo: *"Entendido. ¿Y cuánto tenés en transferencias?"* (Si el usuario dice "nada" o "cero", usa el valor 0).
+4.  **Obtener \`tarjeta\`:** Después, pregunta por el total de pagos con tarjeta. Ejemplo: *"Casi terminamos. ¿Cuánto hay en pagos con tarjeta?"*
+5.  **Calcular Diferencia y Obtener \`razonDiferencia\`:**
+    * Cuando tengas los 4 números, **calcula la diferencia** internamente: (Sistema - Contado - Transferencia - Tarjeta).
+    * Si la diferencia es **cero**, tu siguiente mensaje debe ser para confirmar. Ejemplo: *"Perfecto, todo cuadra. Voy a registrar el arqueo."*. Para este caso, usa el valor "Sin diferencia" para el parámetro \`razonDiferencia\`.
+    * Si la diferencia es **distinta de cero**, anuncia el monto exacto y pide la justificación. Ejemplo: *"Ok, veo un faltante de 50. Necesito la justificación para registrarlo. ¿Cuál fue la razón?"*. El texto que te dé el usuario será el valor para \`razonDiferencia\`.
+
+**Acción Final:**
+Una vez que hayas recopilado los 5 parámetros (\`saldoSistema\`, \`contado\`, \`transferencia\`, \`tarjeta\`, \`razonDiferencia\`), tu siguiente y **ÚNICA RESPUESTA** debe ser la llamada a la herramienta \`arqueoCaja\` con el JSON de argumentos correspondiente. **NO escribas un mensaje de confirmación en el chat como "Listo, ya lo registro".**
+`,
+    rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
   },
 
   // ===============================================================
