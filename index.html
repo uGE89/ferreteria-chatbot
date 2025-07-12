@@ -846,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const searchContainer = document.createElement('div');
             searchContainer.className = 'flex items-center gap-2 mt-2 sm:mt-0';
             searchContainer.innerHTML = `
-                <input type="text" id="quick-find-input" placeholder="Buscar Clave y Enter" class="bg-slate-700 border border-slate-600 rounded-md px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <input type="text" id="quick-find-input" placeholder="Buscar Clave y Enter" class="bg-gray-200 border border-gray-400 rounded-md px-3 py-1 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 <button id="quick-find-btn" class="p-1.5 bg-emerald-600 hover:bg-emerald-700 rounded-md text-white"><span class="material-symbols-outlined text-base">search</span></button>
             `;
             modalHeader.appendChild(searchContainer);
@@ -946,11 +946,11 @@ document.addEventListener('DOMContentLoaded', () => {
         row.innerHTML = `
             <td class="p-4"><input type="checkbox" class="row-checkbox h-4 w-4 text-emerald-600 border-slate-500 rounded focus:ring-emerald-500"></td>
             <td class="px-4 py-3 text-gray-800"><div class="text-sm font-medium">${item.Descripcion || 'N/A'}</div><div class="text-xs text-slate-400">${item.Clave}</div></td>
-            <td class="px-2 py-3 text-center"><input type="number" data-type="stockSistema" value="${sistema}" class="w-24 p-2 text-center bg-slate-700 border border-slate-600 rounded-md text-white"></td>
-            <td class="px-2 py-3 text-center"><input type="number" data-type="stockFisico" value="${stockFisico}" placeholder="0" class="w-24 p-2 text-center bg-slate-800 border border-slate-600 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-300"></td>
-            <td class="px-2 py-3 text-center"><input type="number" data-type="cpi" value="${cpi}" placeholder="0" class="w-24 p-2 text-center bg-slate-800 border border-slate-600 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-300"></td>
-            <td class="px-2 py-3 text-center"><input type="number" data-type="vpe" value="${vpe}" placeholder="0" class="w-24 p-2 text-center bg-slate-800 border border-slate-600 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-300"></td>
-            <td class="px-4 py-3 w-48"><select data-type="razon" class="w-full p-2 border border-slate-600 rounded-md bg-slate-800 text-slate-300 focus:ring-emerald-500"><option value="">Seleccionar...</option>${razonOptions}</select></td>
+            <td class="px-2 py-3 text-center"><input type="number" data-type="stockSistema" value="${sistema}" class="w-24 p-2 text-center bg-white border border-gray-300 rounded-md text-gray-800"></td>
+            <td class="px-2 py-3 text-center"><input type="number" data-type="stockFisico" value="${stockFisico}" placeholder="0" class="w-24 p-2 text-center bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 text-gray-800"></td>
+            <td class="px-2 py-3 text-center"><input type="number" data-type="cpi" value="${cpi}" placeholder="0" class="w-24 p-2 text-center bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 text-gray-800"></td>
+            <td class="px-2 py-3 text-center"><input type="number" data-type="vpe" value="${vpe}" placeholder="0" class="w-24 p-2 text-center bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 text-gray-800"></td>
+            <td class="px-4 py-3 w-48"><select data-type="razon" class="w-full p-2 border border-gray-300 rounded-md bg-white text-gray-800 focus:ring-emerald-500"><option value="">Seleccionar...</option>${razonOptions}</select></td>
             <td class="px-2 py-3 text-center"><span class="difference-value font-bold text-lg">0</span></td>
             <td class="px-2 py-3 text-center"><button class="reset-row-btn text-slate-500 hover:text-red-500" title="Resetear Fila"><span class="material-symbols-outlined">refresh</span></button></td>`;
         row.querySelectorAll('input[type="number"], select').forEach(el => el.addEventListener('input', () => manejarInputFila(row)));
@@ -1019,8 +1019,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function actualizarColorInputs(row) {
         row.querySelectorAll('input[data-type="stockFisico"], input[data-type="cpi"], input[data-type="vpe"], select[data-type="razon"]').forEach(el => {
-            el.classList.toggle('text-white', el.value && el.value !== '');
-            el.classList.toggle('text-slate-300', !el.value || el.value === '');
+            el.classList.toggle('text-gray-800', el.value && el.value !== '');
+            el.classList.toggle('text-gray-500', !el.value || el.value === '');
         });
     }
 
@@ -1095,10 +1095,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function actualizarBotonesFiltro() {
         document.querySelectorAll('.inventory-filter-btn').forEach(btn => {
             const isSelected = btn.dataset.filter === currentFilter;
-            btn.classList.toggle('bg-emerald-600', isSelected);
+            btn.classList.toggle('bg-indigo-600', isSelected);
             btn.classList.toggle('text-white', isSelected);
-            btn.classList.toggle('bg-slate-700', !isSelected);
-            btn.classList.toggle('text-slate-300', !isSelected);
+            btn.classList.toggle('bg-gray-200', !isSelected);
+            btn.classList.toggle('text-gray-700', !isSelected);
         });
     }
 
