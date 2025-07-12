@@ -29,6 +29,7 @@ const SHEET_NAMES = {
   ROLES: 'Roles',
   SUCURSALES: 'Sucursales',
   MOVIMIENTOS_PENDIENTES: 'MovimientosPendientes',
+  ANUNCIOS: 'Anuncios',
   CONFIGURACION_AI: 'ConfiguracionAI',
   PROMPTS_AI: 'PromptsAI',
   HERRAMIENTAS_AI: 'HerramientasAI',

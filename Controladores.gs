@@ -4,9 +4,26 @@
 // En: Controladores.gs
 
 /**
+ * Obtiene los anuncios activos de la hoja 'Anuncios'.
+ * @returns {Array<string>} Lista de anuncios con título y mensaje.
+ */
+function obtenerAnunciosActivos() {
+  try {
+    const anuncios = getSheetData(SHEET_NAMES.ANUNCIOS);
+    return anuncios
+      .filter(a => String(a.Activo).toUpperCase() === 'TRUE')
+      .map(a => `${a.Titulo}\n${a.Mensaje}`);
+  } catch (e) {
+    logError('Backend', 'obtenerAnunciosActivos', e.message, e.stack);
+    return [];
+  }
+}
+
+/**
  * Carga los datos iniciales para el login y la interfaz del chat.
  * VERSIÓN HÍBRIDA FINAL: Valida ID y PIN contra el código, y obtiene el Nombre desde la hoja.
  */
+
 function cargarDatosIniciales(userId, pin) {
   try {
     // 1. Buscamos al usuario en nuestra constante de código (rápido y seguro).
@@ -54,6 +71,7 @@ function cargarDatosIniciales(userId, pin) {
     });
 
     const welcomeMessage = PROMPT_SISTEMA_GENERAL.split('\n').filter(line => line.includes('¡Hola!') || line.includes('•'));
+    const anunciosActivos = obtenerAnunciosActivos();
 
   const quickStarters = HERRAMIENTAS_AI
       .filter(tool => tool.EsQuickStarter === true)
@@ -70,7 +88,7 @@ function cargarDatosIniciales(userId, pin) {
       ok: true,
       perfil: perfil,
       sesionId: sessionId,
-      mensajeAnuncio: welcomeMessage,
+      mensajeAnuncio: [...welcomeMessage, ...anunciosActivos],
       quickStarters: quickStarters
     };
 
@@ -86,6 +104,7 @@ function cargarDatosIniciales(userId, pin) {
       const revision = revisionMetaConteo(perfil.UsuarioID);
       responseData.mensajeAnuncio = [
         ...welcomeMessage,
+        ...anunciosActivos,
         resumenChat,
         resumenInv,
         revision
