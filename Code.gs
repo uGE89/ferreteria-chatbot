@@ -102,7 +102,8 @@ function limitarHistorial(historial, limiteTokens = MAX_TOKENS_HISTORIAL, limite
         i++; // Saltamos el siguiente mensaje ya que lo hemos procesado.
       } else {
         // Si no hay una respuesta de herramienta válida, descartamos el tool_call roto.
-        logError('Code', 'limitarHistorial (Sanitización)', 'Se encontró y eliminó un tool_call sin respuesta válida.', '', JSON.stringify(mensajeActual));
+        // Desactivado para evitar saturar el log de errores
+        // logError('Code', 'limitarHistorial (Sanitización)', 'Se encontró y eliminó un tool_call sin respuesta válida.', '', JSON.stringify(mensajeActual));
       }
     } else {
       // Si no es un tool_call, simplemente lo agregamos.
