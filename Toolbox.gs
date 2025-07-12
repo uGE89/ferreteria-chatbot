@@ -473,6 +473,8 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
       'Razón diferencia': razon || ''
     });
 
+    sumarPuntos(userId, 10);
+
     return `Arqueo registrado correctamente. Diferencia: ${diferencia}.`;
   } catch (e) {
     logError('Toolbox', 'registrarArqueoCaja', e.message, e.stack, JSON.stringify({ userId, saldoSistema, contado, transferencia, tarjeta, diferencia, razon }));
