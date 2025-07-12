@@ -345,6 +345,7 @@ function registrarMultiplesConteos(conteos, userId) {
         SucursalUsuario: userSucursal
       });
     });
+    sumarPuntos(userId, 5 * conteos.length);
     return `¡Listo! Se registraron ${conteos.length} conteos de inventario.`;
   }
   catch (e) {
