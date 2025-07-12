@@ -53,8 +53,8 @@
         }
         .admin-tab-btn:hover { background-color: #475569; }
         .admin-tab-btn.active { background-color: #f59e0b; color: #000; font-weight: bold; }
-        .row-diff-positive { background-color: #1665341a; }
-        .row-diff-negative { background-color: #991b1b1a; }
+        .row-diff-positive { background-color: #d1fae5; }
+        .row-diff-negative { background-color: #ffe4e6; }
         .diff-positive { color: #22c55e; }
         .diff-negative { color: #ef4444; }
         .diff-zero { color: #64748b; }
@@ -945,7 +945,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const razonOptions = RAZONES_AJUSTE.map(r => `<option value="${r}" ${r === razon ? 'selected' : ''}>${r}</option>`).join('');
         row.innerHTML = `
             <td class="p-4"><input type="checkbox" class="row-checkbox h-4 w-4 text-emerald-600 border-slate-500 rounded focus:ring-emerald-500"></td>
-            <td class="px-4 py-3 text-white"><div class="text-sm font-medium">${item.Descripcion || 'N/A'}</div><div class="text-xs text-slate-400">${item.Clave}</div></td>
+            <td class="px-4 py-3 text-gray-800"><div class="text-sm font-medium">${item.Descripcion || 'N/A'}</div><div class="text-xs text-slate-400">${item.Clave}</div></td>
             <td class="px-2 py-3 text-center"><input type="number" data-type="stockSistema" value="${sistema}" class="w-24 p-2 text-center bg-slate-700 border border-slate-600 rounded-md text-white"></td>
             <td class="px-2 py-3 text-center"><input type="number" data-type="stockFisico" value="${stockFisico}" placeholder="0" class="w-24 p-2 text-center bg-slate-800 border border-slate-600 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-300"></td>
             <td class="px-2 py-3 text-center"><input type="number" data-type="cpi" value="${cpi}" placeholder="0" class="w-24 p-2 text-center bg-slate-800 border border-slate-600 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-300"></td>
