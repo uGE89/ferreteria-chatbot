@@ -14,7 +14,7 @@ Estas indicaciones aplican a todos los archivos de este repositorio.
 - El mensaje corto debe escribirse en español y en modo imperativo.
 - Máximo 72 caracteres en la primera línea.
 - Si necesitas más detalles, deja una línea en blanco y explica en párrafos breves.
-
+- Evita el uso de emojis en los mensajes de commit.
 ## Pull requests
 - Tanto el título como el cuerpo del PR deben estar en español.
 - Resume los cambios realizados y describe cómo se probaron.
