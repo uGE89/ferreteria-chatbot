@@ -399,7 +399,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const registroRegex = /(?:ya\s+)?(?:registr(?:e|é)|qued(?:o|ó)\s+registrado|registro\s+completado)/i;
-        if (!data.tool_call && data.content && registroRegex.test(data.content)) {
+        const esPregunta = /[¿?]/.test(data.content);
+        if (!data.tool_call && data.content && registroRegex.test(data.content) && !esPregunta) {
             const herramienta = quickStarterEnUso?.nombreFuncion || 'N/D';
             const claveIntento = `${sessionStorage.getItem('sessionId')}-${herramienta}`;
             const intentos = (intentosFallidos[claveIntento] || 0) + 1;
