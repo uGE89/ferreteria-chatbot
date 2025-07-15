@@ -13,6 +13,43 @@ const PUNTOS_CONTEO = 5;
 const PUNTOS_ARQUEO = 10;
 
 /**
+ * Registra un mensaje del usuario en la hoja 'Mensajes'.
+ * @param {string} tipo - Tipo de mensaje (Problema, Sugerencia, Tarea, etc.).
+ * @param {string} userId - ID del usuario remitente.
+ * @param {string} asunto - Asunto del mensaje.
+ * @param {string} detalle - Detalle del mensaje.
+ * @param {string} sessionId - ID de la sesión.
+ * @param {number} puntos - Puntos a otorgar al usuario.
+ * @returns {string} ID del mensaje creado.
+ */
+function registrarMensaje(tipo, userId, asunto, detalle, sessionId, puntos) {
+  const userProfile = obtenerDetallesDeUsuario(userId);
+  const userName = userProfile ? userProfile.Nombre : 'Desconocido';
+  const messageId = generarId('MSG');
+
+  appendRowToSheet(SHEET_NAMES.MENSAJES, {
+    ID_Mensaje: messageId,
+    FechaHora: getFormattedTimestamp(),
+    UsuarioRemitenteID: userId,
+    NombreRemitente: userName,
+    SesionID: sessionId,
+    TipoMensaje: tipo,
+    Asunto: asunto,
+    Detalle: detalle,
+    Estado: 'Pendiente',
+    RespuestaAdmin: '',
+    FechaHoraRespuesta: '',
+    AdminRespondiendoID: ''
+  });
+
+  if (puntos) {
+    sumarPuntos(userId, puntos);
+  }
+
+  return messageId;
+}
+
+/**
  * Registra un problema reportado por un usuario en la hoja 'Mensajes'.
  * @param {string} userId - ID del usuario que reportó el problema.
  * @param {string} asunto - Título breve del problema.
@@ -22,25 +59,7 @@ const PUNTOS_ARQUEO = 10;
  */
 function registrarProblema(userId, asunto, detalle, sessionId) {
   try {
-const userProfile = obtenerDetallesDeUsuario(userId);
-const userName = userProfile ? userProfile.Nombre : 'Desconocido';
-    const messageId = generarId('MSG');
-
-    appendRowToSheet(SHEET_NAMES.MENSAJES, {
-      ID_Mensaje: messageId,
-      FechaHora: getFormattedTimestamp(),
-      UsuarioRemitenteID: userId,
-      NombreRemitente: userName,
-      SesionID: sessionId,
-      TipoMensaje: 'Problema',
-      Asunto: asunto,
-      Detalle: detalle,
-      Estado: 'Pendiente',
-      RespuestaAdmin: '',
-      FechaHoraRespuesta: '',
-      AdminRespondiendoID: ''
-    });
-    sumarPuntos(userId, PUNTOS_PROBLEMA);
+    registrarMensaje('Problema', userId, asunto, detalle, sessionId, PUNTOS_PROBLEMA);
     return `Listo, registré tu problema: "${asunto}". Gracias.`;
   } catch (e) {
     logError('Toolbox', 'registrarProblema', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
@@ -58,25 +77,7 @@ const userName = userProfile ? userProfile.Nombre : 'Desconocido';
  */
 function registrarSugerencia(userId, asunto, detalle, sessionId) {
   try {
-const userProfile = obtenerDetallesDeUsuario(userId);
-const userName = userProfile ? userProfile.Nombre : 'Desconocido';
-    const messageId = generarId('MSG');
-
-    appendRowToSheet(SHEET_NAMES.MENSAJES, {
-      ID_Mensaje: messageId,
-      FechaHora: getFormattedTimestamp(),
-      UsuarioRemitenteID: userId,
-      NombreRemitente: userName,
-      SesionID: sessionId,
-      TipoMensaje: 'Sugerencia',
-      Asunto: asunto,
-      Detalle: detalle,
-      Estado: 'Pendiente',
-      RespuestaAdmin: '',
-      FechaHoraRespuesta: '',
-      AdminRespondiendoID: ''
-    });
-    sumarPuntos(userId, PUNTOS_SUGERENCIA);
+    registrarMensaje('Sugerencia', userId, asunto, detalle, sessionId, PUNTOS_SUGERENCIA);
     return `Listo, registré tu sugerencia: "${asunto}". Gracias.`;
   } catch (e) {
     logError('Toolbox', 'registrarSugerencia', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
@@ -95,24 +96,8 @@ const userName = userProfile ? userProfile.Nombre : 'Desconocido';
  */
 function crearTareaPendiente(userId, titulo, descripcion, fechaLimite = '', sessionId) {
   try {
-const userProfile = obtenerDetallesDeUsuario(userId);
-const userName = userProfile ? userProfile.Nombre : 'Desconocido';
-    const messageId = generarId('MSG');
-
-    appendRowToSheet(SHEET_NAMES.MENSAJES, {
-      ID_Mensaje: messageId,
-      FechaHora: getFormattedTimestamp(),
-      UsuarioRemitenteID: userId,
-      NombreRemitente: userName,
-      SesionID: sessionId,
-      TipoMensaje: 'Tarea',
-      Asunto: titulo,
-      Detalle: `Descripción: ${descripcion}` + (fechaLimite ? ` (Fecha límite: ${fechaLimite})` : ''),
-      Estado: 'Pendiente',
-      RespuestaAdmin: '',
-      FechaHoraRespuesta: '',
-      AdminRespondiendoID: ''
-    });
+    const detalle = `Descripción: ${descripcion}` + (fechaLimite ? ` (Fecha límite: ${fechaLimite})` : '');
+    registrarMensaje('Tarea', userId, titulo, detalle, sessionId, 0);
     return `¡Hecho! Dejé la tarea pendiente: "${titulo}".`;
   } catch (e) {
     logError('Toolbox', 'crearTareaPendiente', e.message, e.stack, JSON.stringify({ userId, titulo, descripcion, fechaLimite, sessionId }));
