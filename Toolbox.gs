@@ -19,7 +19,7 @@ function registrarProblema(userId, asunto, detalle, sessionId) {
   try {
 const userProfile = obtenerDetallesDeUsuario(userId);
 const userName = userProfile ? userProfile.Nombre : 'Desconocido';
-    const messageId = `MSG-${new Date().getTime()}-${Math.floor(Math.random() * 1000)}`;
+    const messageId = generarId('MSG');
 
     appendRowToSheet(SHEET_NAMES.MENSAJES, {
       ID_Mensaje: messageId,
@@ -55,7 +55,7 @@ function registrarSugerencia(userId, asunto, detalle, sessionId) {
   try {
 const userProfile = obtenerDetallesDeUsuario(userId);
 const userName = userProfile ? userProfile.Nombre : 'Desconocido';
-    const messageId = `MSG-${new Date().getTime()}-${Math.floor(Math.random() * 1000)}`;
+    const messageId = generarId('MSG');
 
     appendRowToSheet(SHEET_NAMES.MENSAJES, {
       ID_Mensaje: messageId,
@@ -92,7 +92,7 @@ function crearTareaPendiente(userId, titulo, descripcion, fechaLimite = '', sess
   try {
 const userProfile = obtenerDetallesDeUsuario(userId);
 const userName = userProfile ? userProfile.Nombre : 'Desconocido';
-    const messageId = `MSG-${new Date().getTime()}-${Math.floor(Math.random() * 1000)}`;
+    const messageId = generarId('MSG');
 
     appendRowToSheet(SHEET_NAMES.MENSAJES, {
       ID_Mensaje: messageId,
@@ -319,7 +319,7 @@ function registrarMultiplesConteos(conteos, userId) {
     conteos.forEach(conteo => {
       const nowFormatted = getFormattedTimestamp();
 
-      const conteoId = `CONTEO-${new Date().getTime()}-${Math.floor(Math.random() * 1000)}`;
+      const conteoId = generarId('CONTEO');
 
       const diferencia =
         (parseFloat(conteo.stockFisico) || 0) -
@@ -403,7 +403,7 @@ function registrarConteo(userId, claveProducto, cantidadSistema, cantidadFisico,
       diferencia -= tarjeta;
     }
 
-    const conteoId = `CONTEO-${new Date().getTime()}-${Math.floor(Math.random() * 1000)}`;
+    const conteoId = generarId('CONTEO');
 
     appendRowToSheet(SHEET_NAMES.CONTEOS, {
       ID_Conteo: conteoId,
@@ -448,7 +448,7 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
     const now = getFormattedTimestamp();
     const userProfile = obtenerDetallesDeUsuario(userId);
     const userName = userProfile ? userProfile.Nombre : 'Desconocido';
-    const conteoId = `ARQ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const conteoId = generarId('ARQ');
 
     diferencia =
       (parseFloat(saldoSistema) || 0) -
