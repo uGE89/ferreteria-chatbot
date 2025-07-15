@@ -7,6 +7,11 @@
 // Se asume que SHEET_NAMES e ID_HOJA_PUENTE están definidos globalmente en Configuracion.gs
 // y que getSheetData, appendRowToSheet están disponibles (e.g., desde DAL.gs).
 
+const PUNTOS_PROBLEMA = 10;
+const PUNTOS_SUGERENCIA = 15;
+const PUNTOS_CONTEO = 50;
+const PUNTOS_ARQUEO = 10;
+
 /**
  * Registra un problema reportado por un usuario en la hoja 'Mensajes'.
  * @param {string} userId - ID del usuario que reportó el problema.
@@ -35,7 +40,7 @@ const userName = userProfile ? userProfile.Nombre : 'Desconocido';
       FechaHoraRespuesta: '',
       AdminRespondiendoID: ''
     });
-    sumarPuntos(userId, 10);
+    sumarPuntos(userId, PUNTOS_PROBLEMA);
     return `Listo, registré tu problema: "${asunto}". Gracias.`;
   } catch (e) {
     logError('Toolbox', 'registrarProblema', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
@@ -71,7 +76,7 @@ const userName = userProfile ? userProfile.Nombre : 'Desconocido';
       FechaHoraRespuesta: '',
       AdminRespondiendoID: ''
     });
-    sumarPuntos(userId, 15);
+    sumarPuntos(userId, PUNTOS_SUGERENCIA);
     return `Listo, registré tu sugerencia: "${asunto}". Gracias.`;
   } catch (e) {
     logError('Toolbox', 'registrarSugerencia', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
@@ -422,7 +427,7 @@ function registrarConteo(userId, claveProducto, cantidadSistema, cantidadFisico,
       SucursalUsuario: userSucursal
     });
 
-    sumarPuntos(userId, 50);
+    sumarPuntos(userId, PUNTOS_CONTEO);
 
   return `Conteo registrado para el producto ${claveFinal}.`;
   } catch (e) {
@@ -474,7 +479,7 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
       'Razón diferencia': razon || ''
     });
 
-    sumarPuntos(userId, 10);
+    sumarPuntos(userId, PUNTOS_ARQUEO);
 
     return `Arqueo registrado correctamente. Diferencia: ${diferencia}.`;
   } catch (e) {
