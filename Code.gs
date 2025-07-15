@@ -628,23 +628,5 @@ function getAIToolByName(name) {
  */
 
 // --- FUNCIONES DE AYUDA PARA CONTEXTO ---
-
-function getUserProfile(userId) {
-  const profile = obtenerDetallesDeUsuario(userId) || {};
-  return {
-    Nombre: profile.Nombre || '',
-    Rol: profile.Rol || '',
-    Sucursal: profile.Sucursal || '',
-    NotasAdicionales: profile.NotasAdicionales || ''
-  };
-}
-
-function getRoleDetails(roleName) {
-  const rolesData = getSheetData(SHEET_NAMES.ROLES);
-  return rolesData.find(r => r.NombreRol === roleName) || {};
-}
-
-function getBranchDetails(branchName) {
-  const branchesData = getSheetData(SHEET_NAMES.SUCURSALES);
-  return branchesData.find(b => b.NombreSucursal === branchName) || {};
-}
+// Las funciones getUserProfile, getRoleDetails y getBranchDetails
+// se encuentran ahora en DataHelpers.gs
