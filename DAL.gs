@@ -20,7 +20,7 @@ function getSheetData(sheetName) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
-    logError('DAL', 'getSheetData', `Hoja '${sheetName}' no encontrada.`);
+    Logging.logError('DAL', 'getSheetData', `Hoja '${sheetName}' no encontrada.`);
     return [];
   }
 
@@ -57,7 +57,7 @@ function appendRowToSheet(sheetName, rowData) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
-    logError('DAL', 'appendRowToSheet', `Hoja '${sheetName}' no encontrada.`);
+    Logging.logError('DAL', 'appendRowToSheet', `Hoja '${sheetName}' no encontrada.`);
     return false;
   }
 
@@ -70,7 +70,7 @@ function appendRowToSheet(sheetName, rowData) {
       try {
         value = JSON.stringify(value);
       } catch (e) {
-        logError('DAL', 'appendRowToSheet', `Error al serializar JSON para ${header}: ${e.message}`, e.stack, JSON.stringify(rowData));
+        Logging.logError('DAL', 'appendRowToSheet', `Error al serializar JSON para ${header}: ${e.message}`, e.stack, JSON.stringify(rowData));
         value = String(value);
       }
     }
@@ -91,14 +91,14 @@ function updateRowInSheet(sheetName, keyColumn, keyValue, updatedData) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
-    logError('DAL', 'updateRowInSheet', `Hoja '${sheetName}' no encontrada.`);
+    Logging.logError('DAL', 'updateRowInSheet', `Hoja '${sheetName}' no encontrada.`);
     return false;
   }
 
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   const keyColumnIndex = headers.indexOf(keyColumn);
   if (keyColumnIndex === -1) {
-    logError('DAL', 'updateRowInSheet', `Columna clave '${keyColumn}' no encontrada en la hoja '${sheetName}'.`);
+    Logging.logError('DAL', 'updateRowInSheet', `Columna clave '${keyColumn}' no encontrada en la hoja '${sheetName}'.`);
     return false;
   }
 
@@ -115,7 +115,7 @@ if (String(values[i][keyColumnIndex]) === String(keyValue)) {      const row = v
             try {
               valueToUpdate = JSON.stringify(valueToUpdate);
             } catch (e) {
-              logError('DAL', 'updateRowInSheet', `Error al serializar JSON para ${prop}: ${e.message}`, e.stack, JSON.stringify(updatedData));
+              Logging.logError('DAL', 'updateRowInSheet', `Error al serializar JSON para ${prop}: ${e.message}`, e.stack, JSON.stringify(updatedData));
               valueToUpdate = String(valueToUpdate);
             }
           }
@@ -166,7 +166,7 @@ function getSheetDataById(spreadsheetId, sheetName) {
     }
     return data;
   } catch (e) {
-    logError('DAL', 'getSheetDataById', `Error leyendo la hoja '${sheetName}' del archivo ID '${spreadsheetId}'.`, e.stack);
+    Logging.logError('DAL', 'getSheetDataById', `Error leyendo la hoja '${sheetName}' del archivo ID '${spreadsheetId}'.`, e.stack);
     return [];
   }
 }
