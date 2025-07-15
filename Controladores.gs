@@ -14,7 +14,7 @@ function obtenerAnunciosActivos() {
       .filter(a => String(a.Activo).toUpperCase() === 'TRUE')
       .map(a => `${a.Titulo}\n${a.Mensaje}`);
   } catch (e) {
-    logError('Backend', 'obtenerAnunciosActivos', e.message, e.stack);
+    Logging.logError('Backend', 'obtenerAnunciosActivos', e.message, e.stack);
     return [];
   }
 }
@@ -44,7 +44,7 @@ function cargarDatosIniciales(userId, pin) {
     const userDynamicData = usersFromSheet.find(u => u.UsuarioID === userId);
 
     if (!userDynamicData || !userDynamicData.Nombre) {
-      logError('Backend', 'cargarDatosIniciales', `Usuario ${userId} validado, pero no encontrado en la hoja 'Usuarios' o sin Nombre asignado.`);
+      Logging.logError('Backend', 'cargarDatosIniciales', `Usuario ${userId} validado, pero no encontrado en la hoja 'Usuarios' o sin Nombre asignado.`);
       return { ok: false, msg: 'Error al recuperar los detalles del perfil del usuario.' };
     }
 
@@ -114,7 +114,7 @@ function cargarDatosIniciales(userId, pin) {
     return responseData;
 
   } catch (e) {
-    logError('Backend', 'cargarDatosIniciales', e.message, e.stack, `userId: ${userId}`);
+    Logging.logError('Backend', 'cargarDatosIniciales', e.message, e.stack, `userId: ${userId}`);
     return { ok: false, msg: `Error interno al cargar datos iniciales: ${e.message}.` };
   }
 }

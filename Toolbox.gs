@@ -62,7 +62,7 @@ function registrarProblema(userId, asunto, detalle, sessionId) {
     registrarMensaje('Problema', userId, asunto, detalle, sessionId, PUNTOS_PROBLEMA);
     return `Listo, registré tu problema: "${asunto}". Gracias.`;
   } catch (e) {
-    logError('Toolbox', 'registrarProblema', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
+    Logging.logError('Toolbox', 'registrarProblema', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
     throw new Error(`Error al registrar problema: ${e.message}`);
   }
 }
@@ -80,7 +80,7 @@ function registrarSugerencia(userId, asunto, detalle, sessionId) {
     registrarMensaje('Sugerencia', userId, asunto, detalle, sessionId, PUNTOS_SUGERENCIA);
     return `Listo, registré tu sugerencia: "${asunto}". Gracias.`;
   } catch (e) {
-    logError('Toolbox', 'registrarSugerencia', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
+    Logging.logError('Toolbox', 'registrarSugerencia', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
     throw new Error(`Error al registrar sugerencia: ${e.message}`);
   }
 }
@@ -100,7 +100,7 @@ function crearTareaPendiente(userId, titulo, descripcion, fechaLimite = '', sess
     registrarMensaje('Tarea', userId, titulo, detalle, sessionId, 0);
     return `¡Hecho! Dejé la tarea pendiente: "${titulo}".`;
   } catch (e) {
-    logError('Toolbox', 'crearTareaPendiente', e.message, e.stack, JSON.stringify({ userId, titulo, descripcion, fechaLimite, sessionId }));
+    Logging.logError('Toolbox', 'crearTareaPendiente', e.message, e.stack, JSON.stringify({ userId, titulo, descripcion, fechaLimite, sessionId }));
     throw new Error(`Error al crear tarea pendiente: ${e.message}`);
   }
 }
@@ -145,7 +145,7 @@ function registrarMovimientoCaja(tipo, monto, concepto, contacto, userId) {
     return `¡Solicitud registrada! Un supervisor debe aprobar el ${tipo.toLowerCase()} de $${monto} para ${contacto} por "${concepto}".`;
 
   } catch (e) {
-    logError('Toolbox', 'registrarMovimientoCaja', e.message, e.stack, JSON.stringify({ tipo, monto, concepto, contacto, userId }));
+    Logging.logError('Toolbox', 'registrarMovimientoCaja', e.message, e.stack, JSON.stringify({ tipo, monto, concepto, contacto, userId }));
     throw new Error(`Error al registrar la solicitud de movimiento: ${e.message}`);
   }
 }
@@ -224,13 +224,13 @@ function resumenAdminPorFecha(fechaRef) {
 
     const apiResult = llamarOpenAI(payload);
     if (apiResult.code !== 200) {
-      logError('Toolbox', 'resumenAdminPorFecha', `Error API ${apiResult.code}`, null, JSON.stringify(payload));
+      Logging.logError('Toolbox', 'resumenAdminPorFecha', `Error API ${apiResult.code}`, null, JSON.stringify(payload));
       return 'Error al generar el resumen.';
     }
     const json = JSON.parse(apiResult.text);
     return json.choices?.[0]?.message?.content || 'No se pudo obtener resumen.';
   } catch (e) {
-    logError('Toolbox', 'resumenAdminPorFecha', e.message, e.stack);
+    Logging.logError('Toolbox', 'resumenAdminPorFecha', e.message, e.stack);
     return `Error al generar resumen: ${e.message}`;
   }
 }
@@ -289,7 +289,7 @@ function generarResumenAdmin(dias) {
     }
     return resultado;
   } catch (e) {
-    logError('Toolbox', 'generarResumenAdmin', e.message, e.stack);
+    Logging.logError('Toolbox', 'generarResumenAdmin', e.message, e.stack);
     return `Error al generar resumen: ${e.message}`;
   }
 }
@@ -339,7 +339,7 @@ function registrarMultiplesConteos(conteos, userId) {
     return `¡Listo! Se registraron ${conteos.length} conteos de inventario.`;
   }
   catch (e) {
-    logError('Toolbox', 'registrarMultiplesConteos', e.message, e.stack, JSON.stringify({ conteos, userId }));
+    Logging.logError('Toolbox', 'registrarMultiplesConteos', e.message, e.stack, JSON.stringify({ conteos, userId }));
     throw new Error(`Error al registrar conteos: ${e.message}`);
   }
 }
@@ -416,7 +416,7 @@ function registrarConteo(userId, claveProducto, cantidadSistema, cantidadFisico,
 
   return `Conteo registrado para el producto ${claveFinal}.`;
   } catch (e) {
-    logError('Toolbox', 'registrarConteo', e.message, e.stack, JSON.stringify({ claveProducto, cantidadSistema, cantidadFisico, cpi, vpe, observacion }));
+    Logging.logError('Toolbox', 'registrarConteo', e.message, e.stack, JSON.stringify({ claveProducto, cantidadSistema, cantidadFisico, cpi, vpe, observacion }));
     throw new Error(`Error al registrar conteo: ${e.message}`);
   }
 }
@@ -468,7 +468,7 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
 
     return `Arqueo registrado correctamente. Diferencia: ${diferencia}.`;
   } catch (e) {
-    logError('Toolbox', 'registrarArqueoCaja', e.message, e.stack, JSON.stringify({ userId, saldoSistema, contado, transferencia, tarjeta, diferencia, razon }));
+    Logging.logError('Toolbox', 'registrarArqueoCaja', e.message, e.stack, JSON.stringify({ userId, saldoSistema, contado, transferencia, tarjeta, diferencia, razon }));
     throw new Error(`Error al registrar el arqueo: ${e.message}`);
   }
 }
@@ -502,12 +502,12 @@ function enviarMensajeAdministrador(destinoSesion, destinoUsuarioId, contenido, 
 
         return `Mensaje enviado a ${userName} correctamente.`;
     } else {
-        logError('Toolbox', 'enviarMensajeAdministrador', `No se encontró el mensaje pendiente para SesionID: ${destinoSesion}, Usuario: ${destinoUsuarioId}`, null, JSON.stringify({ destinoSesion, destinoUsuarioId, contenido }), adminUserId);
+        Logging.logError('Toolbox', 'enviarMensajeAdministrador', `No se encontró el mensaje pendiente para SesionID: ${destinoSesion}, Usuario: ${destinoUsuarioId}`, null, JSON.stringify({ destinoSesion, destinoUsuarioId, contenido }), adminUserId);
         throw new Error('No se pudo encontrar el mensaje original para responder.');
     }
 
   } catch (e) {
-    logError('Toolbox', 'enviarMensajeAdministrador', e.message, e.stack, JSON.stringify({ destinoSesion, destinoUsuarioId, contenido, adminUserId }));
+    Logging.logError('Toolbox', 'enviarMensajeAdministrador', e.message, e.stack, JSON.stringify({ destinoSesion, destinoUsuarioId, contenido, adminUserId }));
     throw new Error(`Error al enviar mensaje: ${e.message}`);
   }
 }
@@ -554,7 +554,7 @@ function ultimaFecha() {
     return Utilities.formatDate(fechaMax, tz, 'yyyy-MM-dd');
 
   } catch (e) {
-    logError('Toolbox', 'ultimaFecha', e.message, e.stack);
+    Logging.logError('Toolbox', 'ultimaFecha', e.message, e.stack);
     return '';
   }
 }
@@ -602,7 +602,7 @@ function resumenChatUsuario(userId) {
           const hist = JSON.parse(s.HistorialConversacion);
           conversationMessages.push(...hist.filter(m => m.role === 'user' || m.role === 'assistant'));
         } catch (e) {
-          logError('Toolbox', 'resumenChatUsuario', 'Historial corrupto', e.stack, s.HistorialConversacion, userId);
+          Logging.logError('Toolbox', 'resumenChatUsuario', 'Historial corrupto', e.stack, s.HistorialConversacion, userId);
         }
       }
     });
@@ -628,13 +628,13 @@ function resumenChatUsuario(userId) {
     const apiResult = llamarOpenAI(payload);
     const codigo = apiResult.code;
     if (codigo !== 200) {
-      logError('Toolbox', 'resumenChatUsuario', `Error API ${codigo}`, null, JSON.stringify(conversationMessages), userId);
+      Logging.logError('Toolbox', 'resumenChatUsuario', `Error API ${codigo}`, null, JSON.stringify(conversationMessages), userId);
       return 'Error al generar el resumen.';
     }
     const json = JSON.parse(apiResult.text);
     return json.choices?.[0]?.message?.content || 'No se pudo obtener resumen.';
   } catch (e) {
-    logError('Toolbox', 'resumenChatUsuario', e.message, e.stack, userId);
+    Logging.logError('Toolbox', 'resumenChatUsuario', e.message, e.stack, userId);
     return `Error al generar el resumen: ${e.message}`;
   }
 }
@@ -721,7 +721,7 @@ function resumenConteo(userId) {
     return resumen.trim();
 
   } catch (e) {
-    logError('Toolbox', 'resumenConteo', e.message, e.stack, userId);
+    Logging.logError('Toolbox', 'resumenConteo', e.message, e.stack, userId);
     return `Error al generar el resumen de conteo: ${e.message}`;
   }
 }
@@ -834,7 +834,7 @@ function revisionMetaConteo(userId) {
     return resultadosFinales.join('\n');
 
   } catch (e) {
-    logError('Toolbox', 'revisionMetaConteo', e.message, e.stack, userId);
+    Logging.logError('Toolbox', 'revisionMetaConteo', e.message, e.stack, userId);
     return `Error al revisar la meta de conteo: ${e.message}`;
   }
 }
@@ -857,7 +857,7 @@ function sumarPuntos(userId, cantidad) {
       if (u) u.Puntos = nuevosPuntos;
     }
   } catch (e) {
-    logError('Toolbox', 'sumarPuntos', e.message, e.stack, JSON.stringify({ userId, cantidad }));
+    Logging.logError('Toolbox', 'sumarPuntos', e.message, e.stack, JSON.stringify({ userId, cantidad }));
   }
 }
 
@@ -882,7 +882,7 @@ function asignarInsignia(userId, nombreInsignia) {
       }
     }
   } catch (e) {
-    logError('Toolbox', 'asignarInsignia', e.message, e.stack, JSON.stringify({ userId, nombreInsignia }));
+    Logging.logError('Toolbox', 'asignarInsignia', e.message, e.stack, JSON.stringify({ userId, nombreInsignia }));
   }
 }
 
@@ -902,7 +902,7 @@ function obtenerRankingPuntos() {
       }))
       .sort((a, b) => b.Puntos - a.Puntos);
   } catch (e) {
-    logError('Toolbox', 'obtenerRankingPuntos', e.message, e.stack);
+    Logging.logError('Toolbox', 'obtenerRankingPuntos', e.message, e.stack);
     return [];
   }
 }

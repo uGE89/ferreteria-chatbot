@@ -26,32 +26,6 @@ function include(filename) {
 }
 
 /**
- * Registra errores de la aplicación en la hoja de LogErrores.
- * @param {string} tipoError - Tipo de error (e.g., 'Backend', 'AI', 'Frontend').
- * @param {string} funcion - Nombre de la función donde ocurrió el error.
- * @param {string} mensajeError - Mensaje descriptivo del error.
- * @param {string} [stackTrace=''] - Stack trace del error.
- * @param {string} [payload=''] - Datos relevantes asociados al error (serializados).
- * @param {string} [userId='N/A'] - ID del usuario si aplica.
- */
-function logError(tipoError, funcion, mensajeError, stackTrace = '', payload = '', userId = 'N/A') {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_NAMES.LOG_ERRORES);
-    if (!sheet) {
-      Logger.log(`ERROR: La hoja '${SHEET_NAMES.LOG_ERRORES}' no existe. Error no registrado: ${mensajeError}`);
-      return;
-    }
-    const now = new Date();
-    const dateStr = Utilities.formatDate(now, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm:ss');
-    const logId = generarId('LOG');
-    sheet.appendRow([logId, dateStr, userId, tipoError, funcion, mensajeError, stackTrace, payload]);
-  } catch(e) {
-    Logger.log(`Fallo crítico en logError: ${e.message}`);
-  }
-}
-
-/**
  * Devuelve la fecha y hora actual como un string en el formato estándar de la app.
  * @returns {string} La fecha en formato 'dd/MM/yyyy HH:mm:ss'.
  */
@@ -64,7 +38,7 @@ function getFormattedTimestamp() {
 function limitarTexto(texto, limiteTokens = MAX_TOKENS_HISTORIAL) {
   const totalTokens = contarTokens(texto);
   if (totalTokens <= limiteTokens) return texto;
-  logError('Code', 'limitarTexto', 'Texto recortado por exceso de tokens');
+  Logging.logError('Code', 'limitarTexto', 'Texto recortado por exceso de tokens');
   const maxChars = limiteTokens * 4;
   return texto.slice(0, maxChars);
 }
@@ -90,14 +64,14 @@ function obtenerHistorialReciente(userId, sesionActual) {
             }
           });
         } catch (e) {
-          logError('Code', 'obtenerHistorialReciente', 'Historial corrupto', e.stack, s.HistorialConversacion, userId);
+          Logging.logError('Code', 'obtenerHistorialReciente', 'Historial corrupto', e.stack, s.HistorialConversacion, userId);
         }
       }
     });
 
     return limitarHistorial([{ role: 'system', content: '' }, ...historial]).slice(1);
   } catch (e) {
-    logError('Code', 'obtenerHistorialReciente', e.message, e.stack, userId);
+    Logging.logError('Code', 'obtenerHistorialReciente', e.message, e.stack, userId);
     return [];
   }
 }
@@ -202,7 +176,7 @@ function enviarAOpenAI(sessionId, userId, payload) {
           chatHistory.shift();
         }
       } catch (e) {
-        logError('Code', 'enviarAOpenAI', `Error parseando historial: ${e.message}`, e.stack, currentSession.HistorialConversacion, userId);
+        Logging.logError('Code', 'enviarAOpenAI', `Error parseando historial: ${e.message}`, e.stack, currentSession.HistorialConversacion, userId);
       }
     }
 
@@ -248,7 +222,7 @@ function enviarAOpenAI(sessionId, userId, payload) {
     return aiResponse;
 
   } catch (e) {
-    logError('Code', 'enviarAOpenAI', e.message, e.stack, JSON.stringify({ sessionId, userId, payload }), userId);
+    Logging.logError('Code', 'enviarAOpenAI', e.message, e.stack, JSON.stringify({ sessionId, userId, payload }), userId);
     return { content: `Hubo un error al procesar tu solicitud: ${e.message}` };
   }
 }
@@ -290,7 +264,7 @@ function buscarArticulo(query) {
       .map(item => item.Descripcion);
 
   } catch (e) {
-    logError('Code', 'buscarArticulo', e.message, e.stack, query);
+    Logging.logError('Code', 'buscarArticulo', e.message, e.stack, query);
     return [];
   }
 }
@@ -343,7 +317,7 @@ function buscarArticulosAvanzado(query, filter = 'todos') {
     }));
 
   } catch (e) {
-    logError('Code.gs', 'buscarArticulosAvanzado', e.message, e.stack, JSON.stringify({query, filter}));
+    Logging.logError('Code.gs', 'buscarArticulosAvanzado', e.message, e.stack, JSON.stringify({query, filter}));
     return [];
   }
 }
@@ -356,7 +330,7 @@ function abrirModalDeConteo() {
   try {
     return HtmlService.createHtmlOutputFromFile('conteo-modal').getContent();
   } catch (e) {
-    logError('Code', 'abrirModalDeConteo', e.message, e.stack);
+    Logging.logError('Code', 'abrirModalDeConteo', e.message, e.stack);
     throw new Error('Error al cargar el formulario de conteo: ' + e.message);
   }
 }
@@ -436,7 +410,7 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
 
   } catch (e) {
     Logger.log(`   - ❌ ERROR ATRAPADO DENTRO de ejecutarHerramienta: ${e.message}`);
-    logError('Code', 'ejecutarHerramienta', e.message, e.stack, JSON.stringify({ functionName, functionArgs, userId }));
+    Logging.logError('Code', 'ejecutarHerramienta', e.message, e.stack, JSON.stringify({ functionName, functionArgs, userId }));
     return `Error al ejecutar la herramienta ${functionName}: ${e.message}`;
   }
 }

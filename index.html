@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const claveIntento = `${sessionStorage.getItem('sessionId')}-${herramienta}`;
             const intentos = (intentosFallidos[claveIntento] || 0) + 1;
             intentosFallidos[claveIntento] = intentos;
-            google.script.run.logError(
+            google.script.run.Logging.logError(
                 'Frontend',
                 'handleAIResponse',
                 'Texto de registro sin tool_call',
@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 functionArgs = JSON.parse(toolCall.function.arguments);
             } catch (e) {
                 showCustomAlert('La respuesta de la IA fue inválida.', 'error');
-                google.script.run.logError(
+                google.script.run.Logging.logError(
                     'Frontend',
                     'handleAIResponse',
                     'Error al parsear argumentos',

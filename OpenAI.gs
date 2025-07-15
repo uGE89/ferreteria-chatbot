@@ -38,12 +38,12 @@ function enviarSolicitudOpenAI(requestPayload, userId) {
   const responseText = apiResult.text;
 
   if (responseCode === 429) {
-    logError('Code', 'enviarSolicitudOpenAI', `Error 429: ${responseText}`, null, JSON.stringify(requestPayload), userId);
+    Logging.logError('Code', 'enviarSolicitudOpenAI', `Error 429: ${responseText}`, null, JSON.stringify(requestPayload), userId);
     return { error: 'Demasiadas solicitudes a la API. Intentá nuevamente en unos minutos.' };
   }
 
   if (responseCode !== 200) {
-    logError('Code', 'enviarSolicitudOpenAI', `API call failed (${responseCode}): ${responseText}`, null, JSON.stringify(requestPayload), userId);
+    Logging.logError('Code', 'enviarSolicitudOpenAI', `API call failed (${responseCode}): ${responseText}`, null, JSON.stringify(requestPayload), userId);
     let userMessage = `El asistente no pudo responder (Error ${responseCode}).`;
     try {
       const parsed = JSON.parse(responseText);

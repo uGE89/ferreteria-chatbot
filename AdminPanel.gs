@@ -52,7 +52,7 @@ function obtenerPanelAdminData_SoloMensajes() {
     Logger.log(`--- ❌ ERROR en obtenerPanelAdminData_SoloMensajes ---`);
     Logger.log(`   - Mensaje: ${e.message}`);
     Logger.log(`   - Stack: ${e.stack}`);
-    logError('AdminPanel', 'obtenerPanelAdminData_SoloMensajes', e.message, e.stack);
+    Logging.logError('AdminPanel', 'obtenerPanelAdminData_SoloMensajes', e.message, e.stack);
     return [];
   }
 }
@@ -91,7 +91,7 @@ function obtenerMovimientosDeCaja() {
     Logger.log(`--- ❌ ERROR en obtenerMovimientosDeCaja ---`);
     Logger.log(`   - Mensaje: ${e.message}`);
     Logger.log(`   - Stack: ${e.stack}`);
-    logError('AdminPanel', 'obtenerMovimientosDeCaja', e.message, e.stack);
+    Logging.logError('AdminPanel', 'obtenerMovimientosDeCaja', e.message, e.stack);
     return [];
   }
 }
@@ -117,7 +117,7 @@ function actualizarEstadoItemAdmin(itemId, nuevoEstado) {
 
     return `Estado actualizado a "${nuevoEstado}".`;
   } catch (e) {
-    logError('AdminPanel', 'actualizarEstadoItemAdmin', e.message, e.stack, JSON.stringify({ itemId, nuevoEstado }));
+    Logging.logError('AdminPanel', 'actualizarEstadoItemAdmin', e.message, e.stack, JSON.stringify({ itemId, nuevoEstado }));
     throw new Error(`Error al actualizar estado: ${e.message}`);
   }
 }
