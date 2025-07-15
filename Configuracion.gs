@@ -601,7 +601,7 @@ const USUARIOS = [
   },
   {
     UsuarioID: 'U009',
-    Rol: 'Vendedor',
+    Rol: 'Todo en uno',
     Sucursal: 'Cotran',
     Activo: true,
     PIN: '9999',
