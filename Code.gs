@@ -44,7 +44,7 @@ function logError(tipoError, funcion, mensajeError, stackTrace = '', payload = '
     }
     const now = new Date();
     const dateStr = Utilities.formatDate(now, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm:ss');
-    const logId = `LOG-${now.getTime()}-${Math.floor(Math.random() * 1000)}`;
+    const logId = generarId('LOG');
     sheet.appendRow([logId, dateStr, userId, tipoError, funcion, mensajeError, stackTrace, payload]);
   } catch(e) {
     Logger.log(`Fallo crítico en logError: ${e.message}`);
