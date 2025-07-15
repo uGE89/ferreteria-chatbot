@@ -9,7 +9,7 @@
 
 const PUNTOS_PROBLEMA = 10;
 const PUNTOS_SUGERENCIA = 15;
-const PUNTOS_CONTEO = 50;
+const PUNTOS_CONTEO = 5;
 const PUNTOS_ARQUEO = 10;
 
 /**
@@ -350,7 +350,7 @@ function registrarMultiplesConteos(conteos, userId) {
         SucursalUsuario: userSucursal
       });
     });
-    sumarPuntos(userId, 5 * conteos.length);
+    sumarPuntos(userId, PUNTOS_CONTEO * conteos.length);
     return `¡Listo! Se registraron ${conteos.length} conteos de inventario.`;
   }
   catch (e) {
