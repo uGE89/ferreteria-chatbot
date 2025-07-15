@@ -78,6 +78,43 @@ function llamarOpenAI(payload) {
   return { code: resp.getResponseCode(), text: resp.getContentText() };
 }
 
+/**
+ * Envía el payload a OpenAI aplicando reintentos y validaciones.
+ * @param {object} requestPayload - Datos para enviar a la API.
+ * @param {string} userId - ID del usuario para registro de errores.
+ * @returns {object} JSON de respuesta o un objeto con la propiedad 'error'.
+ */
+function enviarSolicitudOpenAI(requestPayload, userId) {
+  let attempt = 0;
+  let apiResult = llamarOpenAI(requestPayload);
+  while (apiResult.code === 429 && attempt < 2) {
+    Utilities.sleep(2000);
+    attempt++;
+    apiResult = llamarOpenAI(requestPayload);
+  }
+
+  const responseCode = apiResult.code;
+  const responseText = apiResult.text;
+
+  if (responseCode === 429) {
+    logError('Code', 'enviarSolicitudOpenAI', `Error 429: ${responseText}`, null, JSON.stringify(requestPayload), userId);
+    return { error: 'Demasiadas solicitudes a la API. Intentá nuevamente en unos minutos.' };
+  }
+
+  if (responseCode !== 200) {
+    logError('Code', 'enviarSolicitudOpenAI', `API call failed (${responseCode}): ${responseText}`, null, JSON.stringify(requestPayload), userId);
+    let userMessage = `El asistente no pudo responder (Error ${responseCode}).`;
+    try {
+      const parsed = JSON.parse(responseText);
+      const apiMsg = parsed.error?.message;
+      if (apiMsg) userMessage = `El asistente no pudo responder (${responseCode}): ${apiMsg}`;
+    } catch (e) {}
+    throw new Error(userMessage);
+  }
+
+  return JSON.parse(responseText);
+}
+
 function contarTokens(texto) {
   const chars = String(texto || '').length;
   return Math.ceil(chars / 4);
@@ -174,6 +211,77 @@ function obtenerHistorialReciente(userId, sesionActual) {
   }
 }
 
+/**
+ * Prepara el payload y el historial para la solicitud a OpenAI.
+ * @param {object} userProfile - Perfil del usuario.
+ * @param {object} roleDetails - Detalles del rol.
+ * @param {object} branchDetails - Detalles de la sucursal.
+ * @param {Array<object>} chatHistory - Historial de conversación actual.
+ * @param {object} payload - Datos enviados por el usuario.
+ * @param {string} sessionId - ID de la sesión.
+ * @param {string} userId - ID del usuario.
+ * @returns {{requestPayload: object, chatHistory: Array<object>}} Datos listos para la API.
+ */
+function prepararPayload(userProfile, roleDetails, branchDetails, chatHistory, payload, sessionId, userId) {
+  const finalSystemPrompt = PROMPT_SISTEMA_GENERAL
+    .replace('{userName}', userProfile.Nombre)
+    .replace('{userNotes}', userProfile.NotasAdicionales || 'N/A')
+    .replace('{userRole}', userProfile.Rol)
+    .replace('{roleDescription}', roleDetails.DescripcionGeneral || 'N/A')
+    .replace('{roleResponsibilities}', roleDetails.ResponsabilidadesClave || 'N/A')
+    .replace('{roleTools}', roleDetails.HerramientasComunes || 'N/A')
+    .replace('{userBranch}', userProfile.Sucursal)
+    .replace('{branchDescription}', branchDetails.Descripcion || 'N/A')
+    .replace('{branchGoals}', branchDetails.MetasActuales || 'N/A');
+
+  if (payload.texto) {
+    chatHistory.push({ role: 'user', content: payload.texto });
+  } else if (payload.tool_response) {
+    const toolResponse = payload.tool_response;
+    chatHistory.push({
+      role: 'tool',
+      tool_call_id: toolResponse.tool_call_id,
+      name: toolResponse.function_name,
+      content: toolResponse.result
+    });
+  }
+
+  const selectedToolName = payload.tool_name;
+  let tools = [];
+  let promptExtra = '';
+
+  if (selectedToolName) {
+    const tool = getAIToolByName(selectedToolName);
+    if (tool) {
+      tools.push(tool);
+      if (tool.PromptEspecifico) promptExtra += tool.PromptEspecifico;
+      if (tool.ComportamientoAdicional) {
+        if (promptExtra) promptExtra += '\n';
+        promptExtra += tool.ComportamientoAdicional;
+      }
+    }
+  }
+
+  const historialExtra = obtenerHistorialReciente(userId, sessionId);
+  chatHistory = limitarHistorial([
+    { role: 'system', content: finalSystemPrompt + (promptExtra ? '\n' + promptExtra : '') },
+    ...historialExtra,
+    ...chatHistory
+  ]);
+  const historyForRequest = chatHistory.map(m => Object.assign({}, m));
+
+  const requestPayload = {
+    model: MODELO_DEFAULT,
+    messages: historyForRequest,
+    temperature: TEMPERATURA_AI,
+    max_tokens: MAX_TOKENS_AI,
+    tools: tools,
+    tool_choice: 'auto'
+  };
+
+  return { requestPayload: requestPayload, chatHistory: chatHistory };
+}
+
 
 // --- LÓGICA DE NEGOCIO Y API DE IA ---
 
@@ -211,90 +319,22 @@ function enviarAOpenAI(sessionId, userId, payload) {
     const roleDetails = getRoleDetails(userProfile.Rol);
     const branchDetails = getBranchDetails(userProfile.Sucursal);
 
-    const finalSystemPrompt = PROMPT_SISTEMA_GENERAL
-      .replace('{userName}', userProfile.Nombre)
-      .replace('{userNotes}', userProfile.NotasAdicionales || 'N/A')
-      .replace('{userRole}', userProfile.Rol)
-      .replace('{roleDescription}', roleDetails.DescripcionGeneral || 'N/A')
-      .replace('{roleResponsibilities}', roleDetails.ResponsabilidadesClave || 'N/A')
-      .replace('{roleTools}', roleDetails.HerramientasComunes || 'N/A')
-      .replace('{userBranch}', userProfile.Sucursal)
-      .replace('{branchDescription}', branchDetails.Descripcion || 'N/A')
-      .replace('{branchGoals}', branchDetails.MetasActuales || 'N/A');
+    const preparacion = prepararPayload(
+      userProfile,
+      roleDetails,
+      branchDetails,
+      chatHistory,
+      payload,
+      sessionId,
+      userId
+    );
+    const requestPayload = preparacion.requestPayload;
+    chatHistory = preparacion.chatHistory;
 
-    if (payload.texto) {
-      chatHistory.push({ role: 'user', content: payload.texto });
-    } else if (payload.tool_response) {
-      const toolResponse = payload.tool_response;
-      chatHistory.push({
-        role: 'tool',
-        tool_call_id: toolResponse.tool_call_id,
-        name: toolResponse.function_name,
-        content: toolResponse.result
-      });
+    const responseJson = enviarSolicitudOpenAI(requestPayload, userId);
+    if (responseJson.error) {
+      return { content: responseJson.error };
     }
-
-    const selectedToolName = payload.tool_name;
-    let tools = [];
-    let promptExtra = '';
-
-    if (selectedToolName) {
-      const tool = getAIToolByName(selectedToolName);
-      if (tool) {
-        tools.push(tool);
-        if (tool.PromptEspecifico) promptExtra += tool.PromptEspecifico;
-        if (tool.ComportamientoAdicional) {
-          if (promptExtra) promptExtra += '\n';
-          promptExtra += tool.ComportamientoAdicional;
-        }
-      }
-    }
-
-    const historialExtra = obtenerHistorialReciente(userId, sessionId);
-    chatHistory = limitarHistorial([
-      { role: 'system', content: finalSystemPrompt + (promptExtra ? '\n' + promptExtra : '') },
-      ...historialExtra,
-      ...chatHistory
-    ]);
-    const historyForRequest = chatHistory.map(m => Object.assign({}, m));
-
-    const requestPayload = {
-        model: MODELO_DEFAULT,
-        messages: historyForRequest,
-        temperature: TEMPERATURA_AI,
-        max_tokens: MAX_TOKENS_AI,
-        tools: tools,
-        tool_choice: "auto"
-    };
-
-    let attempt = 0;
-    let apiResult = llamarOpenAI(requestPayload);
-    while (apiResult.code === 429 && attempt < 2) {
-      Utilities.sleep(2000);
-      attempt++;
-      apiResult = llamarOpenAI(requestPayload);
-    }
-
-    const responseCode = apiResult.code;
-    const responseText = apiResult.text;
-
-    if (responseCode === 429) {
-        logError('Code', 'enviarAOpenAI', `Error 429: ${responseText}`, null, JSON.stringify(requestPayload), userId);
-        return { content: 'Demasiadas solicitudes a la API. Intentá nuevamente en unos minutos.' };
-    }
-
-    if (responseCode !== 200) {
-        logError('Code', 'enviarAOpenAI', `API call failed (${responseCode}): ${responseText}`, null, JSON.stringify(requestPayload), userId);
-        let userMessage = `El asistente no pudo responder (Error ${responseCode}).`;
-        try {
-            const parsed = JSON.parse(responseText);
-            const apiMsg = parsed.error?.message;
-            if (apiMsg) userMessage = `El asistente no pudo responder (${responseCode}): ${apiMsg}`;
-        } catch (e) {}
-        throw new Error(userMessage);
-    }
-
-    const responseJson = JSON.parse(responseText);
     const message = responseJson.choices?.[0]?.message;
     let aiResponse = {};
 
