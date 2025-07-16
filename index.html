@@ -228,6 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let herramientaPendiente = null;
     let quickStarterEnUso = null;
     let intentosFallidos = {};
+    const MAX_INTENTOS_HERRAMIENTA = 3;
 
     // --- Lógica de Modales (Alert y Confirm) ---
     function showCustomAlert(message, type = 'info', onClose) {
@@ -416,7 +417,10 @@ document.addEventListener('DOMContentLoaded', () => {
             messageInput.disabled = false;
             sendButton.disabled = false;
             messageInput.focus();
-            if (quickStarterEnUso) {
+            if (intentos >= MAX_INTENTOS_HERRAMIENTA) {
+                quickStarterEnUso = null;
+                showCustomAlert('No se pudo completar el registro tras varios intentos. Por favor, realizá la acción manualmente.', 'error');
+            } else if (quickStarterEnUso) {
                 showCustomConfirm(`El registro no se completó. ¿Reintentar \"${quickStarterEnUso.nombrePantalla}\"?`, 'Reintentar', 'Cancelar')
                     .then(reintentar => {
                         if (reintentar) {
@@ -432,6 +436,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.tool_call) {
             const toolCall = data.tool_call;
             const functionName = toolCall.function.name;
+            const claveIntento = `${sessionStorage.getItem('sessionId')}-${functionName}`;
+            delete intentosFallidos[claveIntento];
             quickStarterEnUso = null;
             let functionArgs;
             try {
