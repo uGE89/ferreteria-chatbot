@@ -558,8 +558,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .ejecutarHerramienta(pending.name, pending.args, userId, sessionId);
         } else if (herramientaPendiente && negativePattern.test(userInput)) {
+            const pending = herramientaPendiente;
             herramientaPendiente = null;
             addMessage('Operación cancelada.', 'system');
+            const tool_response = {
+                tool_call_id: pending.id,
+                function_name: pending.name,
+                result: 'Operación cancelada'
+            };
+            getAIResponse({ texto: null, tool_response });
         } else {
             getAIResponse({ texto: userInput });
         }
