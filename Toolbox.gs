@@ -9,7 +9,7 @@
 
 const PUNTOS_PROBLEMA = 10;
 const PUNTOS_SUGERENCIA = 15;
-const PUNTOS_CONTEO = 50;
+const PUNTOS_CONTEO = 5;
 const PUNTOS_ARQUEO = 10;
 
 /**
