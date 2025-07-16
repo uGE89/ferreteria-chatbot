@@ -47,7 +47,6 @@ function obtenerHistorialReciente(userId, sesionActual) {
   try {
     const sesiones = getSheetData(SHEET_NAMES.SESIONES)
       .filter(s => s.UsuarioID === userId && s.SesionID !== sesionActual);
-    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
     const fechaLimite = new Date();
     fechaLimite.setDate(fechaLimite.getDate() - 2);
     const historial = [];
