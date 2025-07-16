@@ -17,7 +17,7 @@ Este proyecto implementa un backend para una plataforma conversacional interna u
 ## Sistema de gamificación
 
 Cada usuario tiene campos de **Puntos** e **Insignias** en la hoja `Usuarios`.
-Al registrar problemas, sugerencias o conteos se otorgan 10, 15 y 50 puntos respectivamente.
+Al registrar problemas, sugerencias, arqueos o conteos se otorgan 10, 15, 10 y 5 puntos respectivamente.
 Las insignias se guardan con la función `asignarInsignia(userId, nombreInsignia)`.
 En la interfaz se muestra el puntaje actual y una tabla de clasificación,
 obtenida con `obtenerRankingPuntos()`.
