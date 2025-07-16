@@ -520,8 +520,9 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessage(userInput, 'user');
         messageInput.value = '';
 
-        const affirmativePattern = /^(sí|si|claro|dale|ok)/i;
-        const negativePattern = /^(no|cancel)/i;
+        // Expresiones para interpretar respuestas positivas o negativas
+        const affirmativePattern = /^(?:s[ií]p?|claro|dale|ok(?:ay|ey)?|va|vale|listo|de acuerdo|afirmativo)/i;
+        const negativePattern = /^(?:no|nop|nope|cancel(?:ar|ado)?|cancela|cancelaci(?:ó|o)n|negativo)/i;
 
         if (herramientaPendiente && affirmativePattern.test(userInput)) {
             const pending = herramientaPendiente;
