@@ -737,15 +737,29 @@ document.addEventListener('DOMContentLoaded', () => {
             container.innerHTML = `<p class="text-slate-400 text-center text-sm p-4">Cargando ítems...</p>`;
         }
         google.script.run
-            .withSuccessHandler(items => {
-                adminState.items = (Array.isArray(items) ? items : []).map(d => ({...d, fecha: d.fecha ? new Date(d.fecha) : null}));
-                adminState.items.sort((a,b) => (b.fecha?.getTime() || 0) - (a.fecha?.getTime() || 0));
-                renderFilteredAdminItems();
+            .withSuccessHandler(mensajes => {
+                google.script.run
+                    .withSuccessHandler(caja => {
+                        const listaMensajes = Array.isArray(mensajes) ? mensajes : [];
+                        const listaCaja = Array.isArray(caja) ? caja : [];
+                        adminState.items = [...listaMensajes, ...listaCaja]
+                            .map(d => ({...d, fecha: d.fecha ? new Date(d.fecha) : null}));
+                        adminState.items.sort((a, b) => (b.fecha?.getTime() || 0) - (a.fecha?.getTime() || 0));
+                        renderFilteredAdminItems();
+                    })
+                    .withFailureHandler(err => {
+                        if (container) {
+                            container.innerHTML = `<p class="text-red-400 text-center text-sm p-4">Error al cargar caja: ${err.message}</p>`;
+                        }
+                    })
+                    .obtenerMovimientosDeCaja();
             })
             .withFailureHandler(err => {
-                if(container) container.innerHTML = `<p class="text-red-400 text-center text-sm p-4">Error al cargar datos: ${err.message}</p>`;
+                if (container) {
+                    container.innerHTML = `<p class="text-red-400 text-center text-sm p-4">Error al cargar datos: ${err.message}</p>`;
+                }
             })
-            .obtenerPanelAdminData_SoloMensajes(); // Esta función debe devolver todos los tipos que maneja el panel
+            .obtenerPanelAdminData_SoloMensajes();
     }
 
     function renderFilteredAdminItems() {
