@@ -1096,7 +1096,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     google.script.run
                         .withSuccessHandler(response => {
                             editedData = {};
-                            showCustomAlert(response, 'success', () => forceCloseModal());
+                            showCustomAlert(response, 'success', () => {
+                                forceCloseModal();
+                                actualizarPuntajeYRanking();
+                            });
                         })
                         .withFailureHandler(err => showCustomAlert(err.message, 'error'))
                         .registrarMultiplesConteos(conteosValidos, perfilActual.UsuarioID);
