@@ -560,6 +560,55 @@ function ultimaFecha() {
 }
 
 /**
+ * Devuelve la fecha más reciente de conteos para un usuario.
+ * @param {string} userId - ID del usuario.
+ * @returns {string} Fecha en formato 'dd-MM-yyyy' o cadena vacía.
+ */
+function ultimaFechaUsuario(userId) {
+  try {
+    const registros = getSheetData(SHEET_NAMES.CONTEOS)
+      .filter(r => r.UsuarioID === userId);
+    if (!registros || registros.length === 0) {
+      return '';
+    }
+
+    const parseDateRobust = (textoFecha) => {
+      if (!textoFecha) return null;
+      let fecha = parseSafeDate(textoFecha);
+      if (!fecha) {
+        try {
+          fecha = new Date(textoFecha.split('/').reverse().join('-'));
+          if (isNaN(fecha.getTime())) fecha = null;
+        } catch (e) {
+          fecha = null;
+        }
+      }
+      return fecha;
+    };
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const fechasValidas = registros
+      .map(r => parseDateRobust(r.Fecha))
+      .filter(d => d && d.getTime() <= hoy.getTime());
+
+    if (fechasValidas.length === 0) {
+      return '';
+    }
+
+    const fechaMax = new Date(Math.max(...fechasValidas.map(d => d.getTime())));
+
+    const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    return Utilities.formatDate(fechaMax, tz, 'dd-MM-yyyy');
+
+  } catch (e) {
+    Logging.logError('Toolbox', 'ultimaFechaUsuario', e.message, e.stack, userId);
+    return '';
+  }
+}
+
+/**
  * Genera un resumen corto del chat de un usuario en la fecha previa.
  * Usa la fecha obtenida con ultimaFecha o la última sesión registrada.
  * @param {string} userId - ID del usuario a resumir.
@@ -567,7 +616,7 @@ function ultimaFecha() {
  */
 function resumenChatUsuario(userId) {
   try {
-    let fechaBase = ultimaFecha();
+    let fechaBase = ultimaFechaUsuario(userId);
     const sesiones = getSheetData(SHEET_NAMES.SESIONES).filter(s => s.UsuarioID === userId);
     const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
 
@@ -580,7 +629,7 @@ function resumenChatUsuario(userId) {
         }
       });
       if (fechaMax) {
-        fechaBase = Utilities.formatDate(fechaMax, tz, 'yyyy-MM-dd');
+        fechaBase = Utilities.formatDate(fechaMax, tz, 'dd-MM-yyyy');
       }
     }
 
@@ -591,7 +640,7 @@ function resumenChatUsuario(userId) {
     const sesionesFiltradas = sesiones.filter(s => {
       const f = parseSafeDate(s.FechaInicio);
       if (!f) return false;
-      const fStr = Utilities.formatDate(f, tz, 'yyyy-MM-dd');
+      const fStr = Utilities.formatDate(f, tz, 'dd-MM-yyyy');
       return fStr === fechaBase;
     });
 
@@ -646,7 +695,7 @@ function resumenChatUsuario(userId) {
  */
 function resumenConteo(userId) {
   try {
-    const fechaRef = ultimaFecha();
+    const fechaRef = ultimaFechaUsuario(userId);
     if (!fechaRef) {
       return 'No se encontró una fecha reciente de conteos.';
     }
@@ -656,7 +705,7 @@ function resumenConteo(userId) {
       if (r.UsuarioID !== userId) return false;
       const f = parseSafeDate(r.Fecha);
       if (!f) return false;
-      const fStr = Utilities.formatDate(f, tz, 'yyyy-MM-dd');
+      const fStr = Utilities.formatDate(f, tz, 'dd-MM-yyyy');
       return fStr === fechaRef;
     });
 
@@ -756,7 +805,7 @@ function revisionMetaConteo(userId) {
     };
 
     // --- 2. OBTENCIÓN Y PREPARACIÓN DE DATOS ---
-    const fechaRef = ultimaFecha();
+    const fechaRef = ultimaFechaUsuario(userId);
     if (!fechaRef) return 'No se encontró una fecha reciente de conteos.';
 
     const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
@@ -766,7 +815,7 @@ function revisionMetaConteo(userId) {
       if (r.UsuarioID !== userId) return false;
       const f = parseSafeDate(r.Fecha);
       if (!f) return false;
-      const fStr = Utilities.formatDate(f, tz, 'yyyy-MM-dd');
+      const fStr = Utilities.formatDate(f, tz, 'dd-MM-yyyy');
       if (fStr !== fechaRef) return false;
       const clave = String(r.ClaveProducto).replace(/^'/, '');
       return clavesARevisar.includes(clave);
