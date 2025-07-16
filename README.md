@@ -30,6 +30,7 @@ obtenida con `obtenerRankingPuntos()`.
 3. Define una **propiedad de script** llamada `OPENAI_API_KEY` con tu clave de OpenAI.
 4. Ajusta el valor de `ID_HOJA_PUENTE` en `Configuracion.gs` para que apunte al ID de tu hoja principal.
 5. Desde el editor de Apps Script selecciona **Deploy > New deployment** y elige "Web app" para publicar la aplicación. `doGet()` sirve la interfaz `index.html`.
+6. Ejecuta `instalarTriggerLimpiezaSesiones` para programar la limpieza de sesiones.
 
 ## Ejecución de la suite de pruebas
 

@@ -11,6 +11,7 @@ const TEMPERATURA_AI = 0.5;
 const MAX_TOKENS_AI = 4000; // Aumentado para aprovechar el nuevo modelo
 const MAX_TOKENS_HISTORIAL = 6000; // Se amplía el historial permitido
 const MAX_MENSAJES_HISTORIAL = 80;  // Cantidad máxima de mensajes en el historial
+const HORAS_INACTIVIDAD_SESION = 12; // Tiempo en horas para cerrar sesiones
 
 
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
