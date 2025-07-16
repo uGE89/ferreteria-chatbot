@@ -344,6 +344,16 @@ function abrirModalDeConteo() {
  * @param {string} sessionId - El ID de la sesión actual.
  * @returns {string} El resultado de la ejecución de la función, como un string.
  */
+function validarArgumentos(args, campos) {
+  const faltantes = campos.filter(c => {
+    const val = args[c];
+    return val === undefined || val === null || val === '';
+  });
+  return faltantes.length > 0
+    ? `Faltan datos obligatorios: ${faltantes.join(', ')}.`
+    : '';
+}
+
 function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
   Logger.log(`--- ejecutarHerramienta FUE LLAMADA ---`);
   Logger.log(`   - Intentando ejecutar: "${functionName}"`);
@@ -355,26 +365,38 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
     switch (functionName) {
       case 'registrarProblema':
         Logger.log('   - Entrando en el caso: "registrarProblema"');
+        var mensaje = validarArgumentos(functionArgs, ['asunto', 'detalle']);
+        if (mensaje) return mensaje;
         return registrarProblema(userId, functionArgs.asunto, functionArgs.detalle, sessionId);
 
       case 'registrarSugerencia':
         Logger.log('   - Entrando en el caso: "registrarSugerencia"');
+        var mensaje = validarArgumentos(functionArgs, ['asunto', 'detalle']);
+        if (mensaje) return mensaje;
         return registrarSugerencia(userId, functionArgs.asunto, functionArgs.detalle, sessionId);
 
       case 'crearTareaPendiente':
         Logger.log('   - Entrando en el caso: "crearTareaPendiente"');
+        var mensaje = validarArgumentos(functionArgs, ['titulo', 'descripcion']);
+        if (mensaje) return mensaje;
         return crearTareaPendiente(userId, functionArgs.titulo, functionArgs.descripcion, functionArgs.fechaLimite || '', sessionId);
 
       case 'registrarIngresoCaja':
         Logger.log('   - Entrando en el caso: "registrarIngresoCaja"');
+        var mensaje = validarArgumentos(functionArgs, ['monto', 'concepto', 'contacto']);
+        if (mensaje) return mensaje;
         return registrarMovimientoCaja('Ingreso', functionArgs.monto, functionArgs.concepto, functionArgs.contacto, userId);
 
       case 'registrarEgresoCaja':
         Logger.log('   - Entrando en el caso: "registrarEgresoCaja"');
+        var mensaje = validarArgumentos(functionArgs, ['monto', 'concepto', 'contacto']);
+        if (mensaje) return mensaje;
         return registrarMovimientoCaja('Egreso', functionArgs.monto, functionArgs.concepto, functionArgs.contacto, userId);
 
       case 'registrarConteo':
         Logger.log('   - Entrando en el caso: "registrarConteo"');
+        var mensaje = validarArgumentos(functionArgs, ['claveProducto', 'cantidadSistema', 'cantidadFisico']);
+        if (mensaje) return mensaje;
         return registrarConteo(
           userId,
           functionArgs.claveProducto,
@@ -389,6 +411,8 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
 
       case 'arqueoCaja':
         Logger.log('   - Entrando en el caso: "arqueoCaja"');
+        var mensaje = validarArgumentos(functionArgs, ['saldoSistema', 'contado', 'transferencia', 'tarjeta', 'razonDiferencia']);
+        if (mensaje) return mensaje;
         return registrarArqueoCaja(
           userId,
           functionArgs.saldoSistema,
@@ -400,6 +424,8 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
 
       case 'generarResumenAdmin':
          Logger.log('   - Entrando en el caso: "generarResumenAdmin".');
+         var mensaje = validarArgumentos(functionArgs, ['dias']);
+         if (mensaje) return mensaje;
          return generarResumenAdmin(functionArgs.dias);
 
 
