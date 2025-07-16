@@ -66,6 +66,7 @@ const HERRAMIENTAS_AI = [
     },
     ComportamientoAdicional: 'Antes de llamar, asegúrate de que el asunto y el detalle sean específicos y accionables. Haz preguntas de seguimiento si la información es vaga.',
     EsQuickStarter: true,
+    PromptEspecifico: PROMPT_REGISTRAR_PROBLEMA,
     rolesPermitidos: ['Todos']
 
   },
@@ -93,6 +94,7 @@ const HERRAMIENTAS_AI = [
     },
     ComportamientoAdicional: 'Antes de llamar, asegúrate de que la sugerencia sea concreta y accionable. Haz preguntas de seguimiento si la idea es muy general.',
     EsQuickStarter: true,
+    PromptEspecifico: PROMPT_REGISTRAR_SUGERENCIA,
     rolesPermitidos: ['Todos']
 
   },
@@ -144,6 +146,7 @@ const HERRAMIENTAS_AI = [
     },
     ComportamientoAdicional: 'Calcula la diferencia entre sistema y físico. Si es distinta de cero solicita datos de CPI o VPE. Siempre confirma antes de registrar y guarda cualquier explicación en `observacion`.',
     EsQuickStarter: true,
+    PromptEspecifico: PROMPT_REGISTRAR_CONTEO,
     rolesPermitidos: ['Administrador', 'Bodeguero', 'Todo en uno']
 
   },
@@ -175,6 +178,7 @@ const HERRAMIENTAS_AI = [
     },
     ComportamientoAdicional: 'Ofrece crear una tarea pendiente cuando el usuario menciona acciones a futuro. NO pidas confirmación después de la creación.',
     EsQuickStarter: false,
+    PromptEspecifico: PROMPT_CREAR_TAREA,
     rolesPermitidos: ['Todos']
   },
 
@@ -205,6 +209,7 @@ const HERRAMIENTAS_AI = [
     },
     ComportamientoAdicional: '', // Sin comportamiento adicional específico para esta.
     EsQuickStarter: true,
+    PromptEspecifico: PROMPT_REGISTRAR_INGRESO_CAJA,
     rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
   },
 
@@ -235,6 +240,7 @@ const HERRAMIENTAS_AI = [
     },
     ComportamientoAdicional: '', // Sin comportamiento adicional específico para esta.
     EsQuickStarter: true,
+    PromptEspecifico: PROMPT_REGISTRAR_EGRESO_CAJA,
   rolesPermitidos: ['Administrador', 'Cajero', 'Todo en uno']
 
   },
@@ -298,6 +304,7 @@ const HERRAMIENTAS_AI = [
     },
     ComportamientoAdicional: '',
     EsQuickStarter: true,
+    PromptEspecifico: PROMPT_RESUMEN_ADMIN,
     rolesPermitidos: ['Administrador']
 
   }
