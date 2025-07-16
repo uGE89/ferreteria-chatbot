@@ -267,6 +267,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (storedProfile) {
         inputID.value = JSON.parse(storedProfile).UsuarioID;
         // El PIN no se guarda por seguridad, el usuario debe reingresarlo
+    } else {
+        const localSession = localStorage.getItem('sessionId');
+        const localExpire = parseInt(localStorage.getItem('sessionExpires'), 10);
+        const localProfile = localStorage.getItem('perfil');
+        if (localSession && localProfile && localExpire && Date.now() < localExpire) {
+            btnLogin.disabled = true;
+            google.script.run
+                .withSuccessHandler(datos => {
+                    if (datos.ok) {
+                        procesarDatosIniciales(datos);
+                    } else {
+                        localStorage.removeItem('perfil');
+                        localStorage.removeItem('sessionId');
+                        localStorage.removeItem('sessionExpires');
+                        btnLogin.disabled = false;
+                    }
+                })
+                .reutilizarSesionActiva(JSON.parse(localProfile).UsuarioID, localSession);
+        }
     }
 
     btnLogin.addEventListener('click', () => {
@@ -299,6 +318,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sessionStorage.setItem('perfil', JSON.stringify(datos.perfil));
         sessionStorage.setItem('sessionId', datos.sesionId);
+        const expiration = Date.now() + 12 * 60 * 60 * 1000;
+        localStorage.setItem('perfil', JSON.stringify(datos.perfil));
+        localStorage.setItem('sessionId', datos.sesionId);
+        localStorage.setItem('sessionExpires', String(expiration));
         perfilActual = datos.perfil;
 
         loginCard.classList.add('hidden');
@@ -824,6 +847,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const confirmed = await showCustomConfirm("¿Seguro que quieres cerrar sesión?");
         if (confirmed) {
             sessionStorage.clear();
+            localStorage.removeItem('perfil');
+            localStorage.removeItem('sessionId');
+            localStorage.removeItem('sessionExpires');
             location.reload();
         }
     });

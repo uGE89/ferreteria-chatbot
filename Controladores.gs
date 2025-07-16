@@ -118,3 +118,59 @@ function cargarDatosIniciales(userId, pin) {
     return { ok: false, msg: `Error interno al cargar datos iniciales: ${e.message}.` };
   }
 }
+
+/**
+ * Reutiliza la sesión activa si no ha expirado.
+ * Se considera expirada después de doce horas sin actividad.
+ * @param {string} userId - ID del usuario.
+ * @param {string} sessionId - ID de la sesión.
+ * @returns {object} Datos para inicializar la interfaz.
+ */
+function reutilizarSesionActiva(userId, sessionId) {
+  try {
+    const sesiones = getSheetData(SHEET_NAMES.SESIONES);
+    const sesion = sesiones.find(s =>
+      s.UsuarioID === userId &&
+      s.SesionID === sessionId &&
+      s.EstadoSesion === 'Activa'
+    );
+    if (!sesion) return { ok: false };
+
+    const ultima = parseSafeDate(sesion.UltimaActividad);
+    if (!ultima) return { ok: false };
+    const horas = (new Date() - ultima) / (1000 * 60 * 60);
+    if (horas > 12) return { ok: false };
+
+    const usersSheet = getSheetData(SHEET_NAMES.USUARIOS);
+    const dynamicData = usersSheet.find(u => u.UsuarioID === userId);
+    const staticData = USUARIOS.find(u => u.UsuarioID === userId);
+    if (!dynamicData || !staticData) return { ok: false };
+
+    const perfil = { ...staticData, Nombre: dynamicData.Nombre };
+    delete perfil.PIN;
+
+    const rolUsuario = perfil.Rol;
+    const quickStarters = HERRAMIENTAS_AI
+      .filter(tool => tool.EsQuickStarter === true)
+      .filter(tool => {
+        const rolesPermitidos = Array.isArray(tool.rolesPermitidos)
+          ? tool.rolesPermitidos
+          : ['Todos'];
+        return rolesPermitidos.includes('Todos') ||
+          rolesPermitidos.includes(rolUsuario);
+      })
+      .map(tool => ({
+        NombrePantalla: tool.NombrePantalla,
+        NombreFuncion: tool.NombreFuncion
+      }));
+
+    updateRowInSheet(SHEET_NAMES.SESIONES, 'SesionID', sessionId, {
+      UltimaActividad: getFormattedTimestamp()
+    });
+
+    return { ok: true, perfil: perfil, sesionId: sessionId, quickStarters: quickStarters, mensajeAnuncio: [] };
+  } catch (e) {
+    Logging.logError('Backend', 'reutilizarSesionActiva', e.message, e.stack, `userId: ${userId}, sessionId: ${sessionId}`);
+    return { ok: false, msg: 'Error al verificar la sesión.' };
+  }
+}
