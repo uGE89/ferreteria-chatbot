@@ -117,14 +117,14 @@ function prepararPayload(userProfile, roleDetails, branchDetails, chatHistory, p
   let toolChoice = 'auto';
 
   if (selectedToolName) {
-    const tool = getAIToolByName(selectedToolName);
-    if (tool) {
-      tools.push(tool);
+    const info = getAIToolByName(selectedToolName);
+    if (info) {
+      tools.push(info.herramienta);
       toolChoice = { type: 'function', function: { name: selectedToolName } };
-      if (tool.PromptEspecifico) promptExtra += tool.PromptEspecifico;
-      if (tool.ComportamientoAdicional) {
+      if (info.prompt) promptExtra += info.prompt;
+      if (info.comportamiento) {
         if (promptExtra) promptExtra += '\n';
-        promptExtra += tool.ComportamientoAdicional;
+        promptExtra += info.comportamiento;
       }
     }
   }

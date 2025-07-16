@@ -122,7 +122,7 @@ function getAITools() {
   const tools = HERRAMIENTAS_AI.map((tool, index) => {
     Logger.log(`Procesando herramienta [${index}]: NombreFuncion: ${tool.NombreFuncion}`);
     Logger.log(`  Descripción: ${tool.Descripcion.substring(0, 50)}...`); // Log parcial para evitar truncamiento
-    // No loguear el SchemaParametros completo si es muy grande, o si contiene datos sensibles.
+    // No loguear el SchemaParametros completo si es muy grande o sensible.
     // Logger.log(`  SchemaParametros: ${JSON.stringify(tool.SchemaParametros)}`);
 
     return {
@@ -131,9 +131,7 @@ function getAITools() {
         name: tool.NombreFuncion,
         description: tool.Descripcion,
         parameters: tool.SchemaParametros
-      },
-      ComportamientoAdicional: tool.ComportamientoAdicional,
-      PromptEspecifico: tool.PromptEspecifico
+      }
     };
   });
 
@@ -145,14 +143,16 @@ function getAIToolByName(name) {
   const tool = HERRAMIENTAS_AI.find(t => t.NombreFuncion === name);
   if (!tool) return null;
   return {
-    type: 'function',
-    function: {
-      name: tool.NombreFuncion,
-      description: tool.Descripcion,
-      parameters: tool.SchemaParametros
+    herramienta: {
+      type: 'function',
+      function: {
+        name: tool.NombreFuncion,
+        description: tool.Descripcion,
+        parameters: tool.SchemaParametros
+      }
     },
-    ComportamientoAdicional: tool.ComportamientoAdicional,
-    PromptEspecifico: tool.PromptEspecifico
+    comportamiento: tool.ComportamientoAdicional,
+    prompt: tool.PromptEspecifico
   };
 }
 
