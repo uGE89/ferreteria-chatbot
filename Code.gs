@@ -114,11 +114,13 @@ function prepararPayload(userProfile, roleDetails, branchDetails, chatHistory, p
   const selectedToolName = payload.tool_name;
   let tools = [];
   let promptExtra = '';
+  let toolChoice = 'auto';
 
   if (selectedToolName) {
     const tool = getAIToolByName(selectedToolName);
     if (tool) {
       tools.push(tool);
+      toolChoice = { type: 'function', function: { name: selectedToolName } };
       if (tool.PromptEspecifico) promptExtra += tool.PromptEspecifico;
       if (tool.ComportamientoAdicional) {
         if (promptExtra) promptExtra += '\n';
@@ -141,7 +143,7 @@ function prepararPayload(userProfile, roleDetails, branchDetails, chatHistory, p
     temperature: TEMPERATURA_AI,
     max_tokens: MAX_TOKENS_AI,
     tools: tools,
-    tool_choice: 'auto'
+    tool_choice: toolChoice
   };
 
   return { requestPayload: requestPayload, chatHistory: chatHistory };
