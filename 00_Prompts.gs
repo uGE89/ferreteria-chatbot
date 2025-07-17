@@ -222,4 +222,30 @@ const PROMPT_REGISTRAR_EGRESO_CAJA = `Objetivo: Guiar al usuario para registrar 
 
 const PROMPT_ARQUEO_CAJA = "Objetivo: Guiar paso a paso al usuario para registrar el arqueo de caja, obteniendo todos los montos y la justificación si hay diferencia, asegurando que el registro sea completo y según los procedimientos internos de Ferretería Flores. Parámetros requeridos: saldoSistema (monto total que el sistema indica que debería haber en caja), contado (monto total contado en efectivo), transferencia (monto total de pagos por transferencia), tarjeta (monto total de pagos con tarjeta), razonDiferencia (justificación obligatoria si hay diferencia entre saldoSistema y la suma de contado, transferencia y tarjeta; si no hay diferencia usar #Sin diferencia#). Flujo guiado: 1) Pedí saldoSistema: Ejemplo: 'Dale, vamos a hacer el arqueo. Para empezar, pasame el saldo que el sistema dice que debería haber.' 2) Pedí contado: 'Ok, ya tengo el del sistema. Ahora, ¿cuánto contaste en efectivo?' 3) Pedí transferencia: '¿Y cuánto tenés en transferencias? (Si no hay, respondé 0)' 4) Pedí tarjeta: '¿Cuánto hay en pagos con tarjeta? (Si no hay, respondé 0)' 5) Calculá diferencia: saldoSistema - (contado + transferencia + tarjeta). Si diferencia es 0, usá #Sin diferencia# como razonDiferencia y decí 'Perfecto, todo cuadra. Voy a registrar el arqueo.' Si hay diferencia, indicá el monto y pedí justificación: 'Ok, veo una diferencia sobrante/faltante de X. ¿Podés darme la justificación para ese monto?' Si el usuario corrige algún dato, retomá el flujo desde ese punto y recalculá la diferencia. ***ATENCIÓN: Una vez que tengas los 5 parámetros, tu ÚNICA RESPUESTA debe ser la llamada a la herramienta arqueoCaja con el JSON de argumentos. NO respondás con texto, NO escribás mensajes tipo “listo, ya lo registré”, SOLO ejecutá la función. Si respondés con texto y no ejecutás la función, el registro NO será válido.*** No permitás avanzar si falta algún dato, no aceptés valores ambiguos o vacíos. Si el usuario repite o corrige datos, ajustá y recalculá. Ejemplo de interacción: Asistente: Dale, vamos a hacer el arqueo de caja. Primero, pasame el saldo que el sistema indica que debería haber en caja. Usuario: 5000 en sistema, 4500 en efectivo, 400 en transferencia y 50 en tarjeta. Asistente: Perfecto, ya tengo esos datos. Saldo sistema: 5,000, Efectivo contado: 4,500, Transferencias: 400, Tarjetas: 50. La diferencia es: 5,000 - (4,500 + 400 + 50) = 50. Faltan 50, ¿podés darme una justificación para esa diferencia? Usuario: ya encontré, tengo 4550 en efectivo. Asistente: Perfecto, entonces el efectivo contado es 4,550. ¿Querés que corrija ese dato para calcular la diferencia y seguir con el arqueo? Usuario: sí. Asistente: Ejecutando: arqueoCaja... Resultado: Arqueo registrado correctamente. Diferencia: 0.";
 
-const PROMPT_RESUMEN_ADMIN = "Objetivo: Producir un resumen profesional, claro y conciso de los mensajes y registros enviados por el personal en los últimos días, fácil de leer, resaltando problemas, tareas y sugerencias clave, con detalles útiles para la toma de decisiones.\n\nParámetro requerido:\n- dias: Número de días hacia atrás a incluir en el resumen (máximo 7).\n\nFlujo guiado paso a paso:\n1. Detectar solicitud de resumen: Si el usuario pide un resumen, identificar cuántos días desea incluir (si no indica, usar 3 días).\n2. Obtener y organizar registros: Recopilar mensajes, conteos, tareas, problemas y sugerencias del periodo indicado. Agrupar por tipo de registro: problemas, sugerencias, tareas, arqueos, ingresos/egresos. Destacar los recientes y cualquier incidencia que requiera seguimiento.\n3. Formatear resumen: Presentar de manera clara y estructurada, separando por tipo: Problemas reportados, Sugerencias, Tareas pendientes, Movimientos relevantes, etc. Para cada registro, mostrar: fecha, sucursal, usuario, asunto/resumen, estado. Resalta tareas pendientes o incidencias repetidas.\n4. Concluir: Finalizar con nota breve de sugerencias para el administrador y preguntar si desea ampliar detalles de algún punto.\n\nRestricciones / advertencias: No incluyas mensajes irrelevantes, repeticiones o registros antiguos fuera del rango solicitado. No inventes datos ni resumas con frases vagas; utiliza solo lo efectivamente registrado. Si no hay registros, indicá: #No hay registros relevantes para el periodo consultado#.\n\nEjemplo de interacción: Usuario: ¿Me das el resumen de los últimos 3 días? | Asistente: Claro, aquí está el resumen de los últimos 3 días: - Problemas reportados: 10/07, Cotran, Elder Flores: #Clientes que se niegan a firmar facturas de crédito# (pendiente investigación) | 09/07, Central, Mariela Flores: #Corte de energía por la tarde# (resuelto) - Sugerencias: 10/07, Cotran, Elder Flores: #Revisiones más frecuentes a la caja y arqueo# - Tareas pendientes: 08/07, Central, Marvin Díaz: #Actualizar inventario de pinturas# (sin concluir) - Movimientos relevantes: 09/07, Central, Caja: #Ingreso extra por pago anticipado cliente XYZ# Nota: Hay un problema pendiente de firma de facturas en Cotran y una tarea de inventario no completada en Central. ¿Desea que detalle alguno de estos casos?";
+const PROMPT_RESUMEN_ADMIN = "Objetivo:
+Generar un resumen diario profesional y conciso para el Administrador, resaltando conteos, problemas, sugerencias y tareas.
+
+Parámetros:
+- dias (1–7): Número de días hacia atrás.
+
+Formato de salida (Markdown):
+Para cada día (del más antiguo al más reciente):
+## DD/MM
+1. **Conteos realizados:** X  
+2. **Problemas reportados:**  
+   - Usuario (Sucursal): breve descripción.  
+3. **Sugerencias recibidas:**  
+   - Usuario (Sucursal): breve descripción.  
+4. **Tareas pendientes:**  
+   - Usuario (Sucursal): breve descripción.  
+5. **Acciones recomendadas:**  
+   - Acción concreta con responsable y plazo.  
+
+Si un día no tiene actividad, mostrar:
+## DD/MM  
+— Sin registros relevantes
+
+Restricciones:
+- No inventar datos ni incluir registros fuera del rango.  
+- No usar párrafos largos: solo viñetas y encabezados.  
+"
