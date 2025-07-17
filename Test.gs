@@ -36,6 +36,18 @@ function testSuiteBackend() {
     testRegistrarConteoCaja();
     testResumenChatUsuario();
     testSimulacionLlamadaAI();
+    testRegistrarArqueoCaja();
+    testGenerarResumenAdmin();
+    testEnviarMensajeAdministrador();
+    testRevisionMetaConteo();
+    testResumenConteo();
+    testBuscarArticulo();
+    testBuscarArticulosAvanzado();
+    testAbrirModalDeConteo();
+    testSumarPuntos();
+    testAsignarInsignia();
+    testObtenerRankingPuntos();
+    testLimpiarSesionesInactivas();
 
     Logger.log('\n==============================================');
     Logger.log('✅ SUITE DE PRUEBAS COMPLETADA SIN ERRORES CRÍTICOS.');
@@ -326,6 +338,184 @@ function testResumenChatUsuario() {
     Logger.log(`     ❌ ERROR en testResumenChatUsuario: ${e.message}`);
   }
   Logger.log('--- [Fin Prueba 8] ---\n');
+}
+
+/**
+ * PRUEBA 9: Valida registrarArqueoCaja.
+ */
+function testRegistrarArqueoCaja() {
+  Logger.log('--- [Prueba 9: registrarArqueoCaja] ---');
+  try {
+    const resp = registrarArqueoCaja(TEST_ADMIN_USER_ID, 1000, 995, 3, 2, 'Prueba');
+    Logger.log(`     Respuesta: ${resp}`);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testRegistrarArqueoCaja: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 9] ---\n');
+}
+
+/**
+ * PRUEBA 10: Genera resumen para administrador.
+ */
+function testGenerarResumenAdmin() {
+  Logger.log('--- [Prueba 10: generarResumenAdmin] ---');
+  try {
+    const texto = generarResumenAdmin(3);
+    Logger.log(texto);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testGenerarResumenAdmin: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 10] ---\n');
+}
+
+/**
+ * PRUEBA 11: Envía un mensaje desde el administrador.
+ */
+function testEnviarMensajeAdministrador() {
+  Logger.log('--- [Prueba 11: enviarMensajeAdministrador] ---');
+  try {
+    const mensajes = getSheetData(SHEET_NAMES.MENSAJES);
+    const pendiente = mensajes.find(m => m.Estado === 'Pendiente');
+    if (pendiente) {
+      const resp = enviarMensajeAdministrador(pendiente.SesionID, pendiente.UsuarioRemitenteID, 'Respuesta de prueba', TEST_ADMIN_USER_ID);
+      Logger.log(`     Respuesta: ${resp}`);
+    } else {
+      Logger.log('     ⚠️ No se encontró mensaje pendiente para responder.');
+    }
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testEnviarMensajeAdministrador: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 11] ---\n');
+}
+
+/**
+ * PRUEBA 12: Revisa la meta diaria de conteos.
+ */
+function testRevisionMetaConteo() {
+  Logger.log('--- [Prueba 12: revisionMetaConteo] ---');
+  try {
+    const resultado = revisionMetaConteo(TEST_ADMIN_USER_ID);
+    Logger.log(resultado);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testRevisionMetaConteo: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 12] ---\n');
+}
+
+/**
+ * PRUEBA 13: Obtiene el resumen de conteo.
+ */
+function testResumenConteo() {
+  Logger.log('--- [Prueba 13: resumenConteo] ---');
+  try {
+    const texto = resumenConteo(TEST_ADMIN_USER_ID);
+    Logger.log(texto);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testResumenConteo: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 13] ---\n');
+}
+
+/**
+ * PRUEBA 14: Busca un artículo simple.
+ */
+function testBuscarArticulo() {
+  Logger.log('--- [Prueba 14: buscarArticulo] ---');
+  try {
+    const res = buscarArticulo('cemento');
+    Logger.log(`     Resultados: ${JSON.stringify(res)}`);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testBuscarArticulo: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 14] ---\n');
+}
+
+/**
+ * PRUEBA 15: Busca artículos avanzados.
+ */
+function testBuscarArticulosAvanzado() {
+  Logger.log('--- [Prueba 15: buscarArticulosAvanzado] ---');
+  try {
+    const res = buscarArticulosAvanzado('cemento');
+    Logger.log(`     Resultado ejemplo: ${JSON.stringify(res[0], null, 2)}`);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testBuscarArticulosAvanzado: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 15] ---\n');
+}
+
+/**
+ * PRUEBA 16: Abre el modal de conteo.
+ */
+function testAbrirModalDeConteo() {
+  Logger.log('--- [Prueba 16: abrirModalDeConteo] ---');
+  try {
+    const html = abrirModalDeConteo();
+    Logger.log(`     HTML: ${html.slice(0, 30)}...`);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testAbrirModalDeConteo: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 16] ---\n');
+}
+
+/**
+ * PRUEBA 17: Suma puntos a un usuario.
+ */
+function testSumarPuntos() {
+  Logger.log('--- [Prueba 17: sumarPuntos] ---');
+  try {
+    const antes = obtenerDetallesDeUsuario(TEST_NORMAL_USER_ID)?.Puntos;
+    sumarPuntos(TEST_NORMAL_USER_ID, 5);
+    const despues = obtenerDetallesDeUsuario(TEST_NORMAL_USER_ID)?.Puntos;
+    Logger.log(`     Puntos antes: ${antes}, después: ${despues}`);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testSumarPuntos: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 17] ---\n');
+}
+
+/**
+ * PRUEBA 18: Asigna una insignia de prueba.
+ */
+function testAsignarInsignia() {
+  Logger.log('--- [Prueba 18: asignarInsignia] ---');
+  try {
+    const antes = obtenerDetallesDeUsuario(TEST_NORMAL_USER_ID)?.Insignias || '';
+    asignarInsignia(TEST_NORMAL_USER_ID, 'Prueba');
+    const despues = obtenerDetallesDeUsuario(TEST_NORMAL_USER_ID)?.Insignias || '';
+    Logger.log(`     Insignias antes: ${antes} | después: ${despues}`);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testAsignarInsignia: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 18] ---\n');
+}
+
+/**
+ * PRUEBA 19: Obtiene el ranking de puntos.
+ */
+function testObtenerRankingPuntos() {
+  Logger.log('--- [Prueba 19: obtenerRankingPuntos] ---');
+  try {
+    const ranking = obtenerRankingPuntos();
+    Logger.log(`     Top 3: ${JSON.stringify(ranking.slice(0, 3), null, 2)}`);
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testObtenerRankingPuntos: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 19] ---\n');
+}
+
+/**
+ * PRUEBA 20: Ejecuta limpiarSesionesInactivas.
+ */
+function testLimpiarSesionesInactivas() {
+  Logger.log('--- [Prueba 20: limpiarSesionesInactivas] ---');
+  try {
+    limpiarSesionesInactivas();
+    Logger.log('     ✅ Ejecución completada sin errores.');
+  } catch (e) {
+    Logger.log(`     ❌ ERROR en testLimpiarSesionesInactivas: ${e.message}`);
+  }
+  Logger.log('--- [Fin Prueba 20] ---\n');
 }
 
 /**
