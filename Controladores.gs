@@ -102,10 +102,13 @@ function cargarDatosIniciales(userId, pin) {
       const resumenChat = resumenChatUsuario(perfil.UsuarioID);
       const resumenInv = resumenConteo(perfil.UsuarioID);
       const revision = revisionMetaConteo(perfil.UsuarioID);
+      const mensajePersonalizado =
+        `Hola ${perfil.Nombre}, bienvenido seas el día de hoy. ` +
+        `Ayer hicimos ${resumenChat}, ¿qué haremos hoy?`;
       responseData.mensajeAnuncio = [
         ...welcomeMessage,
         ...anunciosActivos,
-        resumenChat,
+        mensajePersonalizado,
         resumenInv,
         revision
       ];
