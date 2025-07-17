@@ -119,7 +119,7 @@ function prepararPayload(userProfile, roleDetails, branchDetails, chatHistory, p
     const info = getAIToolByName(selectedToolName);
     if (info) {
       tools.push(info.herramienta);
-      toolChoice = { type: 'function', function: { name: selectedToolName } };
+      // No forzar la llamada inmediata a la herramienta
       if (info.prompt) promptExtra += info.prompt;
       if (info.comportamiento) {
         if (promptExtra) promptExtra += '\n';
