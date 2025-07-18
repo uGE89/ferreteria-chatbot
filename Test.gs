@@ -542,6 +542,7 @@ function testMensajesPrimerInicio() {
       if (datos.ok) {
         const mensajes = datos.mensajeAnuncio || [];
         Logger.log(`     Mensajes recibidos: ${mensajes.length}`);
+        mensajes.forEach((m, i) => Logger.log(`       ${i + 1}: ${m}`));
         const tieneSaludo = mensajes.some(m => m.includes('¡Hola!'));
         const tienePersonalizado =
           mensajes.some(m => m.includes('bienvenido seas el día de hoy'));
