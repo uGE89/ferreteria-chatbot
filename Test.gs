@@ -13,6 +13,10 @@ const TEST_NORMAL_USER_ID = 'U003'; // <--- MODIFICA ESTE VALOR para un usuario 
 // Se asumen PINs de prueba para los usuarios configurados en Configuracion.gs
 const TEST_ADMIN_PIN = '1111'; // PIN para U001
 const TEST_NORMAL_PIN = '3333'; // PIN para U003
+const TEST_VENDEDOR_USER_ID = 'U007';
+const TEST_VENDEDOR_PIN = '7777';
+const TEST_BODEGUERO_USER_ID = 'U004';
+const TEST_BODEGUERO_PIN = '4444';
 
 
 /**
@@ -48,6 +52,7 @@ function testSuiteBackend() {
     testAsignarInsignia();
     testObtenerRankingPuntos();
     testLimpiarSesionesInactivas();
+    testMensajesPrimerInicio();
 
     Logger.log('\n==============================================');
     Logger.log('✅ SUITE DE PRUEBAS COMPLETADA SIN ERRORES CRÍTICOS.');
@@ -516,6 +521,44 @@ function testLimpiarSesionesInactivas() {
     Logger.log(`     ❌ ERROR en testLimpiarSesionesInactivas: ${e.message}`);
   }
   Logger.log('--- [Fin Prueba 20] ---\n');
+}
+
+/**
+ * PRUEBA 21: Verifica mensajes de bienvenida y anuncios en el primer inicio.
+ */
+function testMensajesPrimerInicio() {
+  Logger.log('--- [Prueba 21: mensajes de primer inicio de sesión] ---');
+  const usuarios = [
+    { id: TEST_ADMIN_USER_ID, pin: TEST_ADMIN_PIN, rol: 'Admin' },
+    { id: TEST_VENDEDOR_USER_ID, pin: TEST_VENDEDOR_PIN, rol: 'Vendedor' },
+    { id: TEST_BODEGUERO_USER_ID, pin: TEST_BODEGUERO_PIN, rol: 'Bodeguero' }
+  ];
+  usuarios.forEach(u => {
+    try {
+      Logger.log(`   - Probando con ${u.rol} (${u.id})`);
+      PropertiesService.getScriptProperties()
+        .deleteProperty('LAST_DAILY_START_' + u.id);
+      const datos = cargarDatosIniciales(u.id, u.pin);
+      if (datos.ok) {
+        const mensajes = datos.mensajeAnuncio || [];
+        Logger.log(`     Mensajes recibidos: ${mensajes.length}`);
+        const tieneSaludo = mensajes.some(m => m.includes('¡Hola!'));
+        const tienePersonalizado =
+          mensajes.some(m => m.includes('bienvenido seas el día de hoy'));
+        Logger.log(tieneSaludo ?
+          '     ✅ Saludo presente.' :
+          '     ❌ Falta saludo.');
+        Logger.log(tienePersonalizado ?
+          '     ✅ Mensaje personalizado presente.' :
+          '     ❌ Falta mensaje personalizado.');
+      } else {
+        Logger.log(`     ❌ Falló: ${datos.msg}`);
+      }
+    } catch (e) {
+      Logger.log(`     ❌ ERROR con usuario ${u.id}: ${e.message}`);
+    }
+  });
+  Logger.log('--- [Fin Prueba 21] ---\n');
 }
 
 /**
