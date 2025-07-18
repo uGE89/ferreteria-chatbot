@@ -104,7 +104,7 @@ function cargarDatosIniciales(userId, pin) {
       const revision = revisionMetaConteo(perfil.UsuarioID);
       const mensajePersonalizado =
         `Hola ${perfil.Nombre}, bienvenido seas el día de hoy. ` +
-        `Ayer hicimos ${resumenChat}, ¿qué haremos hoy?`;
+        `Ayer me comentaste lo siguiente: ${resumenChat} ¿qué haremos hoy?`;
       responseData.mensajeAnuncio = [
         ...welcomeMessage,
         ...anunciosActivos,
