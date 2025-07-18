@@ -777,7 +777,8 @@ function resumenConteo(userId) {
 
 /**
  * Revisa si el usuario cumplió la meta diaria de conteos.
- * Se evalúan las claves 01 y CCH en la fecha más reciente.
+ * Cemento se toma de la hoja Conteos con las claves 01 y 011.
+ * Caja chica se toma de la hoja ArqueoCaja sin buscar por clave.
  * @param {string} userId - ID del usuario.
  * @returns {string} Mensaje sobre el estado de los conteos.
  */
@@ -785,6 +786,8 @@ function revisionMetaConteo(userId) {
   try {
     // --- 1. CONFIGURACIÓN CENTRALIZADA DE REGLAS ---
     // Aquí defines qué productos revisar y sus horarios. Fácil de modificar y añadir más.
+    const CLAVES_CEMENTO = ['01', '011'];
+
     const REGLAS_DE_CONTEO = {
       '01': {
         nombre: 'Cemento',
@@ -809,29 +812,53 @@ function revisionMetaConteo(userId) {
     if (!fechaRef) return 'No se encontró una fecha reciente de conteos.';
 
     const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
-    const clavesARevisar = Object.keys(REGLAS_DE_CONTEO);
-
-    const registros = getSheetData(SHEET_NAMES.CONTEOS).filter(r => {
+    const registrosConteos = getSheetData(SHEET_NAMES.CONTEOS).filter(r => {
       if (r.UsuarioID !== userId) return false;
       const f = parseSafeDate(r.Fecha);
       if (!f) return false;
       const fStr = Utilities.formatDate(f, tz, 'dd-MM-yyyy');
       if (fStr !== fechaRef) return false;
       const clave = String(r.ClaveProducto).replace(/^'/, '');
-      return clavesARevisar.includes(clave);
+      return CLAVES_CEMENTO.includes(clave);
+    });
+
+    const registrosCaja = getSheetData(SHEET_NAMES.ARQUEO_CAJA).filter(r => {
+      if (r.UsuarioID !== userId) return false;
+      const f = parseSafeDate(r.Fecha);
+      if (!f) return false;
+      const fStr = Utilities.formatDate(f, tz, 'dd-MM-yyyy');
+      return fStr === fechaRef;
+    });
+
+    const registros = [];
+
+    registrosConteos.forEach(r => {
+      const clave = String(r.ClaveProducto).replace(/^'/, '');
+      registros.push({
+        clave: clave === '011' ? '01' : clave,
+        fecha: r.Fecha,
+        hora: r.Hora
+      });
+    });
+
+    registrosCaja.forEach(r => {
+      registros.push({
+        clave: 'CCH',
+        fecha: r.Fecha,
+        hora: r.Hora
+      });
     });
 
     // Agrupamos los tiempos de conteo por clave para fácil acceso
     const tiemposPorClave = {};
     registros.forEach(r => {
-      const clave = String(r.ClaveProducto).replace(/^'/, '');
-      if (!tiemposPorClave[clave]) {
-        tiemposPorClave[clave] = [];
+      if (!tiemposPorClave[r.clave]) {
+        tiemposPorClave[r.clave] = [];
       }
-      const fechaHora = parseSafeDate(`${r.Fecha} ${r.Hora}`);
+      const fechaHora = parseSafeDate(`${r.fecha} ${r.hora}`);
       if (fechaHora) {
         const minutosDelDia = fechaHora.getHours() * 60 + fechaHora.getMinutes();
-        tiemposPorClave[clave].push(minutosDelDia);
+        tiemposPorClave[r.clave].push(minutosDelDia);
       }
     });
 
