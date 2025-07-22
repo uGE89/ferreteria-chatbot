@@ -42,6 +42,14 @@ function registrarMensaje(tipo, userId, asunto, detalle, sessionId, puntos) {
     AdminRespondiendoID: ''
   });
 
+  appendRowToSheet(SHEET_NAMES.MENSAJE_COLABORADOR, {
+    ColaboradorID: userId,
+    NombreColaborador: userName,
+    ID_Mensaje: messageId,
+    UsuarioRemitenteID: userId,
+    NombreRemitente: userName
+  });
+
   if (puntos) {
     sumarPuntos(userId, puntos);
   }

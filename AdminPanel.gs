@@ -12,11 +12,21 @@
  * Obtiene y procesa ÚNICAMENTE los mensajes de la hoja local 'Mensajes'.
  * @returns {Array<object>} Una lista de ítems de mensajes.
  */
-function obtenerPanelAdminData_SoloMensajes() {
+function obtenerPanelAdminData_SoloMensajes(userId) {
   Logger.log('--- INICIANDO obtenerPanelAdminData_SoloMensajes ---');
   try {
     Logger.log('Paso 1: Leyendo datos de la hoja local "Mensajes"...');
-    const mensajes = getSheetData(SHEET_NAMES.MENSAJES);
+    const todosMensajes = getSheetData(SHEET_NAMES.MENSAJES);
+    Logger.log('Paso 1b: Leyendo datos de "MensajeColaborador"...');
+    let relacion = getSheetData(SHEET_NAMES.MENSAJE_COLABORADOR);
+    const perfil = obtenerDetallesDeUsuario(userId);
+    const esAdmin = perfil && perfil.Rol === 'Administrador';
+    if (!esAdmin) {
+      relacion = relacion.filter(r => r.ColaboradorID === userId);
+    }
+    const idsPermitidos = relacion.map(r => r.ID_Mensaje);
+    const mensajes = esAdmin ? todosMensajes
+      : todosMensajes.filter(m => idsPermitidos.includes(m.ID_Mensaje));
     Logger.log(` -> Se encontraron ${mensajes.length} mensajes brutos.`);
 
     Logger.log('Paso 2: Mapeando y estandarizando ítems de Mensajes...');
