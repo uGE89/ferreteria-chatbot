@@ -130,6 +130,7 @@ function prepararPayload(userProfile, roleDetails, branchDetails, chatHistory, p
   }
 
   const extra = Array.isArray(historialExtra) ? historialExtra : obtenerHistorialReciente(userId, sessionId);
+  chatHistory = limitarHistorial([
     { role: 'system', content: finalSystemPrompt + (promptExtra ? '\n' + promptExtra : '') },
     ...extra,
     ...chatHistory
