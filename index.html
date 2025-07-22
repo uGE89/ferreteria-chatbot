@@ -174,6 +174,16 @@
         </div>
     </div>
 </div>
+<div id="add-collab-modal" class="fixed inset-0 bg-slate-900 bg-opacity-80 hidden justify-center items-center p-4 z-[100]">
+    <div class="bg-slate-800 p-6 rounded-lg shadow-xl text-center max-w-sm w-full">
+        <h3 class="text-xl font-bold mb-4 text-white">Agregar colaborador</h3>
+        <select id="collab-select" class="w-full bg-slate-700 rounded-md px-3 py-2 text-sm text-white mb-4"></select>
+        <div class="flex justify-center gap-4">
+            <button id="add-collab-yes-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg">Agregar</button>
+            <button id="add-collab-no-btn" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg">Cancelar</button>
+        </div>
+    </div>
+</div>
 
 <script>
 // =========================================================================
@@ -221,6 +231,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmMessage = document.getElementById('custom-confirm-message');
     const confirmYesBtn = document.getElementById('custom-confirm-yes-btn');
     const confirmNoBtn = document.getElementById('custom-confirm-no-btn');
+    const addCollabModal = document.getElementById('add-collab-modal');
+    const collabSelect = document.getElementById('collab-select');
+    const addCollabYesBtn = document.getElementById('add-collab-yes-btn');
+    const addCollabNoBtn = document.getElementById('add-collab-no-btn');
 
     // --- Estado Global ---
     let perfilActual = null;
@@ -229,6 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let quickStarterEnUso = null;
     let intentosFallidos = {};
     const MAX_INTENTOS_HERRAMIENTA = 3;
+    let usuariosActivos = [];
+    let itemColabActual = null;
 
     // --- Lógica de Modales (Alert y Confirm) ---
     function showCustomAlert(message, type = 'info', onClose) {
@@ -260,6 +276,12 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmYesBtn.onclick = () => closeConfirm(true);
             confirmNoBtn.onclick = () => closeConfirm(false);
         });
+    }
+
+    function cargarUsuariosActivos() {
+        google.script.run
+            .withSuccessHandler(list => { usuariosActivos = Array.isArray(list) ? list : []; })
+            .obtenerUsuariosActivos();
     }
 
     // --- Lógica de Login e Inicialización ---
@@ -344,6 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateActiveView('chat');
         renderAdminPanel();
         refrescarPanelAdmin();
+        cargarUsuariosActivos();
 
         messageInput.disabled = false;
         sendButton.disabled = false;
@@ -788,6 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="flex justify-between items-center text-xs text-slate-500">
                         <span>${item.usuario || 'N/A'} - ${item.fecha?.toLocaleDateString('es-NI') || 'Sin fecha'}</span>
                         ${item.estado === 'Pendiente' ? `<button data-item-id="${item.id}" class="btn-marcar-revisado px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs">Marcar Revisado</button>` : ''}
+                        <button data-item-id="${item.id}" class="btn-add-collab ml-2 px-2 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded text-xs">Agregar Colaborador</button>
                     </div>
                 </div>`;
         }).join('');
@@ -809,7 +833,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
             });
         });
+        container.querySelectorAll('.btn-add-collab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                itemColabActual = btn.dataset.itemId;
+                mostrarModalColab();
+            });
+        });
+        container.querySelectorAll('.btn-add-collab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                itemColabActual = btn.dataset.itemId;
+                mostrarModalColab();
+            });
+        });
     }
+
+    function mostrarModalColab() {
+        collabSelect.innerHTML = usuariosActivos.map(u => `<option value="${u.id}">${u.nombre}</option>`).join('');
+        addCollabModal.classList.remove('hidden');
+        addCollabModal.classList.add('flex');
+    }
+
+    addCollabYesBtn.addEventListener('click', () => {
+        const selected = collabSelect.value;
+        if (!selected) return;
+        google.script.run
+            .withSuccessHandler(msg => {
+                showCustomAlert(msg, 'success');
+                addCollabModal.classList.add('hidden');
+                refrescarPanelAdmin();
+            })
+            .withFailureHandler(err => showCustomAlert(err.message, 'error'))
+            .agregarColaboradorMensaje(itemColabActual, selected);
+    });
+
+    addCollabNoBtn.addEventListener('click', () => {
+        addCollabModal.classList.add('hidden');
+    });
 
     // --- Lógica de Autocompletar con @ ---
     messageInput.addEventListener('input', () => {

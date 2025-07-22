@@ -131,3 +131,47 @@ function actualizarEstadoItemAdmin(itemId, nuevoEstado) {
     throw new Error(`Error al actualizar estado: ${e.message}`);
   }
 }
+
+/**
+ * Obtiene una lista de usuarios activos.
+ * @returns {Array<object>} Lista con id y nombre.
+ */
+function obtenerUsuariosActivos() {
+  try {
+    const usuarios = getSheetData(SHEET_NAMES.USUARIOS);
+    return usuarios
+      .filter(u => String(u.Activo).toUpperCase() === 'TRUE')
+      .map(u => ({ id: u.UsuarioID, nombre: u.Nombre }));
+  } catch (e) {
+    Logging.logError('AdminPanel', 'obtenerUsuariosActivos', e.message, e.stack);
+    return [];
+  }
+}
+
+/**
+ * Registra un colaborador adicional para un mensaje.
+ * @param {string} mensajeId - ID del mensaje.
+ * @param {string} colaboradorId - ID del usuario a agregar.
+ * @returns {string} Confirmación.
+ */
+function agregarColaboradorMensaje(mensajeId, colaboradorId) {
+  try {
+    const usuarios = getSheetData(SHEET_NAMES.USUARIOS);
+    const user = usuarios.find(u => u.UsuarioID === colaboradorId && String(u.Activo).toUpperCase() === 'TRUE');
+    if (!user) throw new Error('Usuario no encontrado.');
+    const mensajes = getSheetData(SHEET_NAMES.MENSAJES);
+    const mensaje = mensajes.find(m => m.ID_Mensaje === mensajeId);
+    if (!mensaje) throw new Error('Mensaje no encontrado.');
+    appendRowToSheet(SHEET_NAMES.MENSAJE_COLABORADOR, {
+      ColaboradorID: colaboradorId,
+      NombreColaborador: user.Nombre,
+      ID_Mensaje: mensajeId,
+      UsuarioRemitenteID: mensaje.UsuarioRemitenteID,
+      NombreRemitente: mensaje.NombreRemitente
+    });
+    return 'Colaborador agregado correctamente.';
+  } catch (e) {
+    Logging.logError('AdminPanel', 'agregarColaboradorMensaje', e.message, e.stack, JSON.stringify({ mensajeId, colaboradorId }));
+    throw new Error(`Error al agregar colaborador: ${e.message}`);
+  }
+}
