@@ -16,6 +16,10 @@
     <!-- Google Material Symbols -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <style>
         /* Estilos Base */
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
@@ -184,6 +188,17 @@
         </div>
     </div>
 </div>
+<div id="chat-modal" class="fixed inset-0 bg-slate-900 bg-opacity-80 hidden justify-center items-center p-4 z-[100]">
+    <div class="bg-slate-800 p-6 rounded-lg shadow-xl text-center max-w-md w-full flex flex-col h-[70vh]">
+        <h3 class="text-xl font-bold mb-4 text-white">Comentarios</h3>
+        <div id="chat-messages" class="flex-1 overflow-y-auto mb-4 text-left space-y-2"></div>
+        <div class="flex gap-2">
+            <input id="chat-input" type="text" class="flex-1 bg-slate-700 rounded-md px-3 py-2 text-sm text-white" placeholder="Escribe un comentario...">
+            <button id="chat-send-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg">Enviar</button>
+        </div>
+        <button id="chat-close-btn" class="mt-4 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg">Cerrar</button>
+    </div>
+</div>
 
 <script>
 // =========================================================================
@@ -235,6 +250,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const collabSelect = document.getElementById('collab-select');
     const addCollabYesBtn = document.getElementById('add-collab-yes-btn');
     const addCollabNoBtn = document.getElementById('add-collab-no-btn');
+    const chatModal = document.getElementById('chat-modal');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const chatSendBtn = document.getElementById('chat-send-btn');
+    const chatCloseBtn = document.getElementById('chat-close-btn');
 
     // --- Estado Global ---
     let perfilActual = null;
@@ -245,6 +265,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAX_INTENTOS_HERRAMIENTA = 3;
     let usuariosActivos = [];
     let itemColabActual = null;
+    let currentChatItem = null;
+    let chatRef = null;
+
+    // --- INICIO: CONFIGURACIÓN DE FIREBASE ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCRAoAaoTt1jem-oG1OtYiVAj9M_JwQi8g",
+        authDomain: "gestor-tareas-ferreteria.firebaseapp.com",
+        databaseURL: "https://gestor-tareas-ferreteria-default-rtdb.firebaseio.com",
+        projectId: "gestor-tareas-ferreteria",
+        storageBucket: "gestor-tareas-ferreteria.appspot.com",
+        messagingSenderId: "887544524545",
+        appId: "1:887544524545:web:014a72e484a654579d7500"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    // --- FIN: CONFIGURACIÓN DE FIREBASE ---
 
     // --- Lógica de Modales (Alert y Confirm) ---
     function showCustomAlert(message, type = 'info', onClose) {
@@ -812,6 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span>${item.usuario || 'N/A'} - ${item.fecha?.toLocaleDateString('es-NI') || 'Sin fecha'}</span>
                         ${item.estado === 'Pendiente' ? `<button data-item-id="${item.id}" class="btn-marcar-revisado px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs">Marcar Revisado</button>` : ''}
                         <button data-item-id="${item.id}" class="btn-add-collab ml-2 px-2 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded text-xs">Agregar Colaborador</button>
+                        <button data-item-id="${item.id}" class="btn-chat ml-2 px-2 py-1 bg-blue-700 hover:bg-blue-600 text-white rounded text-xs">Comentarios</button>
                     </div>
                 </div>`;
         }).join('');
@@ -839,10 +876,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 mostrarModalColab();
             });
         });
-        container.querySelectorAll('.btn-add-collab').forEach(btn => {
+        container.querySelectorAll('.btn-chat').forEach(btn => {
             btn.addEventListener('click', () => {
-                itemColabActual = btn.dataset.itemId;
-                mostrarModalColab();
+                mostrarChatModal(btn.dataset.itemId);
             });
         });
     }
@@ -869,6 +905,51 @@ document.addEventListener('DOMContentLoaded', () => {
     addCollabNoBtn.addEventListener('click', () => {
         addCollabModal.classList.add('hidden');
     });
+
+    function mostrarChatModal(itemId) {
+        currentChatItem = itemId;
+        chatMessages.innerHTML = '<p class="text-slate-400 text-sm">Cargando mensajes...</p>';
+        chatModal.classList.remove('hidden');
+        chatModal.classList.add('flex');
+        if (chatRef) chatRef.off();
+        chatRef = database.ref('chats/' + itemId);
+        chatRef.on('child_added', snap => {
+            const data = snap.val();
+            const fecha = new Date(data.timestamp);
+            const div = document.createElement('div');
+            div.className = 'text-slate-200 text-sm';
+            div.innerHTML = `<strong>${data.usuario}:</strong> ${data.mensaje} <span class="text-xs text-slate-400 ml-2">${fecha.toLocaleString('es-NI')}</span>`;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+    }
+
+    function enviarMensajeChat() {
+        const texto = chatInput.value.trim();
+        if (!texto || !chatRef) return;
+        chatRef.push({
+            usuario: perfilActual.Nombre,
+            userId: perfilActual.UsuarioID,
+            mensaje: texto,
+            timestamp: Date.now()
+        });
+        chatInput.value = '';
+    }
+
+    function cerrarChatModal() {
+        if (chatRef) chatRef.off();
+        chatModal.classList.add('hidden');
+        chatMessages.innerHTML = '';
+    }
+
+    chatSendBtn.addEventListener('click', enviarMensajeChat);
+    chatInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            enviarMensajeChat();
+        }
+    });
+    chatCloseBtn.addEventListener('click', cerrarChatModal);
 
     // --- Lógica de Autocompletar con @ ---
     messageInput.addEventListener('input', () => {
