@@ -84,9 +84,10 @@ function obtenerHistorialReciente(userId, sesionActual) {
  * @param {object} payload - Datos enviados por el usuario.
  * @param {string} sessionId - ID de la sesión.
  * @param {string} userId - ID del usuario.
+ * @param {Array<object>} historialExtra - Historial adicional de sesiones recientes.
  * @returns {{requestPayload: object, chatHistory: Array<object>}} Datos listos para la API.
  */
-function prepararPayload(userProfile, roleDetails, branchDetails, chatHistory, payload, sessionId, userId) {
+function prepararPayload(userProfile, roleDetails, branchDetails, chatHistory, payload, sessionId, userId, historialExtra) {
   const finalSystemPrompt = PROMPT_SISTEMA_GENERAL
     .replace('{userName}', userProfile.Nombre)
     .replace('{userNotes}', userProfile.NotasAdicionales || 'N/A')
@@ -128,10 +129,9 @@ function prepararPayload(userProfile, roleDetails, branchDetails, chatHistory, p
     }
   }
 
-  const historialExtra = obtenerHistorialReciente(userId, sessionId);
-  chatHistory = limitarHistorial([
+  const extra = Array.isArray(historialExtra) ? historialExtra : obtenerHistorialReciente(userId, sessionId);
     { role: 'system', content: finalSystemPrompt + (promptExtra ? '\n' + promptExtra : '') },
-    ...historialExtra,
+    ...extra,
     ...chatHistory
   ]);
   const historyForRequest = chatHistory.map(m => Object.assign({}, m));
@@ -169,12 +169,12 @@ function enviarAOpenAI(sessionId, userId, payload) {
 
     if (!currentSession) throw new Error('Sesión no encontrada. Por favor, reinicia tu sesión.');
 
-    let chatHistory = [];
+    let historyActual = [];
     if (currentSession.HistorialConversacion && currentSession.HistorialConversacion.length > 2) {
       try {
-        chatHistory = JSON.parse(currentSession.HistorialConversacion);
-        if (chatHistory[0] && chatHistory[0].role === 'system') {
-          chatHistory.shift();
+        historyActual = JSON.parse(currentSession.HistorialConversacion);
+        if (historyActual[0] && historyActual[0].role === 'system') {
+          historyActual.shift();
         }
       } catch (e) {
         Logging.logError('Code', 'enviarAOpenAI', `Error parseando historial: ${e.message}`, e.stack, currentSession.HistorialConversacion, userId);
@@ -185,17 +185,32 @@ function enviarAOpenAI(sessionId, userId, payload) {
     const roleDetails = getRoleDetails(userProfile.Rol);
     const branchDetails = getBranchDetails(userProfile.Sucursal);
 
+    const historialExtra = obtenerHistorialReciente(userId, sessionId);
+    let mensajeNuevo = null;
+    if (payload.texto) {
+      mensajeNuevo = { role: 'user', content: payload.texto };
+    } else if (payload.tool_response) {
+      const toolResponse = payload.tool_response;
+      mensajeNuevo = {
+        role: 'tool',
+        tool_call_id: toolResponse.tool_call_id,
+        name: toolResponse.function_name,
+        content: toolResponse.result
+      };
+    }
+    const historyTemp = historyActual.slice();
+    if (mensajeNuevo) historyTemp.push(mensajeNuevo);
     const preparacion = prepararPayload(
       userProfile,
       roleDetails,
       branchDetails,
-      chatHistory,
+      historyTemp,
       payload,
       sessionId,
-      userId
+      userId,
+      historialExtra
     );
     const requestPayload = preparacion.requestPayload;
-    chatHistory = preparacion.chatHistory;
 
     const responseJson = enviarSolicitudOpenAI(requestPayload, userId);
     if (responseJson.error) {
@@ -206,17 +221,17 @@ function enviarAOpenAI(sessionId, userId, payload) {
 
     if (message?.tool_calls) {
       aiResponse.tool_call = message.tool_calls[0];
-      chatHistory.push(message);
+      historyActual.push(mensajeNuevo);
+      historyActual.push(message);
     } else if (message?.content) {
       aiResponse.content = message.content;
-      chatHistory.push({ role: 'assistant', content: message.content });
+      historyActual.push(mensajeNuevo);
+      historyActual.push({ role: 'assistant', content: message.content });
     } else {
       throw new Error("La respuesta de la IA no tuvo un formato esperado.");
     }
-
-    const historyToSave = chatHistory.filter(m => m.role !== 'system');
     updateRowInSheet(SHEET_NAMES.SESIONES, 'SesionID', sessionId, {
-      HistorialConversacion: JSON.stringify(historyToSave),
+      HistorialConversacion: JSON.stringify(historyActual),
       UltimaActividad: getFormattedTimestamp()
     });
 
