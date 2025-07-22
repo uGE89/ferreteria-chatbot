@@ -178,7 +178,7 @@ function testAdminPanelLogic() {
   // 4.2: Prueba de obtenerPanelAdminData_SoloMensajes
   try {
     Logger.log('   - Probando: obtenerPanelAdminData_SoloMensajes()...');
-    const mensajesAdminData = obtenerPanelAdminData_SoloMensajes();
+    const mensajesAdminData = obtenerPanelAdminData_SoloMensajes(TEST_ADMIN_USER_ID);
     if (mensajesAdminData.length > 0) {
       Logger.log(`     ✅ Éxito. Se cargaron ${mensajesAdminData.length} ítems de mensajes para el panel.`);
       Logger.log(`     Primer mensaje: ${JSON.stringify(mensajesAdminData[0], null, 2)}`);

@@ -34,7 +34,8 @@ const SHEET_NAMES = {
   CONFIGURACION_AI: 'ConfiguracionAI',
   PROMPTS_AI: 'PromptsAI',
   HERRAMIENTAS_AI: 'HerramientasAI',
-  ARQUEO_CAJA: 'ArqueoCaja'
+  ARQUEO_CAJA: 'ArqueoCaja',
+  MENSAJE_COLABORADOR: 'MensajeColaborador'
 };
 
 

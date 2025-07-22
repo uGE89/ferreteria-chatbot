@@ -338,17 +338,12 @@ document.addEventListener('DOMContentLoaded', () => {
             datos.mensajeAnuncio.forEach((msg, i) => setTimeout(() => addMessage(msg, 'system'), 500 * (i + 1)));
         }
 
-        if (perfilActual.Rol === "Administrador") {
-            adminViewSwitcher.classList.remove('hidden');
-            showChatBtn.addEventListener('click', () => updateActiveView('chat'));
-            showAdminPanelBtn.addEventListener('click', () => updateActiveView('admin'));
-            updateActiveView('chat');
-            renderAdminPanel();
-            refrescarPanelAdmin();
-        } else {
-            adminViewSwitcher.classList.add('hidden');
-            updateActiveView('chat');
-        }
+        adminViewSwitcher.classList.remove('hidden');
+        showChatBtn.addEventListener('click', () => updateActiveView('chat'));
+        showAdminPanelBtn.addEventListener('click', () => updateActiveView('admin'));
+        updateActiveView('chat');
+        renderAdminPanel();
+        refrescarPanelAdmin();
 
         messageInput.disabled = false;
         sendButton.disabled = false;
@@ -759,7 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     container.innerHTML = `<p class="text-red-400 text-center text-sm p-4">Error al cargar datos: ${err.message}</p>`;
                 }
             })
-            .obtenerPanelAdminData_SoloMensajes();
+            .obtenerPanelAdminData_SoloMensajes(perfilActual.UsuarioID);
     }
 
     function renderFilteredAdminItems() {
