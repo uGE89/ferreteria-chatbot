@@ -869,20 +869,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function subirImagenSeleccionada(file) {
+        // Paso 1: leer el archivo para mostrarlo de inmediato.
+        const reader = new FileReader();
+        reader.onload = e => {
+            const localUrl = e.target.result;
+            addImageMessage(localUrl, 'user');
+        };
+        reader.readAsDataURL(file);
+
+        // Paso 2: comprimir y subir en segundo plano.
         showUploadIndicator();
         compressImage(file, base64 => {
             google.script.run
                 .withSuccessHandler(url => {
                     hideUploadIndicator();
-                    addImageMessage(url, 'user');
-                    imageUpload.value = '';
+                    console.log('Imagen guardada en el servidor en:', url);
                 })
                 .withFailureHandler(err => {
                     hideUploadIndicator();
-                    showCustomAlert(`Error al subir imagen: ${err.message}`, 'error');
+                    showCustomAlert(`Error al subir la imagen al servidor: ${err.message}`, 'error');
                 })
                 .subirImagen(base64, file.name);
         });
+
+        imageUpload.value = '';
     }
 
     sendImageButton.addEventListener('click', () => {
