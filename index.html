@@ -151,10 +151,13 @@
                 <div id="suggestions-container" class="px-4 pb-2"></div>
                 <footer class="p-4 border-t border-slate-700">
                     <form id="chat-form" class="relative">
-                        <input type="text" id="message-input" placeholder="Escribe tu mensaje aquí..." class="w-full bg-slate-700 border border-slate-600 rounded-xl py-3 pl-4 pr-24 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow" autocomplete="off">
+                        <input type="text" id="message-input" placeholder="Escribe tu mensaje aquí..." class="w-full bg-slate-700 border border-slate-600 rounded-xl py-3 pl-4 pr-36 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow" autocomplete="off">
                         <input type="file" id="image-upload" accept="image/*" class="hidden">
-                        <button type="button" id="send-image-button" class="absolute right-12 top-1/2 -translate-y-1/2 bg-emerald-600 hover:bg-emerald-500 w-9 h-9 rounded-lg flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-white" aria-label="Enviar Imagen">
+                        <button type="button" id="send-image-button" class="absolute right-20 top-1/2 -translate-y-1/2 bg-emerald-600 hover:bg-emerald-500 w-9 h-9 rounded-lg flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-white" aria-label="Enviar Imagen">
                             <span class="material-symbols-outlined text-white">image</span>
+                        </button>
+                        <button type="button" id="registrar-btn" class="absolute right-10 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-700 w-9 h-9 rounded-lg flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-white hidden" aria-label="Registrar">
+                            <span class="material-symbols-outlined text-white">save</span>
                         </button>
                         <button type="submit" id="send-button" class="absolute right-2 top-1/2 -translate-y-1/2 bg-emerald-600 hover:bg-emerald-500 w-9 h-9 rounded-lg flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-white" aria-label="Enviar Mensaje">
                             <span class="material-symbols-outlined text-white">send</span>
@@ -244,6 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const sendButton = document.getElementById('send-button');
     const imageUpload = document.getElementById('image-upload');
     const sendImageButton = document.getElementById('send-image-button');
+    const registrarBtn = document.getElementById('registrar-btn');
+    registrarBtn.classList.add('hidden');
+    registrarBtn.disabled = true;
 
     // Modales
     const modalContainer = document.getElementById('modal-container');
@@ -644,49 +650,13 @@ document.addEventListener('DOMContentLoaded', () => {
             .ejecutarHerramienta(pending.name, pending.args, userId, sessionId);
     }
 
-    function cerrarQuickModal() {
-        modalContainer.classList.add('hidden');
-        modalContainer.innerHTML = '';
-        document.body.style.overflow = 'auto';
-        quickStarterEnUso = null;
-        qsHerramientaPendiente = null;
-        if (qsSaveBtn) qsSaveBtn.disabled = true;
+    function iniciarQuickStarter(funcion, pantalla) {
+        quickStarterEnUso = { nombreFuncion: funcion, nombrePantalla: pantalla };
+        registrarBtn.classList.add('hidden');
+        registrarBtn.disabled = true;
+        addMessage(pantalla, 'user');
+        getAIResponse({ texto: pantalla, tool_name: funcion });
     }
-
-    function inicializarQuickModal() {
-        qsChatWindow = document.getElementById('qs-chat-window');
-        qsMessageInput = document.getElementById('qs-message-input');
-        qsSendBtn = document.getElementById('qs-send-btn');
-        qsSaveBtn = document.getElementById('qs-save-btn');
-        document.getElementById('quick-modal-title').textContent = qsModalData.pantalla;
-        document.getElementById('qs-close-btn').addEventListener('click', cerrarQuickModal);
-        qsSendBtn.addEventListener('click', enviarMensajeQuick);
-        qsSaveBtn.addEventListener('click', guardarQuick);
-        qsSaveBtn.disabled = true;
-        qsMessageInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                enviarMensajeQuick();
-            }
-        });
-        addQSMessage(qsModalData.pantalla, 'user');
-        quickStarterEnUso = { nombreFuncion: qsModalData.funcion, nombrePantalla: qsModalData.pantalla };
-        getAIResponseQS({ texto: qsModalData.pantalla, tool_name: qsModalData.funcion });
-    }
-
-    function abrirModalQuickStarter(funcion, pantalla) {
-        google.script.run
-            .withSuccessHandler(html => {
-                modalContainer.innerHTML = html;
-                modalContainer.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-                qsModalData = { funcion, pantalla };
-                inicializarQuickModal();
-            })
-            .withFailureHandler(err => showCustomAlert('Error al cargar el modal: ' + err.message, 'error'))
-            .abrirModalDeQuickStarter();
-    }
-    window.abrirModalQuickStarter = abrirModalQuickStarter;
 
     function compressImage(file, callback) {
         const reader = new FileReader();
@@ -719,6 +689,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function getAIResponse(payload) {
         messageInput.disabled = true;
         sendButton.disabled = true;
+        registrarBtn.classList.add('hidden');
+        registrarBtn.disabled = true;
         showTypingIndicator();
 
         const userIdToPass = perfilActual?.UsuarioID;
@@ -787,6 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const toolCall = data.tool_call;
             const functionName = toolCall.function.name;
             const claveIntento = `${sessionStorage.getItem('sessionId')}-${functionName}`;
+            const desdeQS = !!quickStarterEnUso;
             delete intentosFallidos[claveIntento];
             quickStarterEnUso = null;
             let functionArgs;
@@ -808,7 +781,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (functionName === 'registrarConteo') {
+            if (desdeQS) {
+                herramientaPendiente = {
+                    id: toolCall.id,
+                    name: functionName,
+                    args: functionArgs
+                };
+                addMessage(`Datos listos para "${functionName}". Presioná Registrar para finalizar.`, 'system');
+                registrarBtn.classList.remove('hidden');
+                registrarBtn.disabled = false;
+                messageInput.disabled = false;
+                sendButton.disabled = false;
+                messageInput.focus();
+            } else if (functionName === 'registrarConteo') {
                 herramientaPendiente = {
                     id: toolCall.id,
                     name: functionName,
@@ -909,6 +894,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (file) subirImagenSeleccionada(file);
     });
 
+    registrarBtn.addEventListener('click', () => {
+        if (!herramientaPendiente) return;
+        registrarBtn.disabled = true;
+        registrarBtn.classList.add('hidden');
+        const pending = herramientaPendiente;
+        herramientaPendiente = null;
+        addMessage(`Ejecutando: ${pending.name}...`, 'system');
+        const userId = perfilActual.UsuarioID;
+        const sessionId = sessionStorage.getItem('sessionId');
+        google.script.run
+            .withSuccessHandler(res => {
+                addMessage(`Resultado: ${res}`, 'system');
+                actualizarPuntajeYRanking();
+                const nextPayload = { texto: null, tool_response: { tool_call_id: pending.id, function_name: pending.name, result: res } };
+                getAIResponse(nextPayload);
+            })
+            .withFailureHandler(error => {
+                const msg = `Error al ejecutar la herramienta ${pending.name}: ${error.message}`;
+                addMessage(`Resultado: ${msg}`, 'system');
+                const nextPayload = { texto: null, tool_response: { tool_call_id: pending.id, function_name: pending.name, result: msg } };
+                getAIResponse(nextPayload);
+            })
+            .ejecutarHerramienta(pending.name, pending.args, userId, sessionId);
+    });
+
     chatForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const userInput = messageInput.value.trim();
@@ -1002,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         showCustomAlert('La función para registrar conteo no está disponible.', 'error');
                     }
                 } else {
-                    abrirModalQuickStarter(starter.NombreFuncion, starter.NombrePantalla);
+                    iniciarQuickStarter(starter.NombreFuncion, starter.NombrePantalla);
                 }
             });
             quickStartersContainer.appendChild(button);
