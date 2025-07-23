@@ -63,6 +63,10 @@
         .diff-negative { color: #ef4444; }
         .diff-zero { color: #64748b; }
 
+        .nuevo-comentario {
+            border-color: #f87171;
+        }
+
         /* Animación para resaltar fila */
         @keyframes highlight-fade {
             from { background-color: #f59e0b40; }
@@ -274,6 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentChatItem = null;
     let chatRef = null;
     let chatRefs = {};
+    let previewRefs = {};
+    let ultimoComentario = {};
 
     // --- INICIO: CONFIGURACIÓN DE FIREBASE ---
     const firebaseConfig = {
@@ -910,6 +916,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (container) {
             container.innerHTML = `<p class="text-slate-400 text-center text-sm p-4">Cargando ítems...</p>`;
         }
+        Object.values(chatRefs).forEach(ref => ref.off());
+        chatRefs = {};
+        Object.values(previewRefs).forEach(ref => ref.off());
+        previewRefs = {};
         google.script.run
             .withSuccessHandler(mensajes => {
                 google.script.run
@@ -1074,7 +1084,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         itemsToShow.forEach(item => {
             const preview = document.getElementById(`comments-preview-${item.id}`);
-            cargarPreviewComentarios(item.id, preview);
+            cargarPreviewComentarios(item.id, preview).then(() => {
+                suscribirNuevoComentario(item.id);
+            });
         });
     }
 
@@ -1153,6 +1165,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isHidden) {
             cargarComentariosEnTarjeta(itemId, commentsSection);
             if (previewSection) previewSection.classList.add('hidden');
+            const card = commentsSection.parentElement;
+            if (card) card.classList.remove('nuevo-comentario');
+            database.ref('chats/' + itemId).limitToLast(1).once('value').then(s => {
+                const data = s.val();
+                if (data) {
+                    const ultimo = Math.max(...Object.values(data).map(m => m.timestamp));
+                    ultimoComentario[itemId] = ultimo;
+                }
+            });
         } else {
             commentsSection.innerHTML = '';
             if (previewSection) previewSection.classList.remove('hidden');
@@ -1164,14 +1185,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function cargarPreviewComentarios(itemId, container, limite = 10) {
-        if (!container) return;
+        if (!container) return Promise.resolve();
         container.innerHTML = '<p class="text-slate-400 text-sm">Cargando comentarios...</p>';
-        database.ref('chats/' + itemId)
+        return database.ref('chats/' + itemId)
             .limitToLast(limite)
             .once('value')
             .then(snap => {
                 const data = snap.val();
                 container.innerHTML = '';
+                let ultimo = 0;
                 if (data) {
                     Object.values(data).forEach(msg => {
                         const fecha = new Date(msg.timestamp);
@@ -1179,10 +1201,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         div.className = 'text-slate-200 text-sm';
                         div.innerHTML = `<strong>${msg.usuario}:</strong> ${msg.mensaje} <span class="text-xs text-slate-400 ml-2">${fecha.toLocaleString('es-NI')}</span>`;
                         container.appendChild(div);
+                        if (msg.timestamp > ultimo) ultimo = msg.timestamp;
                     });
                 } else {
                     container.innerHTML = '<p class="text-slate-400 text-sm">Sin comentarios.</p>';
                 }
+                ultimoComentario[itemId] = ultimo;
             });
     }
 
@@ -1229,6 +1253,27 @@ document.addEventListener('DOMContentLoaded', () => {
             timestamp: Date.now()
         });
         inputEl.value = '';
+    }
+
+    function suscribirNuevoComentario(itemId) {
+        const preview = document.getElementById(`comments-preview-${itemId}`);
+        if (!preview) return;
+        const card = preview.parentElement;
+        if (previewRefs[itemId]) previewRefs[itemId].off();
+        const ref = database.ref('chats/' + itemId).limitToLast(1);
+        previewRefs[itemId] = ref;
+        ref.on('child_added', snap => {
+            const data = snap.val();
+            const ts = data.timestamp || 0;
+            if (!ultimoComentario[itemId]) {
+                ultimoComentario[itemId] = ts;
+                return;
+            }
+            if (ts > ultimoComentario[itemId]) {
+                ultimoComentario[itemId] = ts;
+                if (card) card.classList.add('nuevo-comentario');
+            }
+        });
     }
 
     // --- Lógica de Autocompletar con @ ---
