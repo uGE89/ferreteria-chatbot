@@ -914,10 +914,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                             ` : ''}
                         </div>
-                        <div class="flex items-center gap-2">
-                            ${item.estado === 'Pendiente' ? `<button data-item-id="${item.id}" class="btn-marcar-revisado px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs">Marcar Revisado</button>` : ''}
-                            <button data-item-id="${item.id}" class="btn-add-collab px-2 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded text-xs">Agregar Colaborador</button>
-                            <button data-item-id="${item.id}" class="btn-chat px-2 py-1 bg-blue-700 hover:bg-blue-600 text-white rounded text-xs">Comentarios</button>
+                        <div class="relative inline-block text-left">
+                            <button type="button" class="btn-kebab p-1 rounded-full hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-emerald-500" data-item-id="${item.id}">
+                                <span class="material-symbols-outlined">more_vert</span>
+                            </button>
+                            <div class="kebab-menu hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-slate-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                                <div class="py-1" role="none">
+                                    ${item.estado === 'Pendiente' ? `<a href="#" class="btn-marcar-revisado block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700" data-item-id="${item.id}">Marcar como Revisado</a>` : ''}
+                                    <a href="#" class="btn-add-collab block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700" data-item-id="${item.id}">Agregar Colaborador</a>
+                                    <a href="#" class="btn-chat block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700" data-item-id="${item.id}">Ver Comentarios</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>`;
@@ -950,6 +957,20 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', () => {
                 mostrarChatModal(btn.dataset.itemId);
             });
+        });
+        container.querySelectorAll('.btn-kebab').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                document.querySelectorAll('.kebab-menu').forEach(menu => {
+                    if (menu !== btn.nextElementSibling) {
+                        menu.classList.add('hidden');
+                    }
+                });
+                btn.nextElementSibling.classList.toggle('hidden');
+            });
+        });
+        window.addEventListener('click', () => {
+            document.querySelectorAll('.kebab-menu').forEach(menu => menu.classList.add('hidden'));
         });
     }
 
