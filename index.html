@@ -619,7 +619,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleAIErrorQS(error) {
         hideQSTyping();
-        showCustomAlert(`Ocurrió un error al procesar tu solicitud: ${error.message}.`, 'error');
+        const mensaje = error && error.message ? error.message : 'Error desconocido';
+        showCustomAlert(mensaje, 'error');
+        google.script.run.Logging.logError(
+            'Frontend',
+            'handleAIErrorQS',
+            mensaje,
+            error && error.stack ? error.stack : '',
+            '',
+            perfilActual?.UsuarioID || 'N/A'
+        );
         qsMessageInput.disabled = false;
         qsSendBtn.disabled = false;
         qsMessageInput.focus();
@@ -854,7 +863,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleAIError(error) {
         hideTypingIndicator();
-        showCustomAlert(`Ocurrió un error al procesar tu solicitud: ${error.message}.`, 'error');
+        const mensaje = error && error.message ? error.message : 'Error desconocido';
+        showCustomAlert(mensaje, 'error');
+        google.script.run.Logging.logError(
+            'Frontend',
+            'handleAIError',
+            mensaje,
+            error && error.stack ? error.stack : '',
+            '',
+            perfilActual?.UsuarioID || 'N/A'
+        );
         messageInput.disabled = false;
         sendButton.disabled = false;
         messageInput.focus();
