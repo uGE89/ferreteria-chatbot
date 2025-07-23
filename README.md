@@ -50,6 +50,24 @@ Cada burbuja de conversación incluye cuatro iconos:
 Al hacer clic se llaman las funciones correspondientes en el backend,
 por ejemplo `marcarMensajeAprobado(id)` o `fijarMensaje(id)`.
 
+## Herramientas de la IA
+
+| NombreFuncion           | Propósito                                   | EsQuickStarter |
+| ----------------------- | ------------------------------------------- | -------------- |
+| registrarProblema       | Registrar un problema o incidente           | Sí             |
+| registrarSugerencia     | Registrar una sugerencia o idea             | Sí             |
+| registrarConteo         | Registrar un conteo de inventario           | Sí             |
+| crearTareaPendiente     | Crear una tarea pendiente                   | No             |
+| registrarIngresoCaja    | Registrar un ingreso de caja                | Sí             |
+| registrarEgresoCaja     | Registrar un gasto de caja                  | Sí             |
+| arqueoCaja              | Realizar un arqueo de caja                  | Sí             |
+| generarResumenAdmin     | Generar un resumen para administrador       | Sí             |
+
+Para añadir una nueva herramienta editá la constante `HERRAMIENTAS_AI`
+en `Configuracion.gs`. Definí un objeto con todos los campos mencionados
+arriba e indicá en `rolesPermitidos` qué perfiles pueden usarla. Las
+funciones invocadas deben existir en `Toolbox.gs`.
+
 
 ## Despliegue
 
