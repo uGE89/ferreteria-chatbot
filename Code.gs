@@ -99,17 +99,6 @@ function prepararPayload(userProfile, roleDetails, branchDetails, chatHistory, p
     .replace('{branchDescription}', branchDetails.Descripcion || 'N/A')
     .replace('{branchGoals}', branchDetails.MetasActuales || 'N/A');
 
-  if (payload.texto) {
-    chatHistory.push({ role: 'user', content: payload.texto });
-  } else if (payload.tool_response) {
-    const toolResponse = payload.tool_response;
-    chatHistory.push({
-      role: 'tool',
-      tool_call_id: toolResponse.tool_call_id,
-      name: toolResponse.function_name,
-      content: toolResponse.result
-    });
-  }
 
   const selectedToolName = payload.tool_name;
   let tools = [];
