@@ -417,10 +417,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Lógica de Chat ---
-    function addMessage(text, sender) {
+    function addMessage(text, sender, messageId = null) {
         const messageContainer = document.createElement('div');
         messageContainer.className = `flex message-bubble ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
-        let bubbleClasses = 'max-w-md lg:max-w-xl rounded-2xl px-4 py-2.5 text-sm shadow-md ';
+        let bubbleClasses = 'relative group max-w-md lg:max-w-xl rounded-2xl px-4 py-2.5 text-sm shadow-md ';
         let bubbleContent = `<p>${text.replace(/\n/g, '<br>')}</p>`;
 
         if (sender === 'user') {
@@ -431,7 +431,28 @@ document.addEventListener('DOMContentLoaded', () => {
             bubbleClasses += 'bg-slate-700/50 border border-slate-600/50 text-slate-400 w-full';
             bubbleContent = `<div class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-base">auto_awesome</span><p class="font-mono text-xs">${text}</p></div>`;
         }
-        messageContainer.innerHTML = `<div class="${bubbleClasses}">${bubbleContent}</div>`;
+        messageContainer.innerHTML = `<div class="${bubbleClasses}">${bubbleContent}
+            <div class="absolute top-0 right-0 flex gap-1 p-1 opacity-0 group-hover:opacity-100">
+                <span class="material-symbols-outlined cursor-pointer text-xs action-approve" title="Marcar como aprobado">check</span>
+                <span class="material-symbols-outlined cursor-pointer text-xs action-view" title="Marcar como visto">visibility</span>
+                <span class="material-symbols-outlined cursor-pointer text-xs action-idea" title="Destacar mensaje">lightbulb</span>
+                <span class="material-symbols-outlined cursor-pointer text-xs action-pin" title="Fijar mensaje">push_pin</span>
+            </div>
+        </div>`;
+        const bubble = messageContainer.firstElementChild;
+        if (messageId) bubble.dataset.msgId = messageId;
+        bubble.querySelector('.action-approve').onclick = () => {
+            if (bubble.dataset.msgId) google.script.run.marcarMensajeAprobado(bubble.dataset.msgId);
+        };
+        bubble.querySelector('.action-view').onclick = () => {
+            if (bubble.dataset.msgId) google.script.run.marcarMensajeVisto(bubble.dataset.msgId);
+        };
+        bubble.querySelector('.action-idea').onclick = () => {
+            if (bubble.dataset.msgId) google.script.run.marcarMensajeDestacado(bubble.dataset.msgId);
+        };
+        bubble.querySelector('.action-pin').onclick = () => {
+            if (bubble.dataset.msgId) google.script.run.fijarMensaje(bubble.dataset.msgId);
+        };
         chatWindow.appendChild(messageContainer);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
