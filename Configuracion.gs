@@ -316,6 +316,27 @@ const HERRAMIENTAS_AI = [
   },
 
   // ===============================================================
+  // ==== HERRAMIENTA: Traspasos ====
+  // ===============================================================
+  {
+    NombreFuncion: 'registrarTraspaso',
+    NombrePantalla: '🔄 Traspasos',
+    Descripcion: 'Registra la solicitud de un traspaso con una captura y comentario.',
+    SchemaParametros: {
+      type: 'object',
+      properties: {
+        fileUrl: { type: 'string', description: 'Enlace o ID de la imagen subida.' },
+        comentario: { type: 'string', description: 'Comentario del usuario.' }
+      },
+      required: ['fileUrl', 'comentario']
+    },
+    ComportamientoAdicional: '',
+    EsQuickStarter: true,
+    PromptEspecifico: PROMPT_TRASPASOS,
+    rolesPermitidos: ['Todos']
+  },
+
+  // ===============================================================
   // ==== HERRAMIENTA: Resumen para Administrador ====
   // ===============================================================
   {

@@ -428,6 +428,17 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
           sessionId
         );
 
+      case 'registrarTraspaso':
+        Logger.log('   - Entrando en el caso: "registrarTraspaso"');
+        var mensaje = validarArgumentos(functionArgs, ['fileUrl', 'comentario']);
+        if (mensaje) return mensaje;
+        return registrarTraspaso(
+          userId,
+          functionArgs.fileUrl,
+          functionArgs.comentario,
+          sessionId
+        );
+
       case 'registrarConteo':
         Logger.log('   - Entrando en el caso: "registrarConteo"');
         var mensaje = validarArgumentos(functionArgs, ['claveProducto', 'cantidadSistema', 'cantidadFisico']);
@@ -493,8 +504,7 @@ function subirImagen(base64, nombre) {
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   const url = file.getDownloadUrl();
-  const resumen = analizarImagenOpenAI(base64);
-  return { url: url, resumen: resumen };
+  return { url: url };
 }
 
 // --- LÓGICA DE CALENDARIO DE CONTEO Y REGISTRO DE CONTEOS ---
