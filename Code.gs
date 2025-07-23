@@ -465,10 +465,11 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
  * @returns {string} URL del archivo accesible públicamente.
  */
 function subirImagen(base64, nombre) {
+  const nombreJpg = nombre.replace(/\.\w+$/, '') + '.jpg';
   const blob = Utilities.newBlob(
     Utilities.base64Decode(base64),
     'image/jpeg',
-    nombre
+    nombreJpg
   );
   const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
   const file = folder.createFile(blob);
