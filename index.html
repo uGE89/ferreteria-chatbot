@@ -892,8 +892,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Paso 2: comprimir y subir en segundo plano.
         showUploadIndicator();
         compressImage(file, base64 => {
+            const timeoutId = setTimeout(() => {
+                hideUploadIndicator();
+                showCustomAlert('La carga de la imagen excedió el tiempo límite.', 'error');
+            }, 30000);
             google.script.run
                 .withSuccessHandler(data => {
+                    clearTimeout(timeoutId);
                     hideUploadIndicator();
                     console.log('Imagen guardada en el servidor en:', data.url);
                     if (imageBubble) {
@@ -907,6 +912,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 })
                 .withFailureHandler(err => {
+                    clearTimeout(timeoutId);
                     hideUploadIndicator();
                     showCustomAlert(`Error al subir la imagen al servidor: ${err.message}`, 'error');
                 })
