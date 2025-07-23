@@ -32,6 +32,9 @@ function obtenerPanelAdminData_SoloMensajes(userId) {
     Logger.log('Paso 2: Mapeando y estandarizando ítems de Mensajes...');
     const itemsMensajes = mensajes.map(m => {
       const fechaObj = parseSafeDate(m.FechaHora);
+      const colabs = relacion
+        .filter(r => r.ID_Mensaje === m.ID_Mensaje)
+        .map(r => ({ id: r.ColaboradorID, nombre: r.NombreColaborador }));
       const item = {
         id: m.ID_Mensaje,
         tipo: m.TipoMensaje,
@@ -39,7 +42,8 @@ function obtenerPanelAdminData_SoloMensajes(userId) {
         usuario: `${m.NombreRemitente} (${m.UsuarioRemitenteID})`,
         asunto: m.Asunto,
         detalle: m.Detalle,
-        estado: m.Estado
+        estado: m.Estado,
+        colaboradores: colabs
       };
       return item;
     });

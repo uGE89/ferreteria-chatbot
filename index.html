@@ -885,17 +885,40 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusColor = item.estado === 'Pendiente' ? 'bg-yellow-500/20 text-yellow-300' : 'bg-green-500/20 text-green-300';
             const tipoIcono = { Problema: 'report', Sugerencia: 'lightbulb', Tarea: 'task_alt', Caja: 'payments' }[item.tipo] || 'folder';
             return `
-                <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+                <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 flex flex-col gap-3">
                     <div class="flex justify-between items-start">
-                        <p class="font-bold text-white text-sm pr-2 flex items-center"><span class="material-symbols-outlined text-base mr-2">${tipoIcono}</span> ${item.asunto || 'Sin asunto'}</p>
-                        <span class="text-xs ${statusColor} px-2 py-0.5 rounded-full whitespace-nowrap">${item.estado}</span>
+                        <p class="font-bold text-white text-base pr-2 flex items-center">
+                            <span class="material-symbols-outlined text-xl mr-2">${tipoIcono}</span>
+                            ${item.asunto || 'Sin asunto'}
+                        </p>
+                        <span class="text-xs ${statusColor} px-2.5 py-1 rounded-full font-semibold whitespace-nowrap">${item.estado}</span>
                     </div>
-                    <p class="text-xs text-slate-400 mt-1 mb-2 break-words">${item.detalle || ''}</p>
-                    <div class="flex justify-between items-center text-xs text-slate-500">
-                        <span>${item.usuario || 'N/A'} - ${item.fecha?.toLocaleDateString('es-NI') || 'Sin fecha'}</span>
-                        ${item.estado === 'Pendiente' ? `<button data-item-id="${item.id}" class="btn-marcar-revisado px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs">Marcar Revisado</button>` : ''}
-                        <button data-item-id="${item.id}" class="btn-add-collab ml-2 px-2 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded text-xs">Agregar Colaborador</button>
-                        <button data-item-id="${item.id}" class="btn-chat ml-2 px-2 py-1 bg-blue-700 hover:bg-blue-600 text-white rounded text-xs">Comentarios</button>
+
+                    <p class="text-sm text-slate-400 break-words">${item.detalle || 'Sin detalle.'}</p>
+
+                    <div class="flex justify-between items-center mt-2">
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 text-xs text-slate-500">
+                                <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                                    ${(item.usuario || 'N/A').charAt(0)}
+                                </div>
+                                <span>${item.usuario || 'N/A'} &bull; ${item.fecha?.toLocaleDateString('es-NI') || 'Sin fecha'}</span>
+                            </div>
+                            ${item.colaboradores && item.colaboradores.length > 0 ? `
+                            <div class="flex items-center -space-x-2">
+                                ${item.colaboradores.map(colab => `
+                                    <div class="w-6 h-6 bg-sky-500 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 border-slate-800" title="${colab.nombre}">
+                                        ${colab.nombre.charAt(0)}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${item.estado === 'Pendiente' ? `<button data-item-id="${item.id}" class="btn-marcar-revisado px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs">Marcar Revisado</button>` : ''}
+                            <button data-item-id="${item.id}" class="btn-add-collab px-2 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded text-xs">Agregar Colaborador</button>
+                            <button data-item-id="${item.id}" class="btn-chat px-2 py-1 bg-blue-700 hover:bg-blue-600 text-white rounded text-xs">Comentarios</button>
+                        </div>
                     </div>
                 </div>`;
         }).join('');
