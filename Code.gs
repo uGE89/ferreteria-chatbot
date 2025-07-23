@@ -412,6 +412,22 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
         if (mensaje) return mensaje;
         return registrarMovimientoCaja('Egreso', functionArgs.monto, functionArgs.concepto, functionArgs.contacto, userId);
 
+      case 'registrarRecepcionCompra':
+        Logger.log('   - Entrando en el caso: "registrarRecepcionCompra"');
+        var mensaje = validarArgumentos(functionArgs, ['fecha', 'sucursal', 'proveedor', 'transporte', 'total', 'faltantes', 'fileUrl']);
+        if (mensaje) return mensaje;
+        return registrarRecepcionCompra(
+          userId,
+          functionArgs.fecha,
+          functionArgs.sucursal,
+          functionArgs.proveedor,
+          functionArgs.transporte,
+          functionArgs.total,
+          functionArgs.faltantes,
+          functionArgs.fileUrl,
+          sessionId
+        );
+
       case 'registrarConteo':
         Logger.log('   - Entrando en el caso: "registrarConteo"');
         var mensaje = validarArgumentos(functionArgs, ['claveProducto', 'cantidadSistema', 'cantidadFisico']);

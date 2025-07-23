@@ -290,6 +290,32 @@ const HERRAMIENTAS_AI = [
   },
 
   // ===============================================================
+  // ==== HERRAMIENTA: Registrar Recepción de Compras ====
+  // ===============================================================
+  {
+    NombreFuncion: 'registrarRecepcionCompra',
+    NombrePantalla: '📦 Recepción Compras',
+    Descripcion: 'Registra la recepción de una compra adjuntando la factura y detalles básicos.',
+    SchemaParametros: {
+      type: 'object',
+      properties: {
+        fecha: { type: 'string', description: 'Fecha de la factura.' },
+        sucursal: { type: 'string', description: 'Sucursal que recibe la compra.' },
+        proveedor: { type: 'string', description: 'Nombre del proveedor.' },
+        transporte: { type: 'string', description: 'Transporte utilizado.' },
+        total: { type: 'number', description: 'Monto total de la factura.' },
+        faltantes: { type: 'string', description: 'Productos faltantes o diferencias.' },
+        fileUrl: { type: 'string', description: 'Enlace o ID del archivo subido.' }
+      },
+      required: ['fecha', 'sucursal', 'proveedor', 'transporte', 'total', 'faltantes', 'fileUrl']
+    },
+    ComportamientoAdicional: '',
+    EsQuickStarter: true,
+    PromptEspecifico: PROMPT_RECEPCION_COMPRAS,
+    rolesPermitidos: ['Administrador', 'Bodeguero', 'Todo en uno']
+  },
+
+  // ===============================================================
   // ==== HERRAMIENTA: Resumen para Administrador ====
   // ===============================================================
   {
