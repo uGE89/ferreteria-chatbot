@@ -979,9 +979,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                     </div>
-                    <div id="comments-${item.id}" class="comments-section hidden border-t border-slate-700 p-4">
-                        <p class="text-slate-400 text-sm">Cargando comentarios...</p>
-                    </div>
+                    <div id="comments-preview-${item.id}" class="border-t border-slate-700 p-4 text-sm space-y-1"></div>
+                    <div id="comments-${item.id}" class="comments-section hidden border-t border-slate-700 p-4"></div>
                 </div>`;
         }).join('');
 
@@ -1027,6 +1026,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         window.addEventListener('click', () => {
             document.querySelectorAll('.kebab-menu').forEach(menu => menu.classList.add('hidden'));
+        });
+
+        itemsToShow.forEach(item => {
+            const preview = document.getElementById(`comments-preview-${item.id}`);
+            cargarPreviewComentarios(item.id, preview);
         });
     }
 
@@ -1100,16 +1104,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function toggleComentariosEnTarjeta(itemId) {
         const commentsSection = document.getElementById(`comments-${itemId}`);
+        const previewSection = document.getElementById(`comments-preview-${itemId}`);
         const isHidden = commentsSection.classList.toggle('hidden');
         if (!isHidden) {
             cargarComentariosEnTarjeta(itemId, commentsSection);
+            if (previewSection) previewSection.classList.add('hidden');
         } else {
             commentsSection.innerHTML = '';
+            if (previewSection) previewSection.classList.remove('hidden');
             if (chatRefs[itemId]) {
                 chatRefs[itemId].off();
                 delete chatRefs[itemId];
             }
         }
+    }
+
+    function cargarPreviewComentarios(itemId, container, limite = 10) {
+        if (!container) return;
+        container.innerHTML = '<p class="text-slate-400 text-sm">Cargando comentarios...</p>';
+        database.ref('chats/' + itemId)
+            .limitToLast(limite)
+            .once('value')
+            .then(snap => {
+                const data = snap.val();
+                container.innerHTML = '';
+                if (data) {
+                    Object.values(data).forEach(msg => {
+                        const fecha = new Date(msg.timestamp);
+                        const div = document.createElement('div');
+                        div.className = 'text-slate-200 text-sm';
+                        div.innerHTML = `<strong>${msg.usuario}:</strong> ${msg.mensaje} <span class="text-xs text-slate-400 ml-2">${fecha.toLocaleString('es-NI')}</span>`;
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = '<p class="text-slate-400 text-sm">Sin comentarios.</p>';
+                }
+            });
     }
 
     function cargarComentariosEnTarjeta(itemId, container) {
