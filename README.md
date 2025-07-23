@@ -39,6 +39,10 @@ configura en `FOLDER_IMAGENES`. La cuenta que ejecuta el script necesita permiso
 de edición sobre esa carpeta y autorizar el acceso a Drive al desplegar la
 aplicación.
 
+**Nota:** la interfaz solo funciona correctamente cuando se accede mediante el
+despliegue web de Apps Script. Si abrís `index.html` de forma local,
+`google.script.run` no existe y algunas funciones quedan inoperativas.
+
 ## Acciones rápidas en el chat
 
 Cada burbuja de conversación incluye cuatro iconos:
