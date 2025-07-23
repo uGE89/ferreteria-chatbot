@@ -156,3 +156,27 @@ function getAIToolByName(name) {
   };
 }
 
+function analizarImagenOpenAI(base64) {
+  try {
+    const requestPayload = {
+      model: 'gpt-4-vision-preview',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Describí brevemente la imagen enviada.' },
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } }
+          ]
+        }
+      ],
+      max_tokens: 100
+    };
+    const respuesta = enviarSolicitudOpenAI(requestPayload, 'vision');
+    if (respuesta.error) return '';
+    return respuesta.choices?.[0]?.message?.content || '';
+  } catch (e) {
+    Logging.logError('OpenAI', 'analizarImagenOpenAI', e.message, e.stack);
+    return '';
+  }
+}
+
