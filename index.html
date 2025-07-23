@@ -909,6 +909,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 .withFailureHandler(err => {
                     hideUploadIndicator();
                     showCustomAlert(`Error al subir la imagen al servidor: ${err.message}`, 'error');
+                    google.script.run.Logging.logError(
+                        'Frontend',
+                        'subirImagenSeleccionada',
+                        err.message,
+                        err && err.stack ? err.stack : '',
+                        file.name,
+                        perfilActual?.UsuarioID || 'N/A'
+                    );
                 })
                 .subirImagen(base64, file.name);
         });
