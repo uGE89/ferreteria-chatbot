@@ -620,12 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
         messageInput.focus();
     }
 
-    sendImageButton.addEventListener('click', () => {
-        const file = imageUpload.files[0];
-        if (!file) {
-            showCustomAlert('Seleccioná una imagen primero.', 'info');
-            return;
-        }
+    function subirImagenSeleccionada(file) {
         const reader = new FileReader();
         reader.onload = () => {
             const base64 = reader.result.split(',')[1];
@@ -640,6 +635,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 .subirImagen(base64, file.name);
         };
         reader.readAsDataURL(file);
+    }
+
+    sendImageButton.addEventListener('click', () => {
+        const file = imageUpload.files[0];
+        if (!file) {
+            imageUpload.click();
+            return;
+        }
+        subirImagenSeleccionada(file);
+    });
+
+    imageUpload.addEventListener('change', () => {
+        const file = imageUpload.files[0];
+        if (file) subirImagenSeleccionada(file);
     });
 
     chatForm.addEventListener('submit', (e) => {
