@@ -268,6 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let qsChatWindow;
     let qsMessageInput;
     let qsSendBtn;
+    let qsSaveBtn;
 
     // --- Estado Global ---
     let perfilActual = null;
@@ -590,23 +591,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            addQSMessage(`Ejecutando: ${nombre}...`, 'system');
-            const userId = perfilActual.UsuarioID;
-            const sessionId = sessionStorage.getItem('sessionId');
-            google.script.run
-                .withSuccessHandler(res => {
-                    addQSMessage(`Resultado: ${res}`, 'system');
-                    actualizarPuntajeYRanking();
-                    const nextPayload = { texto: null, tool_response: { tool_call_id: toolCall.id, function_name: nombre, result: res } };
-                    getAIResponseQS(nextPayload);
-                })
-                .withFailureHandler(error => {
-                    const msg = `Error al ejecutar la herramienta ${nombre}: ${error.message}`;
-                    addQSMessage(`Resultado: ${msg}`, 'system');
-                    const nextPayload = { texto: null, tool_response: { tool_call_id: toolCall.id, function_name: nombre, result: msg } };
-                    getAIResponseQS(nextPayload);
-                })
-                .ejecutarHerramienta(nombre, args, userId, sessionId);
+            qsHerramientaPendiente = { id: toolCall.id, name: nombre, args };
+            addQSMessage(`Datos listos para "${nombre}". Presioná Guardar para finalizar.`, 'system');
+            qsMessageInput.disabled = false;
+            qsSendBtn.disabled = false;
+            qsSaveBtn.disabled = false;
+            qsMessageInput.focus();
         } else {
             qsMessageInput.disabled = false;
             qsSendBtn.disabled = false;
@@ -630,21 +620,49 @@ document.addEventListener('DOMContentLoaded', () => {
         getAIResponseQS({ texto });
     }
 
+    function guardarQuick() {
+        if (!qsHerramientaPendiente) return;
+        qsSaveBtn.disabled = true;
+        const pending = qsHerramientaPendiente;
+        qsHerramientaPendiente = null;
+        addQSMessage(`Ejecutando: ${pending.name}...`, 'system');
+        const userId = perfilActual.UsuarioID;
+        const sessionId = sessionStorage.getItem('sessionId');
+        google.script.run
+            .withSuccessHandler(res => {
+                addQSMessage(`Resultado: ${res}`, 'system');
+                actualizarPuntajeYRanking();
+                const nextPayload = { texto: null, tool_response: { tool_call_id: pending.id, function_name: pending.name, result: res } };
+                getAIResponseQS(nextPayload);
+            })
+            .withFailureHandler(error => {
+                const msg = `Error al ejecutar la herramienta ${pending.name}: ${error.message}`;
+                addQSMessage(`Resultado: ${msg}`, 'system');
+                const nextPayload = { texto: null, tool_response: { tool_call_id: pending.id, function_name: pending.name, result: msg } };
+                getAIResponseQS(nextPayload);
+            })
+            .ejecutarHerramienta(pending.name, pending.args, userId, sessionId);
+    }
+
     function cerrarQuickModal() {
         modalContainer.classList.add('hidden');
         modalContainer.innerHTML = '';
         document.body.style.overflow = 'auto';
         quickStarterEnUso = null;
         qsHerramientaPendiente = null;
+        if (qsSaveBtn) qsSaveBtn.disabled = true;
     }
 
     function inicializarQuickModal() {
         qsChatWindow = document.getElementById('qs-chat-window');
         qsMessageInput = document.getElementById('qs-message-input');
         qsSendBtn = document.getElementById('qs-send-btn');
+        qsSaveBtn = document.getElementById('qs-save-btn');
         document.getElementById('quick-modal-title').textContent = qsModalData.pantalla;
         document.getElementById('qs-close-btn').addEventListener('click', cerrarQuickModal);
         qsSendBtn.addEventListener('click', enviarMensajeQuick);
+        qsSaveBtn.addEventListener('click', guardarQuick);
+        qsSaveBtn.disabled = true;
         qsMessageInput.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
                 e.preventDefault();
