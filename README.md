@@ -24,11 +24,18 @@ obtenida con `obtenerRankingPuntos()`.
 
 ## Subida de imágenes
 
-En el formulario de chat hay un campo para elegir archivos de imagen y un botón
-dedicado para enviarlas. Al seleccionar una imagen se convierte a base64 y se
-envía a la función `subirImagen`, que la guarda en la carpeta indicada por
-`FOLDER_IMAGENES` y devuelve su URL pública. Esa URL se muestra en el chat como
-la imagen subida.
+Para adjuntar capturas desde la interfaz seguí estos pasos:
+
+1. Hacé clic en el botón **Seleccionar archivo** debajo del cuadro de texto.
+2. Elegí la imagen a cargar y presioná **Enviar imagen**.
+3. La aplicación convierte la imagen a base64 y llama a `subirImagen`.
+4. La función guarda el archivo en la carpeta de Drive **ImagenesFerrebot** y
+   devuelve su enlace público para mostrarlo en el chat.
+
+La carpeta **ImagenesFerrebot** debe existir en tu Google Drive y su ID se
+configura en `FOLDER_IMAGENES`. La cuenta que ejecuta el script necesita permiso
+de edición sobre esa carpeta y autorizar el acceso a Drive al desplegar la
+aplicación.
 
 
 ## Despliegue
