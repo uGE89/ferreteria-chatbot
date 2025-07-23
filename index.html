@@ -891,8 +891,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Paso 2: comprimir y subir en segundo plano.
         showUploadIndicator();
+        if (!window.google?.script?.run) {
+            hideUploadIndicator();
+            showCustomAlert('Esta página debe abrirse desde la app desplegada.', 'error');
+            return;
+        }
         compressImage(file, base64 => {
-            google.script.run
+            window.google.script.run
                 .withSuccessHandler(data => {
                     hideUploadIndicator();
                     console.log('Imagen guardada en el servidor en:', data.url);
