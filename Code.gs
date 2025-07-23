@@ -465,7 +465,11 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
  * @returns {string} URL del archivo accesible públicamente.
  */
 function subirImagen(base64, nombre) {
-  const blob = Utilities.newBlob(Utilities.base64Decode(base64), undefined, nombre);
+  const blob = Utilities.newBlob(
+    Utilities.base64Decode(base64),
+    'image/jpeg',
+    nombre
+  );
   const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
