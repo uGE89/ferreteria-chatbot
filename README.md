@@ -37,8 +37,9 @@ la imagen subida.
 2. Copia todos los archivos `.gs` y `.html` de este repositorio en tu proyecto de Apps Script.
 3. Define una **propiedad de script** llamada `OPENAI_API_KEY` con tu clave de OpenAI.
 4. Ajusta el valor de `ID_HOJA_PUENTE` en `Configuracion.gs` para que apunte al ID de tu hoja principal.
-5. Desde el editor de Apps Script selecciona **Deploy > New deployment** y elige "Web app" para publicar la aplicación. `doGet()` sirve la interfaz `index.html`.
-6. Ejecuta `instalarTriggerLimpiezaSesiones` para programar la limpieza de sesiones.
+5. Configura `FOLDER_IMAGENES` en `Configuracion.gs` con el ID de la carpeta de Drive donde se subirán las imágenes.
+6. Desde el editor de Apps Script selecciona **Deploy > New deployment** y elige "Web app" para publicar la aplicación. `doGet()` sirve la interfaz `index.html`.
+7. Ejecuta `instalarTriggerLimpiezaSesiones` para programar la limpieza de sesiones.
 
 ## Ejecución de la suite de pruebas
 
