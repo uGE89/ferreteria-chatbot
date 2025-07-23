@@ -265,6 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chat-input');
     const chatSendBtn = document.getElementById('chat-send-btn');
     const chatCloseBtn = document.getElementById('chat-close-btn');
+    let qsChatWindow;
+    let qsMessageInput;
+    let qsSendBtn;
 
     // --- Estado Global ---
     let perfilActual = null;
@@ -280,6 +283,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let chatRefs = {};
     let previewRefs = {};
     let ultimoComentario = {};
+    let qsModalData = {};
+    let qsHerramientaPendiente = null;
 
     // --- INICIO: CONFIGURACIÓN DE FIREBASE ---
     const firebaseConfig = {
@@ -509,6 +514,160 @@ document.addEventListener('DOMContentLoaded', () => {
     function hideUploadIndicator() {
         document.getElementById('upload-indicator')?.remove();
     }
+
+    // ----- Funciones para el modal de acciones rápidas -----
+    function addQSMessage(text, sender) {
+        const container = document.createElement('div');
+        container.className = `flex message-bubble ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+        let classes = 'max-w-md rounded-2xl px-4 py-2.5 text-sm shadow-md ';
+        if (sender === 'user') {
+            classes += 'bg-blue-600 text-white';
+        } else if (sender === 'ai') {
+            classes += 'bg-slate-700 text-slate-200';
+        } else {
+            classes += 'bg-slate-700/50 border border-slate-600/50 text-slate-400 w-full';
+        }
+        container.innerHTML = `<div class="${classes}"><p>${text.replace(/\n/g, '<br>')}</p></div>`;
+        qsChatWindow.appendChild(container);
+        qsChatWindow.scrollTop = qsChatWindow.scrollHeight;
+    }
+
+    function showQSTyping() {
+        if (document.getElementById('qs-typing')) return;
+        const indicator = document.createElement('div');
+        indicator.id = 'qs-typing';
+        indicator.className = 'flex justify-start message-bubble';
+        indicator.innerHTML = `<div class="bg-slate-700 text-slate-200 rounded-2xl px-4 py-2.5 shadow-md"><div class="flex items-center gap-1.5"><span class="typing-dot"></span><span class="typing-dot" style="animation-delay: 0.2s;"></span><span class="typing-dot" style="animation-delay: 0.4s;"></span></div></div>`;
+        qsChatWindow.appendChild(indicator);
+        qsChatWindow.scrollTop = qsChatWindow.scrollHeight;
+    }
+
+    function hideQSTyping() {
+        document.getElementById('qs-typing')?.remove();
+    }
+
+    function getAIResponseQS(payload) {
+        qsMessageInput.disabled = true;
+        qsSendBtn.disabled = true;
+        showQSTyping();
+
+        const userId = perfilActual?.UsuarioID;
+        const sessionId = sessionStorage.getItem('sessionId');
+        if (!userId || !sessionId) {
+            hideQSTyping();
+            showCustomAlert('⚠️ La sesión de usuario no está activa.', 'error');
+            qsMessageInput.disabled = false;
+            qsSendBtn.disabled = false;
+            return;
+        }
+
+        if (!payload.tool_name && quickStarterEnUso) {
+            payload.tool_name = quickStarterEnUso.nombreFuncion;
+        }
+
+        google.script.run
+            .withSuccessHandler(handleAIResponseQS)
+            .withFailureHandler(handleAIErrorQS)
+            .enviarAOpenAI(sessionId, userId, payload);
+    }
+
+    function handleAIResponseQS(data) {
+        hideQSTyping();
+        if (data.content) addQSMessage(data.content, 'ai');
+
+        if (data.tool_call) {
+            const toolCall = data.tool_call;
+            const nombre = toolCall.function.name;
+            let args;
+            try {
+                args = JSON.parse(toolCall.function.arguments);
+            } catch (e) {
+                showCustomAlert('La respuesta de la IA fue inválida.', 'error');
+                qsMessageInput.disabled = false;
+                qsSendBtn.disabled = false;
+                qsMessageInput.focus();
+                return;
+            }
+
+            addQSMessage(`Ejecutando: ${nombre}...`, 'system');
+            const userId = perfilActual.UsuarioID;
+            const sessionId = sessionStorage.getItem('sessionId');
+            google.script.run
+                .withSuccessHandler(res => {
+                    addQSMessage(`Resultado: ${res}`, 'system');
+                    actualizarPuntajeYRanking();
+                    const nextPayload = { texto: null, tool_response: { tool_call_id: toolCall.id, function_name: nombre, result: res } };
+                    getAIResponseQS(nextPayload);
+                })
+                .withFailureHandler(error => {
+                    const msg = `Error al ejecutar la herramienta ${nombre}: ${error.message}`;
+                    addQSMessage(`Resultado: ${msg}`, 'system');
+                    const nextPayload = { texto: null, tool_response: { tool_call_id: toolCall.id, function_name: nombre, result: msg } };
+                    getAIResponseQS(nextPayload);
+                })
+                .ejecutarHerramienta(nombre, args, userId, sessionId);
+        } else {
+            qsMessageInput.disabled = false;
+            qsSendBtn.disabled = false;
+            qsMessageInput.focus();
+        }
+    }
+
+    function handleAIErrorQS(error) {
+        hideQSTyping();
+        showCustomAlert(`Ocurrió un error al procesar tu solicitud: ${error.message}.`, 'error');
+        qsMessageInput.disabled = false;
+        qsSendBtn.disabled = false;
+        qsMessageInput.focus();
+    }
+
+    function enviarMensajeQuick() {
+        const texto = qsMessageInput.value.trim();
+        if (!texto) return;
+        addQSMessage(texto, 'user');
+        qsMessageInput.value = '';
+        getAIResponseQS({ texto });
+    }
+
+    function cerrarQuickModal() {
+        modalContainer.classList.add('hidden');
+        modalContainer.innerHTML = '';
+        document.body.style.overflow = 'auto';
+        quickStarterEnUso = null;
+        qsHerramientaPendiente = null;
+    }
+
+    function inicializarQuickModal() {
+        qsChatWindow = document.getElementById('qs-chat-window');
+        qsMessageInput = document.getElementById('qs-message-input');
+        qsSendBtn = document.getElementById('qs-send-btn');
+        document.getElementById('quick-modal-title').textContent = qsModalData.pantalla;
+        document.getElementById('qs-close-btn').addEventListener('click', cerrarQuickModal);
+        qsSendBtn.addEventListener('click', enviarMensajeQuick);
+        qsMessageInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                enviarMensajeQuick();
+            }
+        });
+        addQSMessage(qsModalData.pantalla, 'user');
+        quickStarterEnUso = { nombreFuncion: qsModalData.funcion, nombrePantalla: qsModalData.pantalla };
+        getAIResponseQS({ texto: qsModalData.pantalla, tool_name: qsModalData.funcion });
+    }
+
+    function abrirModalQuickStarter(funcion, pantalla) {
+        google.script.run
+            .withSuccessHandler(html => {
+                modalContainer.innerHTML = html;
+                modalContainer.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                qsModalData = { funcion, pantalla };
+                inicializarQuickModal();
+            })
+            .withFailureHandler(err => showCustomAlert('Error al cargar el modal: ' + err.message, 'error'))
+            .abrirModalDeQuickStarter();
+    }
+    window.abrirModalQuickStarter = abrirModalQuickStarter;
 
     function compressImage(file, callback) {
         const reader = new FileReader();
@@ -814,9 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         showCustomAlert('La función para registrar conteo no está disponible.', 'error');
                     }
                 } else {
-                    addMessage(starter.NombrePantalla, 'user');
-                    quickStarterEnUso = { nombreFuncion: starter.NombreFuncion, nombrePantalla: starter.NombrePantalla };
-                    getAIResponse({ texto: starter.NombrePantalla, tool_name: starter.NombreFuncion });
+                    abrirModalQuickStarter(starter.NombreFuncion, starter.NombrePantalla);
                 }
             });
             quickStartersContainer.appendChild(button);
