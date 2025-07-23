@@ -38,6 +38,18 @@ configura en `FOLDER_IMAGENES`. La cuenta que ejecuta el script necesita permiso
 de edición sobre esa carpeta y autorizar el acceso a Drive al desplegar la
 aplicación.
 
+## Acciones rápidas en el chat
+
+Cada burbuja de conversación incluye cuatro iconos:
+
+- **check** para aprobar un mensaje.
+- **visibility** para marcarlo como visto.
+- **lightbulb** para destacarlo como idea.
+- **push_pin** para fijarlo en la lista.
+
+Al hacer clic se llaman las funciones correspondientes en el backend,
+por ejemplo `marcarMensajeAprobado(id)` o `fijarMensaje(id)`.
+
 
 ## Despliegue
 

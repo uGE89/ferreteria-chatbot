@@ -39,7 +39,11 @@ function registrarMensaje(tipo, userId, asunto, detalle, sessionId, puntos) {
     Estado: 'Pendiente',
     RespuestaAdmin: '',
     FechaHoraRespuesta: '',
-    AdminRespondiendoID: ''
+    AdminRespondiendoID: '',
+    Aprobado: false,
+    Visto: false,
+    Destacado: false,
+    Fijado: false
   });
 
   appendRowToSheet(SHEET_NAMES.MENSAJE_COLABORADOR, {
@@ -968,6 +972,66 @@ function asignarInsignia(userId, nombreInsignia) {
   } catch (e) {
     Logging.logError('Toolbox', 'asignarInsignia', e.message, e.stack, JSON.stringify({ userId, nombreInsignia }));
   }
+}
+
+/**
+ * Marca un mensaje como aprobado.
+ * @param {string} messageId - ID del mensaje.
+ * @returns {string} Confirmación.
+ */
+function marcarMensajeAprobado(messageId) {
+  const ok = updateRowInSheet(SHEET_NAMES.MENSAJES, 'ID_Mensaje', messageId, {
+    Aprobado: true
+  });
+  if (!ok) {
+    throw new Error('No se encontró el mensaje.');
+  }
+  return 'Mensaje aprobado.';
+}
+
+/**
+ * Marca un mensaje como visto.
+ * @param {string} messageId - ID del mensaje.
+ * @returns {string} Confirmación.
+ */
+function marcarMensajeVisto(messageId) {
+  const ok = updateRowInSheet(SHEET_NAMES.MENSAJES, 'ID_Mensaje', messageId, {
+    Visto: true
+  });
+  if (!ok) {
+    throw new Error('No se encontró el mensaje.');
+  }
+  return 'Mensaje marcado como visto.';
+}
+
+/**
+ * Destaca un mensaje como idea.
+ * @param {string} messageId - ID del mensaje.
+ * @returns {string} Confirmación.
+ */
+function marcarMensajeDestacado(messageId) {
+  const ok = updateRowInSheet(SHEET_NAMES.MENSAJES, 'ID_Mensaje', messageId, {
+    Destacado: true
+  });
+  if (!ok) {
+    throw new Error('No se encontró el mensaje.');
+  }
+  return 'Mensaje destacado.';
+}
+
+/**
+ * Fija un mensaje en la lista.
+ * @param {string} messageId - ID del mensaje.
+ * @returns {string} Confirmación.
+ */
+function fijarMensaje(messageId) {
+  const ok = updateRowInSheet(SHEET_NAMES.MENSAJES, 'ID_Mensaje', messageId, {
+    Fijado: true
+  });
+  if (!ok) {
+    throw new Error('No se encontró el mensaje.');
+  }
+  return 'Mensaje fijado.';
 }
 
 /**
