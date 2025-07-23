@@ -903,12 +903,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Imagen guardada en el servidor en:', data.url);
                     if (imageBubble) {
                         imageBubble.querySelector('img').src = data.url;
-                        if (data.resumen) {
-                            const p = document.createElement('p');
-                            p.className = 'p-2 text-white text-sm';
-                            p.textContent = data.resumen;
-                            imageBubble.appendChild(p);
-                        }
+                    }
+                    if (data.resumen) {
+                        addMessage(data.resumen, 'ai');
                     }
                 })
                 .withFailureHandler(err => {
