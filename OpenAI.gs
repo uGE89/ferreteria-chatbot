@@ -159,7 +159,7 @@ function getAIToolByName(name) {
 function analizarImagenOpenAI(base64) {
   try {
     const requestPayload = {
-      model: 'gpt-4-vision-preview',
+      model: 'gpt-4o',
       messages: [
         {
           role: 'user',
