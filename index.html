@@ -147,7 +147,11 @@
                 <div id="suggestions-container" class="px-4 pb-2"></div>
                 <footer class="p-4 border-t border-slate-700">
                     <form id="chat-form" class="relative">
-                        <input type="text" id="message-input" placeholder="Escribe tu mensaje aquí..." class="w-full bg-slate-700 border border-slate-600 rounded-xl py-3 pl-4 pr-12 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow" autocomplete="off">
+                        <input type="text" id="message-input" placeholder="Escribe tu mensaje aquí..." class="w-full bg-slate-700 border border-slate-600 rounded-xl py-3 pl-4 pr-24 text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow" autocomplete="off">
+                        <input type="file" id="image-upload" accept="image/*" class="hidden">
+                        <button type="button" id="send-image-button" class="absolute right-12 top-1/2 -translate-y-1/2 bg-emerald-600 hover:bg-emerald-500 w-9 h-9 rounded-lg flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-white" aria-label="Enviar Imagen">
+                            <span class="material-symbols-outlined text-white">image</span>
+                        </button>
                         <button type="submit" id="send-button" class="absolute right-2 top-1/2 -translate-y-1/2 bg-emerald-600 hover:bg-emerald-500 w-9 h-9 rounded-lg flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-white" aria-label="Enviar Mensaje">
                             <span class="material-symbols-outlined text-white">send</span>
                         </button>
@@ -234,6 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatForm = document.getElementById('chat-form');
     const messageInput = document.getElementById('message-input');
     const sendButton = document.getElementById('send-button');
+    const imageUpload = document.getElementById('image-upload');
+    const sendImageButton = document.getElementById('send-image-button');
 
     // Modales
     const modalContainer = document.getElementById('modal-container');
@@ -429,6 +435,25 @@ document.addEventListener('DOMContentLoaded', () => {
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
+    function addImageMessage(url, sender = 'user') {
+        const container = document.createElement('div');
+        container.className = `flex message-bubble ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+        const bubble = document.createElement('div');
+        bubble.className = 'max-w-xs rounded-2xl overflow-hidden shadow-md';
+        if (sender === 'user') {
+            bubble.classList.add('bg-blue-600');
+        } else {
+            bubble.classList.add('bg-slate-700');
+        }
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'block w-full h-auto';
+        bubble.appendChild(img);
+        container.appendChild(bubble);
+        chatWindow.appendChild(container);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
     function showTypingIndicator() {
         if (document.getElementById('typing-indicator')) return;
         const indicator = document.createElement('div');
@@ -594,6 +619,28 @@ document.addEventListener('DOMContentLoaded', () => {
         sendButton.disabled = false;
         messageInput.focus();
     }
+
+    sendImageButton.addEventListener('click', () => {
+        const file = imageUpload.files[0];
+        if (!file) {
+            showCustomAlert('Seleccioná una imagen primero.', 'info');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64 = reader.result.split(',')[1];
+            google.script.run
+                .withSuccessHandler(url => {
+                    addImageMessage(url, 'user');
+                    imageUpload.value = '';
+                })
+                .withFailureHandler(err => {
+                    showCustomAlert(`Error al subir imagen: ${err.message}`, 'error');
+                })
+                .subirImagen(base64, file.name);
+        };
+        reader.readAsDataURL(file);
+    });
 
     chatForm.addEventListener('submit', (e) => {
         e.preventDefault();

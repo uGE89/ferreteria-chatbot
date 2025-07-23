@@ -22,6 +22,14 @@ Las insignias se guardan con la función `asignarInsignia(userId, nombreInsignia
 En la interfaz se muestra el puntaje actual y una tabla de clasificación,
 obtenida con `obtenerRankingPuntos()`.
 
+## Subida de imágenes
+
+En el formulario de chat hay un campo para elegir archivos de imagen y un botón
+dedicado para enviarlas. Al seleccionar una imagen se convierte a base64 y se
+envía a la función `subirImagen`, que la guarda en la carpeta indicada por
+`FOLDER_IMAGENES` y devuelve su URL pública. Esa URL se muestra en el chat como
+la imagen subida.
+
 
 ## Despliegue
 
