@@ -881,10 +881,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function subirImagenSeleccionada(file) {
         let imageBubble;
+        let localUrl;
         // Paso 1: leer el archivo para mostrarlo de inmediato.
         const reader = new FileReader();
         reader.onload = e => {
-            const localUrl = e.target.result;
+            localUrl = e.target.result;
             imageBubble = addImageMessage(localUrl, 'user');
         };
         reader.readAsDataURL(file);
@@ -902,7 +903,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     hideUploadIndicator();
                     console.log('Imagen guardada en el servidor en:', data.url);
                     if (imageBubble) {
-                        imageBubble.querySelector('img').src = data.url;
+                        const img = imageBubble.querySelector('img');
+                        img.onerror = () => {
+                            img.src = localUrl;
+                            google.script.run.Logging.logError(
+                                'Frontend',
+                                'subirImagenSeleccionada',
+                                'Falló la carga de la imagen desde Drive',
+                                '',
+                                file.name,
+                                perfilActual?.UsuarioID || 'N/A'
+                            );
+                        };
+                        img.src = data.url;
                     }
                     if (data.resumen) {
                         addMessage(data.resumen, 'ai');
