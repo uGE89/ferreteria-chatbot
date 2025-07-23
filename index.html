@@ -995,7 +995,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="py-1" role="none">
                                     ${item.estado === 'Pendiente' ? `<a href="#" class="btn-marcar-revisado block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700" data-item-id="${item.id}">Marcar como Revisado</a>` : ''}
                                     <a href="#" class="btn-add-collab block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700" data-item-id="${item.id}">Agregar Colaborador</a>
-                                <a href="#" class="btn-chat block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700" data-item-id="${item.id}">Ver Comentarios</a>
+                                    <a href="#" class="btn-crear-tarea block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700" data-item-id="${item.id}">Crear Tarea</a>
+                                    <a href="#" class="btn-chat block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700" data-item-id="${item.id}">Ver Comentarios</a>
                                 </div>
                             </div>
                         </div>
@@ -1026,6 +1027,28 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', () => {
                 itemColabActual = btn.dataset.itemId;
                 mostrarModalColab();
+            });
+        });
+        container.querySelectorAll('.btn-crear-tarea').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const itemId = btn.dataset.itemId;
+                const item = adminState.items.find(i => i.id === itemId);
+                if (!item) return;
+                showCustomConfirm('¿Crear una tarea con este mensaje?')
+                    .then(conf => {
+                        if (!conf) return;
+                        const titulo = item.asunto || 'Tarea desde mensaje';
+                        const descripcion = item.detalle || '';
+                        const userId = perfilActual.UsuarioID;
+                        const sessionId = sessionStorage.getItem('sessionId');
+                        google.script.run
+                            .withSuccessHandler(msg => {
+                                showCustomAlert(msg, 'success');
+                                google.script.run.marcarMensajeConTarea(itemId);
+                            })
+                            .withFailureHandler(err => showCustomAlert(err.message, 'error'))
+                            .crearTareaPendiente(userId, titulo, descripcion, '', sessionId);
+                    });
             });
         });
         container.querySelectorAll('.btn-chat').forEach(btn => {

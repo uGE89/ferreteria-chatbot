@@ -1035,6 +1035,21 @@ function fijarMensaje(messageId) {
 }
 
 /**
+ * Marca que de este mensaje se creó una tarea.
+ * @param {string} messageId - ID del mensaje origen.
+ * @returns {string} Confirmación.
+ */
+function marcarMensajeConTarea(messageId) {
+  const ok = updateRowInSheet(SHEET_NAMES.MENSAJES, 'ID_Mensaje', messageId, {
+    Estado: 'Con Tarea'
+  });
+  if (!ok) {
+    throw new Error('No se encontró el mensaje.');
+  }
+  return 'Mensaje marcado con tarea.';
+}
+
+/**
  * Obtiene el ranking de usuarios ordenado por puntaje.
  * @returns {Array<object>} Lista de usuarios con puntos e insignias.
  */
