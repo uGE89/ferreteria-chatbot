@@ -486,6 +486,45 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
 }
 
 /**
+ * Registra la recepción de una compra y guarda la factura en Drive.
+ * @param {string} userId - ID del usuario que registra la compra.
+ * @param {string} fecha - Fecha de la factura.
+ * @param {string} sucursal - Sucursal que recibe la mercadería.
+ * @param {string} proveedor - Nombre del proveedor.
+ * @param {string} transporte - Transporte utilizado.
+ * @param {number} total - Monto total de la factura.
+ * @param {string} faltantes - Productos faltantes o diferencias.
+ * @param {string} fileUrl - Enlace o ID del archivo subido.
+ * @param {string} sessionId - ID de la sesión actual.
+ * @returns {string} Mensaje de confirmación.
+ */
+function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte, total, faltantes, fileUrl, sessionId) {
+  try {
+    const idMatch = /id=([^&]+)/.exec(fileUrl);
+    const fileId = idMatch ? idMatch[1] : fileUrl;
+    const file = DriveApp.getFileById(fileId);
+    const ext = file.getName().split('.').pop();
+    const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
+    const nuevoNombre = `${fecha}_Factura_${proveedor}_${sucursal}.${ext}`;
+    file.setName(nuevoNombre);
+    folder.addFile(file);
+    const parents = file.getParents();
+    while (parents.hasNext()) {
+      const p = parents.next();
+      if (p.getId() !== folder.getId()) p.removeFile(file);
+    }
+
+    const asunto = `Factura ${proveedor} ${sucursal}`;
+    const detalle = `Fecha: ${fecha}\nProveedor: ${proveedor}\nTransporte: ${transporte}\nTotal: ${total}\nFaltantes: ${faltantes}\nArchivo: ${fileUrl}`;
+    registrarMensaje('Recepción Compra', userId, asunto, detalle, sessionId, 0);
+    return 'Recepción de compra registrada.';
+  } catch (e) {
+    Logging.logError('Toolbox', 'registrarRecepcionCompra', e.message, e.stack, JSON.stringify({ userId, fecha, sucursal, proveedor, transporte, total, faltantes, fileUrl, sessionId }));
+    throw new Error(`Error al registrar la recepción: ${e.message}`);
+  }
+}
+
+/**
  * Envía una respuesta de un administrador a un mensaje específico.
  * Se ha modificado para recibir el adminUserId del frontend.
  * @param {string} destinoSesion - ID de la sesión del mensaje original.
