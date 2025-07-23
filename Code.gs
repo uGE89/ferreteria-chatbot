@@ -476,7 +476,7 @@ function subirImagen(base64, nombre) {
   const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  const url = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
+  const url = file.getDownloadUrl();
   const resumen = analizarImagenOpenAI(base64);
   return { url: url, resumen: resumen };
 }
