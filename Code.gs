@@ -469,7 +469,7 @@ function subirImagen(base64, nombre) {
   const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  return file.getUrl();
+  return `https://drive.google.com/uc?export=view&id=${file.getId()}`;
 }
 
 // --- LÓGICA DE CALENDARIO DE CONTEO Y REGISTRO DE CONTEOS ---

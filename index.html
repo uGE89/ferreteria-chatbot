@@ -469,6 +469,48 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('typing-indicator')?.remove();
     }
 
+    function showUploadIndicator() {
+        if (document.getElementById('upload-indicator')) return;
+        const indicator = document.createElement('div');
+        indicator.id = 'upload-indicator';
+        indicator.className = 'flex justify-end message-bubble';
+        indicator.innerHTML = `<div class="bg-blue-600 text-white rounded-2xl px-4 py-2.5 shadow-md flex items-center gap-2"><span class="material-symbols-outlined animate-spin">cloud_upload</span><span class="text-sm">Subiendo imagen...</span></div>`;
+        chatWindow.appendChild(indicator);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function hideUploadIndicator() {
+        document.getElementById('upload-indicator')?.remove();
+    }
+
+    function compressImage(file, callback) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 1280;
+                if (width > height && width > maxDim) {
+                    height = Math.round(height * maxDim / width);
+                    width = maxDim;
+                } else if (height >= width && height > maxDim) {
+                    width = Math.round(width * maxDim / height);
+                    height = maxDim;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                callback(dataUrl.split(',')[1]);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
     function getAIResponse(payload) {
         messageInput.disabled = true;
         sendButton.disabled = true;
@@ -622,20 +664,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function subirImagenSeleccionada(file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const base64 = reader.result.split(',')[1];
+        showUploadIndicator();
+        compressImage(file, base64 => {
             google.script.run
                 .withSuccessHandler(url => {
+                    hideUploadIndicator();
                     addImageMessage(url, 'user');
                     imageUpload.value = '';
                 })
                 .withFailureHandler(err => {
+                    hideUploadIndicator();
                     showCustomAlert(`Error al subir imagen: ${err.message}`, 'error');
                 })
                 .subirImagen(base64, file.name);
-        };
-        reader.readAsDataURL(file);
+        });
     }
 
     sendImageButton.addEventListener('click', () => {

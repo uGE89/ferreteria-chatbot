@@ -28,9 +28,10 @@ Para adjuntar capturas desde la interfaz seguí estos pasos:
 
 1. Hacé clic en el botón **Seleccionar archivo** debajo del cuadro de texto.
 2. Elegí la imagen a cargar y presioná **Enviar imagen**.
-3. La aplicación convierte la imagen a base64 y llama a `subirImagen`.
+3. La aplicación comprime la imagen, la convierte a base64 y llama a
+   `subirImagen`.
 4. La función guarda el archivo en la carpeta de Drive **ImagenesFerrebot** y
-   devuelve su enlace público para mostrarlo en el chat.
+   devuelve un enlace directo para mostrarlo en el chat.
 
 La carpeta **ImagenesFerrebot** debe existir en tu Google Drive y su ID se
 configura en `FOLDER_IMAGENES`. La cuenta que ejecuta el script necesita permiso
