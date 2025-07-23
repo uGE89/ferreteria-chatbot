@@ -525,6 +525,40 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
 }
 
 /**
+ * Registra una solicitud de traspaso enviada por un usuario.
+ * @param {string} userId - ID del usuario que envía la captura.
+ * @param {string} fileUrl - Enlace o ID de la imagen subida.
+ * @param {string} comentario - Comentario del usuario.
+ * @param {string} sessionId - ID de la sesión.
+ * @returns {string} Mensaje de confirmación.
+ */
+function registrarTraspaso(userId, fileUrl, comentario, sessionId) {
+  try {
+    const idMatch = /id=([^&]+)/.exec(fileUrl);
+    const fileId = idMatch ? idMatch[1] : fileUrl;
+    const file = DriveApp.getFileById(fileId);
+    const ext = file.getName().split('.').pop();
+    const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
+    const nuevoNombre = `Traspaso_${Date.now()}.${ext}`;
+    file.setName(nuevoNombre);
+    folder.addFile(file);
+    const parents = file.getParents();
+    while (parents.hasNext()) {
+      const p = parents.next();
+      if (p.getId() !== folder.getId()) p.removeFile(file);
+    }
+
+    const asunto = 'Solicitud de traspaso';
+    const detalle = `Comentario: ${comentario}\nArchivo: ${fileUrl}`;
+    registrarMensaje('Traspaso', userId, asunto, detalle, sessionId, 0);
+    return 'Traspaso registrado correctamente.';
+  } catch (e) {
+    Logging.logError('Toolbox', 'registrarTraspaso', e.message, e.stack, JSON.stringify({ userId, fileUrl, comentario, sessionId }));
+    throw new Error(`Error al registrar traspaso: ${e.message}`);
+  }
+}
+
+/**
  * Envía una respuesta de un administrador a un mensaje específico.
  * Se ha modificado para recibir el adminUserId del frontend.
  * @param {string} destinoSesion - ID de la sesión del mensaje original.
