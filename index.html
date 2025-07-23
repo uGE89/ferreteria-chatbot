@@ -475,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    function addImageMessage(url, sender = 'user') {
+    function addImageMessage(url, sender = 'user', contexto = '') {
         const container = document.createElement('div');
         container.className = `flex message-bubble ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
         const bubble = document.createElement('div');
@@ -490,9 +490,16 @@ document.addEventListener('DOMContentLoaded', () => {
         img.alt = 'Imagen enviada';
         img.className = 'block w-full h-auto';
         bubble.appendChild(img);
+        if (contexto) {
+            const p = document.createElement('p');
+            p.className = 'p-2 text-white text-sm';
+            p.textContent = contexto;
+            bubble.appendChild(p);
+        }
         container.appendChild(bubble);
         chatWindow.appendChild(container);
         chatWindow.scrollTop = chatWindow.scrollHeight;
+        return bubble;
     }
 
     function showTypingIndicator() {
@@ -854,11 +861,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function subirImagenSeleccionada(file) {
+        let imageBubble;
         // Paso 1: leer el archivo para mostrarlo de inmediato.
         const reader = new FileReader();
         reader.onload = e => {
             const localUrl = e.target.result;
-            addImageMessage(localUrl, 'user');
+            imageBubble = addImageMessage(localUrl, 'user');
         };
         reader.readAsDataURL(file);
 
@@ -866,9 +874,18 @@ document.addEventListener('DOMContentLoaded', () => {
         showUploadIndicator();
         compressImage(file, base64 => {
             google.script.run
-                .withSuccessHandler(url => {
+                .withSuccessHandler(data => {
                     hideUploadIndicator();
-                    console.log('Imagen guardada en el servidor en:', url);
+                    console.log('Imagen guardada en el servidor en:', data.url);
+                    if (imageBubble) {
+                        imageBubble.querySelector('img').src = data.url;
+                        if (data.resumen) {
+                            const p = document.createElement('p');
+                            p.className = 'p-2 text-white text-sm';
+                            p.textContent = data.resumen;
+                            imageBubble.appendChild(p);
+                        }
+                    }
                 })
                 .withFailureHandler(err => {
                     hideUploadIndicator();

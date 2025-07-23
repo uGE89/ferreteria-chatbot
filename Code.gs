@@ -464,8 +464,8 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
  * Sube una imagen en base64 a Drive y devuelve su URL pública.
  * @param {string} base64 - Cadena de la imagen codificada en base64.
  * @param {string} nombre - Nombre del archivo a guardar.
- * @returns {string} URL del archivo accesible públicamente.
- */
+ * @returns {{url: string, resumen: string}} URL y resumen de la imagen.
+*/
 function subirImagen(base64, nombre) {
   const nombreJpg = nombre.replace(/\.\w+$/, '') + '.jpg';
   const blob = Utilities.newBlob(
@@ -476,7 +476,9 @@ function subirImagen(base64, nombre) {
   const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  return `https://drive.google.com/uc?export=view&id=${file.getId()}`;
+  const url = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
+  const resumen = analizarImagenOpenAI(base64);
+  return { url: url, resumen: resumen };
 }
 
 // --- LÓGICA DE CALENDARIO DE CONTEO Y REGISTRO DE CONTEOS ---
