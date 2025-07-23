@@ -273,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let itemColabActual = null;
     let currentChatItem = null;
     let chatRef = null;
+    let chatRefs = {};
 
     // --- INICIO: CONFIGURACIÓN DE FIREBASE ---
     const firebaseConfig = {
@@ -931,10 +932,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="py-1" role="none">
                                     ${item.estado === 'Pendiente' ? `<a href="#" class="btn-marcar-revisado block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700" data-item-id="${item.id}">Marcar como Revisado</a>` : ''}
                                     <a href="#" class="btn-add-collab block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700" data-item-id="${item.id}">Agregar Colaborador</a>
-                                    <a href="#" class="btn-chat block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700" data-item-id="${item.id}">Ver Comentarios</a>
+                                <a href="#" class="btn-chat block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700" data-item-id="${item.id}">Ver Comentarios</a>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    <div id="comments-${item.id}" class="comments-section hidden border-t border-slate-700 p-4">
+                        <p class="text-slate-400 text-sm">Cargando comentarios...</p>
                     </div>
                 </div>`;
         }).join('');
@@ -963,8 +967,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         container.querySelectorAll('.btn-chat').forEach(btn => {
-            btn.addEventListener('click', () => {
-                mostrarChatModal(btn.dataset.itemId);
+            btn.addEventListener('click', e => {
+                e.preventDefault();
+                toggleComentariosEnTarjeta(btn.dataset.itemId);
             });
         });
         container.querySelectorAll('.btn-kebab').forEach(btn => {
@@ -1050,6 +1055,65 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     chatCloseBtn.addEventListener('click', cerrarChatModal);
+
+    function toggleComentariosEnTarjeta(itemId) {
+        const commentsSection = document.getElementById(`comments-${itemId}`);
+        const isHidden = commentsSection.classList.toggle('hidden');
+        if (!isHidden) {
+            cargarComentariosEnTarjeta(itemId, commentsSection);
+        } else {
+            commentsSection.innerHTML = '';
+            if (chatRefs[itemId]) {
+                chatRefs[itemId].off();
+                delete chatRefs[itemId];
+            }
+        }
+    }
+
+    function cargarComentariosEnTarjeta(itemId, container) {
+        container.innerHTML = `
+            <div id="chat-messages-${itemId}" class="overflow-y-auto mb-2 text-left space-y-2 max-h-48"></div>
+            <div class="flex gap-2">
+                <input id="chat-input-${itemId}" type="text" class="flex-1 bg-slate-700 rounded-md px-3 py-2 text-sm text-white" placeholder="Escribe un comentario...">
+                <button id="chat-send-${itemId}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-2 rounded-lg">Enviar</button>
+            </div>
+        `;
+        const messagesDiv = document.getElementById(`chat-messages-${itemId}`);
+        const inputEl = document.getElementById(`chat-input-${itemId}`);
+        const btnEl = document.getElementById(`chat-send-${itemId}`);
+        messagesDiv.innerHTML = '<p class="text-slate-400 text-sm">Cargando mensajes...</p>';
+        const ref = database.ref('chats/' + itemId);
+        chatRefs[itemId] = ref;
+        ref.on('child_added', snap => {
+            const data = snap.val();
+            const fecha = new Date(data.timestamp);
+            const div = document.createElement('div');
+            div.className = 'text-slate-200 text-sm';
+            div.innerHTML = `<strong>${data.usuario}:</strong> ${data.mensaje} <span class="text-xs text-slate-400 ml-2">${fecha.toLocaleString('es-NI')}</span>`;
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+        btnEl.addEventListener('click', () => enviarMensajeChatTarjeta(itemId, inputEl));
+        inputEl.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                enviarMensajeChatTarjeta(itemId, inputEl);
+            }
+        });
+    }
+
+    function enviarMensajeChatTarjeta(itemId, inputEl) {
+        const texto = inputEl.value.trim();
+        const ref = chatRefs[itemId];
+        if (!texto || !ref) return;
+        ref.push({
+            usuario: perfilActual.Nombre,
+            userId: perfilActual.UsuarioID,
+            mensaje: texto,
+            timestamp: Date.now()
+        });
+        inputEl.value = '';
+    }
 
     // --- Lógica de Autocompletar con @ ---
     messageInput.addEventListener('input', () => {
