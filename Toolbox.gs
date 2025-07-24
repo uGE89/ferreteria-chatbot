@@ -513,12 +513,18 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
     const nuevoNombre = `${fecha}_Factura_${proveedor}_${sucursal}.${ext}`;
     file.setName(nuevoNombre);
-    folder.addFile(file);
     const parents = file.getParents();
+    let enCarpeta = false;
     while (parents.hasNext()) {
       const p = parents.next();
-      if (p.getId() !== folder.getId()) p.removeFile(file);
+      if (p.getId() === folder.getId()) {
+        enCarpeta = true;
+      } else {
+        p.removeFile(file);
+      }
     }
+    // Solo se agrega a la carpeta si aún no es hijo de ella
+    if (!enCarpeta) folder.addFile(file);
 
     const asunto = `Factura ${proveedor} ${sucursal}`;
     const detalle = `Fecha: ${fecha}\nProveedor: ${proveedor}\nTransporte: ${transporte}\nTotal: ${total}\nFaltantes: ${faltantes}\nArchivo: ${fileUrl}`;
@@ -549,12 +555,18 @@ function registrarTraspaso(userId, fileUrl, comentario, sessionId, imagenes) {
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
     const nuevoNombre = `Traspaso_${Date.now()}.${ext}`;
     file.setName(nuevoNombre);
-    folder.addFile(file);
     const parents = file.getParents();
+    let enCarpeta = false;
     while (parents.hasNext()) {
       const p = parents.next();
-      if (p.getId() !== folder.getId()) p.removeFile(file);
+      if (p.getId() === folder.getId()) {
+        enCarpeta = true;
+      } else {
+        p.removeFile(file);
+      }
     }
+    // Solo se agrega a la carpeta si aún no es hijo de ella
+    if (!enCarpeta) folder.addFile(file);
 
     const asunto = 'Solicitud de traspaso';
     const detalle = `Comentario: ${comentario}\nArchivo: ${fileUrl}`;
