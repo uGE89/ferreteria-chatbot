@@ -507,8 +507,8 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
  */
 function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte, total, faltantes, fileUrl, sessionId, imagenes) {
   try {
-    const idMatch = /id=([^&]+)/.exec(fileUrl);
-    const fileId = idMatch ? idMatch[1] : fileUrl;
+    const idMatch = /[-\w]{25,}/.exec(fileUrl);
+    const fileId = idMatch ? idMatch[0] : fileUrl;
     const file = DriveApp.getFileById(fileId);
     const ext = file.getName().split('.').pop();
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
@@ -523,7 +523,7 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
 
     const asunto = `Factura ${proveedor} ${sucursal}`;
     const detalle = `Fecha: ${fecha}\nProveedor: ${proveedor}\nTransporte: ${transporte}\nTotal: ${total}\nFaltantes: ${faltantes}\nArchivo: ${fileUrl}`;
-    const imagenesTotales = [file.getDownloadUrl()];
+    const imagenesTotales = [file.getUrl()];
     if (Array.isArray(imagenes)) imagenesTotales.push(...imagenes);
     registrarMensaje('Recepción Compra', userId, asunto, detalle, sessionId, 0, imagenesTotales);
     return 'Recepción de compra registrada.';
@@ -544,8 +544,8 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
  */
 function registrarTraspaso(userId, fileUrl, comentario, sessionId, imagenes) {
   try {
-    const idMatch = /id=([^&]+)/.exec(fileUrl);
-    const fileId = idMatch ? idMatch[1] : fileUrl;
+    const idMatch = /[-\w]{25,}/.exec(fileUrl);
+    const fileId = idMatch ? idMatch[0] : fileUrl;
     const file = DriveApp.getFileById(fileId);
     const ext = file.getName().split('.').pop();
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
@@ -560,7 +560,7 @@ function registrarTraspaso(userId, fileUrl, comentario, sessionId, imagenes) {
 
     const asunto = 'Solicitud de traspaso';
     const detalle = `Comentario: ${comentario}\nArchivo: ${fileUrl}`;
-    const imagenesTotales = [file.getDownloadUrl()];
+    const imagenesTotales = [file.getUrl()];
     if (Array.isArray(imagenes)) imagenesTotales.push(...imagenes);
     registrarMensaje('Traspaso', userId, asunto, detalle, sessionId, 0, imagenesTotales);
     return 'Traspaso registrado correctamente.';
