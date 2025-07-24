@@ -55,3 +55,24 @@ function parseSafeDate(dateString) {
   return null;
 }
 
+/**
+ * Obtiene el ID de un archivo de Drive a partir de una URL o del propio ID.
+ * Acepta enlaces con los patrones "id=<ID>" y "/d/<ID>".
+ * @param {string} fileUrl - URL o ID del archivo.
+ * @returns {string} ID del archivo extraído.
+ * @throws {Error} Si no se puede determinar el ID.
+ */
+function obtenerFileId(fileUrl) {
+  if (!fileUrl) {
+    throw new Error('URL o ID de archivo no proporcionado.');
+  }
+  const match = /(?:id=|\/d\/)([-\w]{25,})/.exec(fileUrl);
+  if (match && match[1]) {
+    return match[1];
+  }
+  if (/^[-\w]{25,}$/.test(fileUrl)) {
+    return fileUrl;
+  }
+  throw new Error('No se pudo determinar el ID del archivo.');
+}
+
