@@ -458,29 +458,37 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
     const userName = userProfile ? userProfile.Nombre : 'Desconocido';
     const conteoId = generarId('ARQ');
 
-    diferencia =
-      (parseFloat(saldoSistema) || 0) -
-      (parseFloat(contado) || 0) -
-      (parseFloat(transferencia) || 0) -
-      (parseFloat(tarjeta) || 0);
+    const montoSistema = parseMontoSeguro(saldoSistema, 'saldoSistema');
+    const montoContado = parseMontoSeguro(contado, 'contado');
+    const montoTransferencia = parseMontoSeguro(transferencia, 'transferencia');
+    const montoTarjeta = parseMontoSeguro(tarjeta, 'tarjeta');
 
-    if (Math.abs(diferencia) > 5 && (!razon || razon.trim() === '')) {
-      throw new Error('Se requiere una justificación cuando la diferencia supera 5.');
+    diferencia = montoSistema - montoContado - montoTransferencia - montoTarjeta;
+
+    if (diferencia !== 0 && (!razon || razon.trim() === '')) {
+      throw new Error('Se requiere una justificación si la diferencia no es cero.');
     }
 
-    appendRowToSheet(SHEET_NAMES.ARQUEO_CAJA, {
+    if (diferencia === 0 && razon.trim() !== '#Sin diferencia#') {
+      throw new Error('Cuando la diferencia es 0, la justificación debe ser "#Sin diferencia#".');
+    }
+
+    const guardado = appendRowToSheet(SHEET_NAMES.ARQUEO_CAJA, {
       ID_Conteo: conteoId,
       Fecha: now.split(' ')[0],
       Hora: now.split(' ')[1],
       UsuarioID: userId,
       NombreUsuario: userName,
-      'Saldo sistema': saldoSistema,
-      Contado: contado,
-      Transferencia: transferencia,
-      Tarjeta: tarjeta,
+      'Saldo sistema': montoSistema,
+      Contado: montoContado,
+      Transferencia: montoTransferencia,
+      Tarjeta: montoTarjeta,
       Diferencia: diferencia,
       'Razón diferencia': razon || ''
     });
+    if (!guardado) {
+      throw new Error('Error al guardar el arqueo de caja. Verificá si la hoja existe o si hay un error en los datos.');
+    }
 
     sumarPuntos(userId, PUNTOS_ARQUEO);
 
