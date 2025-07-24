@@ -283,7 +283,6 @@ function buscarArticulo(query) {
  * @param {string} query - El texto de búsqueda.
  * @returns {Array<object>} Un array de objetos de productos que coinciden.
  */
-const INVENTARIO_COLUMNS = ['Clave','Descripcion','StockSistema','Ubicacion','Precio Costo','Precio Venta','Inversion','Participación','Acumulado','Periodo','Dia','tocaConteoHoy'];
 
 function buscarArticulosAvanzado(query, filter = 'todos') {
   try {
