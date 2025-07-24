@@ -281,6 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let perfilActual = null;
     let adminState = { items: [], filters: { tipo: 'Todos', fecha: '' } };
     let herramientaPendiente = null;
+    let imagenesPendientes = [];
     let quickStarterEnUso = null;
     let intentosFallidos = {};
     const MAX_INTENTOS_HERRAMIENTA = 3;
@@ -798,6 +799,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            if (imagenesPendientes.length > 0) {
+                if (!functionArgs.imagenes) functionArgs.imagenes = [];
+                functionArgs.imagenes = functionArgs.imagenes.concat(imagenesPendientes);
+                imagenesPendientes = [];
+            }
+
             if (desdeQS) {
                 herramientaPendiente = {
                     id: toolCall.id,
@@ -917,6 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         };
                         img.src = data.url;
                     }
+                    imagenesPendientes.push(data.url);
                     if (data.resumen) {
                         addMessage(data.resumen, 'ai');
                         getAIResponse({ texto: data.resumen });

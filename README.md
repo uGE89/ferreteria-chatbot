@@ -39,6 +39,12 @@ configura en `FOLDER_IMAGENES`. La cuenta que ejecuta el script necesita permiso
 de edición sobre esa carpeta y autorizar el acceso a Drive al desplegar la
 aplicación.
 
+Al registrar un problema, sugerencia u otra herramienta que admita archivos,
+las URLs de las capturas se almacenan en la columna **DireccionImagenes** de la
+hoja *Mensajes* separadas por comas.
+Si subís varias imágenes antes de que la IA llame a una herramienta, todas se
+enviarán juntas como parte del registro.
+
 **Nota:** la interfaz solo funciona correctamente cuando se accede mediante el
 despliegue web de Apps Script. Si abrís `index.html` de forma local,
 `google.script.run` no existe y algunas funciones quedan inoperativas.
