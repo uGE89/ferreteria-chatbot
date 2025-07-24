@@ -73,16 +73,7 @@ function cargarDatosIniciales(userId, pin) {
     const welcomeMessage = PROMPT_SISTEMA_GENERAL.split('\n').filter(line => line.includes('¡Hola!') || line.includes('•'));
     const anunciosActivos = obtenerAnunciosActivos();
 
-  const quickStarters = HERRAMIENTAS_AI
-      .filter(tool => tool.EsQuickStarter === true)
-      .filter(tool => {
-        const rolesPermitidos = Array.isArray(tool.rolesPermitidos) ? tool.rolesPermitidos : ['Todos'];
-        return rolesPermitidos.includes('Todos') || rolesPermitidos.includes(rolUsuario);
-      })
-      .map(tool => ({
-        NombrePantalla: tool.NombrePantalla,
-        NombreFuncion: tool.NombreFuncion
-      }));
+  const quickStarters = obtenerQuickStarters(rolUsuario);
 
     let responseData = {
       ok: true,
@@ -153,19 +144,7 @@ function reutilizarSesionActiva(userId, sessionId) {
     delete perfil.PIN;
 
     const rolUsuario = perfil.Rol;
-    const quickStarters = HERRAMIENTAS_AI
-      .filter(tool => tool.EsQuickStarter === true)
-      .filter(tool => {
-        const rolesPermitidos = Array.isArray(tool.rolesPermitidos)
-          ? tool.rolesPermitidos
-          : ['Todos'];
-        return rolesPermitidos.includes('Todos') ||
-          rolesPermitidos.includes(rolUsuario);
-      })
-      .map(tool => ({
-        NombrePantalla: tool.NombrePantalla,
-        NombreFuncion: tool.NombreFuncion
-      }));
+    const quickStarters = obtenerQuickStarters(rolUsuario);
 
     updateRowInSheet(SHEET_NAMES.SESIONES, 'SesionID', sessionId, {
       UltimaActividad: getFormattedTimestamp()

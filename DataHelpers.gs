@@ -39,3 +39,24 @@ function getBranchDetails(branchName) {
   return branchesData.find(b => b.NombreSucursal === branchName) || {};
 }
 
+/**
+ * Obtiene la lista de quick starters permitidos para un rol.
+ * @param {string} rol - Rol del usuario.
+ * @returns {Array<object>} Lista de quick starters disponibles.
+ */
+function obtenerQuickStarters(rol) {
+  return HERRAMIENTAS_AI
+    .filter(tool => tool.EsQuickStarter === true)
+    .filter(tool => {
+      const roles = Array.isArray(tool.rolesPermitidos)
+        ? tool.rolesPermitidos
+        : ['Todos'];
+      return roles.includes('Todos') || roles.includes(rol);
+    })
+    .map(tool => ({
+      NombrePantalla: tool.NombrePantalla,
+      NombreFuncion: tool.NombreFuncion
+    }));
+}
+
+
