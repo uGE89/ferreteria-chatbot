@@ -342,19 +342,6 @@ function abrirModalDeConteo() {
 }
 
 /**
- * Abre el modal para las acciones rápidas con asistencia.
- * @returns {string} El HTML del modal.
- */
-function abrirModalDeQuickStarter() {
-  try {
-    return HtmlService.createHtmlOutputFromFile('quick-modal').getContent();
-  } catch (e) {
-    Logging.logError('Code', 'abrirModalDeQuickStarter', e.message, e.stack);
-    throw new Error('Error al cargar el modal de acciones rápidas: ' + e.message);
-  }
-}
-
-/**
  * Ejecuta una función de herramienta específica y devuelve el resultado.
  * El frontend llamará a esta función cuando la IA solicite usar una herramienta.
  * @param {string} functionName - El nombre de la función a ejecutar (ej. "registrarProblema").
