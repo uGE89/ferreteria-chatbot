@@ -64,6 +64,11 @@ const HERRAMIENTAS_AI = [
         detalle: {
           type: 'string',
           description: 'Descripción completa del problema, incluyendo todos los detalles relevantes.'
+        },
+        imagenes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Enlaces de imágenes relacionadas.'
         }
       },
       required: ['asunto', 'detalle']
@@ -92,6 +97,11 @@ const HERRAMIENTAS_AI = [
         detalle: {
           type: 'string',
           description: 'Descripción completa de la sugerencia.'
+        },
+        imagenes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Enlaces de imágenes relacionadas.'
         }
       },
       required: ['asunto', 'detalle']
@@ -304,8 +314,13 @@ const HERRAMIENTAS_AI = [
         proveedor: { type: 'string', description: 'Nombre del proveedor.' },
         transporte: { type: 'string', description: 'Transporte utilizado.' },
         total: { type: 'number', description: 'Monto total de la factura.' },
-        faltantes: { type: 'string', description: 'Productos faltantes o diferencias.' },
-        fileUrl: { type: 'string', description: 'Enlace o ID del archivo subido.' }
+       faltantes: { type: 'string', description: 'Productos faltantes o diferencias.' },
+        fileUrl: { type: 'string', description: 'Enlace o ID del archivo subido.' },
+        imagenes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Otras imágenes relacionadas.'
+        }
       },
       required: ['fecha', 'sucursal', 'proveedor', 'transporte', 'total', 'faltantes', 'fileUrl']
     },
@@ -326,7 +341,12 @@ const HERRAMIENTAS_AI = [
       type: 'object',
       properties: {
         fileUrl: { type: 'string', description: 'Enlace o ID de la imagen subida.' },
-        comentario: { type: 'string', description: 'Comentario del usuario.' }
+        comentario: { type: 'string', description: 'Comentario del usuario.' },
+        imagenes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Otras imágenes relacionadas.'
+        }
       },
       required: ['fileUrl', 'comentario']
     },

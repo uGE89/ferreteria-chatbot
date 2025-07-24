@@ -386,13 +386,13 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
         Logger.log('   - Entrando en el caso: "registrarProblema"');
         var mensaje = validarArgumentos(functionArgs, ['asunto', 'detalle']);
         if (mensaje) return mensaje;
-        return registrarProblema(userId, functionArgs.asunto, functionArgs.detalle, sessionId);
+        return registrarProblema(userId, functionArgs.asunto, functionArgs.detalle, sessionId, functionArgs.imagenes);
 
       case 'registrarSugerencia':
         Logger.log('   - Entrando en el caso: "registrarSugerencia"');
         var mensaje = validarArgumentos(functionArgs, ['asunto', 'detalle']);
         if (mensaje) return mensaje;
-        return registrarSugerencia(userId, functionArgs.asunto, functionArgs.detalle, sessionId);
+        return registrarSugerencia(userId, functionArgs.asunto, functionArgs.detalle, sessionId, functionArgs.imagenes);
 
       case 'crearTareaPendiente':
         Logger.log('   - Entrando en el caso: "crearTareaPendiente"');
@@ -425,7 +425,8 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
           functionArgs.total,
           functionArgs.faltantes,
           functionArgs.fileUrl,
-          sessionId
+          sessionId,
+          functionArgs.imagenes
         );
 
       case 'registrarTraspaso':
@@ -436,7 +437,8 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
           userId,
           functionArgs.fileUrl,
           functionArgs.comentario,
-          sessionId
+          sessionId,
+          functionArgs.imagenes
         );
 
       case 'registrarConteo':

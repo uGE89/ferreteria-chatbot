@@ -20,9 +20,10 @@ const PUNTOS_ARQUEO = 10;
  * @param {string} detalle - Detalle del mensaje.
  * @param {string} sessionId - ID de la sesión.
  * @param {number} puntos - Puntos a otorgar al usuario.
+ * @param {Array<string>} [imagenes] - URLs de imágenes relacionadas.
  * @returns {string} ID del mensaje creado.
  */
-function registrarMensaje(tipo, userId, asunto, detalle, sessionId, puntos) {
+function registrarMensaje(tipo, userId, asunto, detalle, sessionId, puntos, imagenes) {
   const userProfile = obtenerDetallesDeUsuario(userId);
   const userName = userProfile ? userProfile.Nombre : 'Desconocido';
   const messageId = generarId('MSG');
@@ -43,7 +44,10 @@ function registrarMensaje(tipo, userId, asunto, detalle, sessionId, puntos) {
     Aprobado: false,
     Visto: false,
     Destacado: false,
-    Fijado: false
+    Fijado: false,
+    DireccionImagenes: Array.isArray(imagenes) && imagenes.length
+      ? imagenes.join(',')
+      : ''
   });
 
   appendRowToSheet(SHEET_NAMES.MENSAJE_COLABORADOR, {
@@ -67,11 +71,12 @@ function registrarMensaje(tipo, userId, asunto, detalle, sessionId, puntos) {
  * @param {string} asunto - Título breve del problema.
  * @param {string} detalle - Descripción detallada del problema.
  * @param {string} sessionId - ID de la sesión.
+ * @param {Array<string>} [imagenes] - URLs de imágenes adjuntas.
  * @returns {string} Mensaje de confirmación.
  */
-function registrarProblema(userId, asunto, detalle, sessionId) {
+function registrarProblema(userId, asunto, detalle, sessionId, imagenes) {
   try {
-    registrarMensaje('Problema', userId, asunto, detalle, sessionId, PUNTOS_PROBLEMA);
+    registrarMensaje('Problema', userId, asunto, detalle, sessionId, PUNTOS_PROBLEMA, imagenes);
     return `Listo, registré tu problema: "${asunto}". Gracias.`;
   } catch (e) {
     Logging.logError('Toolbox', 'registrarProblema', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
@@ -85,11 +90,12 @@ function registrarProblema(userId, asunto, detalle, sessionId) {
  * @param {string} asunto - Título breve de la sugerencia.
  * @param {string} detalle - Descripción detallada de la sugerencia.
  * @param {string} sessionId - ID de la sesión.
+ * @param {Array<string>} [imagenes] - URLs de imágenes adjuntas.
  * @returns {string} Mensaje de confirmación.
  */
-function registrarSugerencia(userId, asunto, detalle, sessionId) {
+function registrarSugerencia(userId, asunto, detalle, sessionId, imagenes) {
   try {
-    registrarMensaje('Sugerencia', userId, asunto, detalle, sessionId, PUNTOS_SUGERENCIA);
+    registrarMensaje('Sugerencia', userId, asunto, detalle, sessionId, PUNTOS_SUGERENCIA, imagenes);
     return `Listo, registré tu sugerencia: "${asunto}". Gracias.`;
   } catch (e) {
     Logging.logError('Toolbox', 'registrarSugerencia', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
@@ -496,9 +502,10 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
  * @param {string} faltantes - Productos faltantes o diferencias.
  * @param {string} fileUrl - Enlace o ID del archivo subido.
  * @param {string} sessionId - ID de la sesión actual.
+ * @param {Array<string>} [imagenes] - Otras imágenes relacionadas.
  * @returns {string} Mensaje de confirmación.
  */
-function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte, total, faltantes, fileUrl, sessionId) {
+function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte, total, faltantes, fileUrl, sessionId, imagenes) {
   try {
     const idMatch = /id=([^&]+)/.exec(fileUrl);
     const fileId = idMatch ? idMatch[1] : fileUrl;
@@ -516,10 +523,12 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
 
     const asunto = `Factura ${proveedor} ${sucursal}`;
     const detalle = `Fecha: ${fecha}\nProveedor: ${proveedor}\nTransporte: ${transporte}\nTotal: ${total}\nFaltantes: ${faltantes}\nArchivo: ${fileUrl}`;
-    registrarMensaje('Recepción Compra', userId, asunto, detalle, sessionId, 0);
+    const imagenesTotales = [file.getDownloadUrl()];
+    if (Array.isArray(imagenes)) imagenesTotales.push(...imagenes);
+    registrarMensaje('Recepción Compra', userId, asunto, detalle, sessionId, 0, imagenesTotales);
     return 'Recepción de compra registrada.';
   } catch (e) {
-    Logging.logError('Toolbox', 'registrarRecepcionCompra', e.message, e.stack, JSON.stringify({ userId, fecha, sucursal, proveedor, transporte, total, faltantes, fileUrl, sessionId }));
+    Logging.logError('Toolbox', 'registrarRecepcionCompra', e.message, e.stack, JSON.stringify({ userId, fecha, sucursal, proveedor, transporte, total, faltantes, fileUrl, sessionId, imagenes }));
     throw new Error(`Error al registrar la recepción: ${e.message}`);
   }
 }
@@ -530,9 +539,10 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
  * @param {string} fileUrl - Enlace o ID de la imagen subida.
  * @param {string} comentario - Comentario del usuario.
  * @param {string} sessionId - ID de la sesión.
+ * @param {Array<string>} [imagenes] - Otras imágenes relacionadas.
  * @returns {string} Mensaje de confirmación.
  */
-function registrarTraspaso(userId, fileUrl, comentario, sessionId) {
+function registrarTraspaso(userId, fileUrl, comentario, sessionId, imagenes) {
   try {
     const idMatch = /id=([^&]+)/.exec(fileUrl);
     const fileId = idMatch ? idMatch[1] : fileUrl;
@@ -550,10 +560,12 @@ function registrarTraspaso(userId, fileUrl, comentario, sessionId) {
 
     const asunto = 'Solicitud de traspaso';
     const detalle = `Comentario: ${comentario}\nArchivo: ${fileUrl}`;
-    registrarMensaje('Traspaso', userId, asunto, detalle, sessionId, 0);
+    const imagenesTotales = [file.getDownloadUrl()];
+    if (Array.isArray(imagenes)) imagenesTotales.push(...imagenes);
+    registrarMensaje('Traspaso', userId, asunto, detalle, sessionId, 0, imagenesTotales);
     return 'Traspaso registrado correctamente.';
   } catch (e) {
-    Logging.logError('Toolbox', 'registrarTraspaso', e.message, e.stack, JSON.stringify({ userId, fileUrl, comentario, sessionId }));
+    Logging.logError('Toolbox', 'registrarTraspaso', e.message, e.stack, JSON.stringify({ userId, fileUrl, comentario, sessionId, imagenes }));
     throw new Error(`Error al registrar traspaso: ${e.message}`);
   }
 }
