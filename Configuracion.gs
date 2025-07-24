@@ -33,8 +33,6 @@ const SHEET_NAMES = {
   SUCURSALES: 'Sucursales',
   MOVIMIENTOS_PENDIENTES: 'MovimientosPendientes',
   ANUNCIOS: 'Anuncios',
-  CONFIGURACION_AI: 'ConfiguracionAI',
-  PROMPTS_AI: 'PromptsAI',
   HERRAMIENTAS_AI: 'HerramientasAI',
   ARQUEO_CAJA: 'ArqueoCaja',
   MENSAJE_COLABORADOR: 'MensajeColaborador'
