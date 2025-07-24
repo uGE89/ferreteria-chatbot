@@ -21,10 +21,6 @@ function doGet() {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
-}
-
 /**
  * Devuelve la fecha y hora actual como un string en el formato estándar de la app.
  * @returns {string} La fecha en formato 'dd/MM/yyyy HH:mm:ss'.
