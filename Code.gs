@@ -504,7 +504,8 @@ function subirImagen(base64, nombre) {
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   const url = file.getDownloadUrl();
-  return { url: url };
+  const resumen = analizarImagenOpenAI(base64);
+  return { url: url, resumen: resumen };
 }
 
 // --- LÓGICA DE CALENDARIO DE CONTEO Y REGISTRO DE CONTEOS ---
