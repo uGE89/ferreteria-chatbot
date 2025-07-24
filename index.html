@@ -908,7 +908,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.google.script.run
                 .withSuccessHandler(data => {
                     hideUploadIndicator();
-                    console.log('Imagen guardada en el servidor en:', data.url);
+                    console.log('Imagen guardada en Drive:', data.id, data.url);
                     if (imageBubble) {
                         const img = imageBubble.querySelector('img');
                         img.onerror = () => {
