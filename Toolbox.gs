@@ -498,7 +498,7 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
  * @param {string} sucursal - Sucursal que recibe la mercadería.
  * @param {string} proveedor - Nombre del proveedor.
  * @param {string} transporte - Transporte utilizado.
- * @param {number} total - Monto total de la factura.
+ * @param {string} total - Monto total de la factura.
  * @param {string} faltantes - Productos faltantes o diferencias.
  * @param {string} fileUrl - Enlace o ID del archivo subido.
  * @param {string} sessionId - ID de la sesión actual.
@@ -507,6 +507,19 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
  */
 function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte, total, faltantes, fileUrl, sessionId, imagenes) {
   try {
+    const totalNumero = parseFloat(String(total).replace(/[^\d.-]/g, ''));
+    if (isNaN(totalNumero)) {
+      Logging.logError(
+        'Toolbox',
+        'registrarRecepcionCompra',
+        'El valor de total no es numérico',
+        '',
+        JSON.stringify({ userId, total })
+      );
+    }
+    const totalFormateado = isNaN(totalNumero)
+      ? String(total)
+      : totalNumero.toFixed(2);
     const fileId = obtenerFileId(fileUrl);
     const file = DriveApp.getFileById(fileId);
     const ext = file.getName().split('.').pop();
@@ -521,7 +534,7 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
     }
 
     const asunto = `Factura ${proveedor} ${sucursal}`;
-    const detalle = `Fecha: ${fecha}\nProveedor: ${proveedor}\nTransporte: ${transporte}\nTotal: ${total}\nFaltantes: ${faltantes}\nArchivo: ${fileUrl}`;
+    const detalle = `Fecha: ${fecha}\nProveedor: ${proveedor}\nTransporte: ${transporte}\nTotal: ${totalFormateado}\nFaltantes: ${faltantes}\nArchivo: ${fileUrl}`;
     const imagenesTotales = [file.getUrl()];
     if (Array.isArray(imagenes)) imagenesTotales.push(...imagenes);
     registrarMensaje('Recepción Compra', userId, asunto, detalle, sessionId, 0, imagenesTotales);
