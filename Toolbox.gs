@@ -511,7 +511,15 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
     const file = DriveApp.getFileById(fileId);
     const ext = file.getName().split('.').pop();
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
-    const nuevoNombre = `${fecha}_Factura_${proveedor}_${sucursal}.${ext}`;
+    // Limpieza de datos para evitar caracteres no permitidos en Drive
+    const limpia = t => String(t).replace(/[\/\\:*?"<>|]/g, '-');
+    const fechaLimpia = limpia(fecha);
+    const proveedorLimpio = limpia(proveedor);
+    const sucursalLimpia = limpia(sucursal);
+    let baseNombre = `${fechaLimpia}_Factura_${proveedorLimpio}_${sucursalLimpia}`;
+    const maxLong = 255 - ext.length - 1;
+    if (baseNombre.length > maxLong) baseNombre = baseNombre.substring(0, maxLong);
+    const nuevoNombre = `${baseNombre}.${ext}`;
     file.setName(nuevoNombre);
     folder.addFile(file);
     const parents = file.getParents();
