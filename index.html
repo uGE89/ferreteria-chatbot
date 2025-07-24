@@ -919,6 +919,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (data.resumen) {
                         addMessage(data.resumen, 'ai');
+                        getAIResponse({ texto: data.resumen });
                     }
                 })
                 .withFailureHandler(err => {
