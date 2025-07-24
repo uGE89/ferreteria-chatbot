@@ -180,3 +180,32 @@ function analizarImagenOpenAI(base64) {
   }
 }
 
+function analizarFacturaOpenAI(base64) {
+  try {
+    const requestPayload = {
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Extraé fecha, total y proveedor de la factura. Respondé solo con un JSON.' },
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } }
+          ]
+        }
+      ],
+      max_tokens: 100
+    };
+    const respuesta = enviarSolicitudOpenAI(requestPayload, 'vision-factura');
+    if (respuesta.error) return null;
+    const content = respuesta.choices?.[0]?.message?.content || '';
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      Logging.logError('OpenAI', 'analizarFacturaOpenAI', 'JSON inválido', e.stack, content);
+      return null;
+    }
+  } catch (e) {
+    Logging.logError('OpenAI', 'analizarFacturaOpenAI', e.message, e.stack);
+    return null;
+  }
+}

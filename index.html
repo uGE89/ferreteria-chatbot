@@ -905,6 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         compressImage(file, base64 => {
+            const activeTool = quickStarterEnUso?.nombreFuncion || herramientaPendiente?.name || '';
             window.google.script.run
                 .withSuccessHandler(data => {
                     hideUploadIndicator();
@@ -925,9 +926,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         img.src = data.url;
                     }
                     imagenesPendientes.push(data.url);
+                    if (data.datos) {
+                        if (data.datos.fecha) document.getElementById('qs-fecha')?.value = data.datos.fecha;
+                        if (data.datos.total) document.getElementById('qs-total')?.value = data.datos.total;
+                        if (data.datos.proveedor) document.getElementById('qs-proveedor')?.value = data.datos.proveedor;
+                    }
                     if (data.resumen) {
                         addMessage(data.resumen, 'ai');
-                        getAIResponse({ texto: data.resumen });
+                        const payload = { texto: data.resumen };
+                        if (data.datos) payload.datosFactura = data.datos;
+                        getAIResponse(payload);
                     }
                 })
                 .withFailureHandler(err => {
@@ -942,7 +950,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         perfilActual?.UsuarioID || 'N/A'
                     );
                 })
-                .subirImagen(base64, file.name);
+                .subirImagen(base64, file.name, activeTool);
         });
 
         imageUpload.value = '';

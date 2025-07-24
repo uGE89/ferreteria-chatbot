@@ -495,7 +495,7 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
  * @param {string} nombre - Nombre del archivo a guardar.
  * @returns {{url: string, resumen: string}} URL y resumen de la imagen.
 */
-function subirImagen(base64, nombre) {
+function subirImagen(base64, nombre, herramientaActiva) {
   const nombreJpg = nombre.replace(/\.\w+$/, '') + '.jpg';
   const blob = Utilities.newBlob(
     Utilities.base64Decode(base64),
@@ -507,7 +507,11 @@ function subirImagen(base64, nombre) {
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   const url = file.getUrl();
   const resumen = analizarImagenOpenAI(base64);
-  return { id: file.getId(), url: url, resumen: resumen };
+  let datos = null;
+  if (herramientaActiva === 'registrarRecepcionCompra') {
+    datos = analizarFacturaOpenAI(base64);
+  }
+  return { id: file.getId(), url: url, resumen: resumen, datos: datos };
 }
 
 // --- LÓGICA DE CALENDARIO DE CONTEO Y REGISTRO DE CONTEOS ---
