@@ -572,7 +572,8 @@ function registrarTraspaso(userId, fileUrl, comentario, sessionId, imagenes) {
   try {
     const fileId = obtenerFileId(fileUrl);
     const file = DriveApp.getFileById(fileId);
-    const ext = file.getName().split('.').pop();
+    const nombreOriginal = file.getName();
+    const ext = nombreOriginal.split('.').pop();
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
     const nuevoNombre = `Traspaso_${Date.now()}.${ext}`;
     file.setName(nuevoNombre);
@@ -593,7 +594,29 @@ function registrarTraspaso(userId, fileUrl, comentario, sessionId, imagenes) {
     const detalle = `Comentario: ${comentario}\nArchivo: ${fileUrl}`;
     const imagenesTotales = [file.getUrl()];
     if (Array.isArray(imagenes)) imagenesTotales.push(...imagenes);
-    registrarMensaje('Traspaso', userId, asunto, detalle, sessionId, 0, imagenesTotales);
+    try {
+      registrarMensaje('Traspaso', userId, asunto, detalle, sessionId, 0, imagenesTotales);
+    } catch (e) {
+      try {
+        file.setName(nombreOriginal);
+      } catch (revertError) {
+        Logging.logError(
+          'Toolbox',
+          'registrarTraspaso',
+          `No se pudo revertir el nombre del archivo: ${revertError.message}`,
+          revertError.stack,
+          JSON.stringify({ fileId })
+        );
+      }
+      Logging.logError(
+        'Toolbox',
+        'registrarTraspaso',
+        `Fallo al registrar mensaje para ${file.getUrl()}`,
+        e.stack,
+        JSON.stringify({ userId, fileUrl, comentario, sessionId, imagenes })
+      );
+      throw e;
+    }
     return 'Traspaso registrado correctamente.';
   } catch (e) {
     Logging.logError('Toolbox', 'registrarTraspaso', e.message, e.stack, JSON.stringify({ userId, fileUrl, comentario, sessionId, imagenes }));
