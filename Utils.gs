@@ -76,3 +76,12 @@ function obtenerFileId(fileUrl) {
   throw new Error('No se pudo determinar el ID del archivo.');
 }
 
+/**
+ * Reemplaza caracteres no permitidos en nombres de archivo de Drive.
+ * @param {string} texto - Texto a limpiar.
+ * @returns {string} Texto sin caracteres inválidos.
+ */
+function limpiarTextoDrive(texto) {
+  return String(texto).replace(/[\/\\:*?"<>|]/g, '-');
+}
+

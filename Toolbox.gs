@@ -522,17 +522,18 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
       : totalNumero.toFixed(2);
     const fileId = obtenerFileId(fileUrl);
     const file = DriveApp.getFileById(fileId);
-    const ext = file.getName().split('.').pop();
+    let ext = file.getName().split('.').pop();
+    ext = limpiarTextoDrive(ext);
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
     // Limpieza de datos para evitar caracteres no permitidos en Drive
-    const limpia = t => String(t).replace(/[\/\\:*?"<>|]/g, '-');
-    const fechaLimpia = limpia(fecha);
-    const proveedorLimpio = limpia(proveedor);
-    const sucursalLimpia = limpia(sucursal);
+    const fechaLimpia = limpiarTextoDrive(fecha);
+    const proveedorLimpio = limpiarTextoDrive(proveedor);
+    const sucursalLimpia = limpiarTextoDrive(sucursal);
     let baseNombre = `${fechaLimpia}_Factura_${proveedorLimpio}_${sucursalLimpia}`;
     const maxLong = 255 - ext.length - 1;
     if (baseNombre.length > maxLong) baseNombre = baseNombre.substring(0, maxLong);
-    const nuevoNombre = `${baseNombre}.${ext}`;
+    let nuevoNombre = `${baseNombre}.${ext}`;
+    if (nuevoNombre.length > 255) nuevoNombre = nuevoNombre.substring(0, 255);
     file.setName(nuevoNombre);
     const parents = file.getParents();
     let enCarpeta = false;
@@ -572,9 +573,15 @@ function registrarTraspaso(userId, fileUrl, comentario, sessionId, imagenes) {
   try {
     const fileId = obtenerFileId(fileUrl);
     const file = DriveApp.getFileById(fileId);
-    const ext = file.getName().split('.').pop();
+    let ext = file.getName().split('.').pop();
+    ext = limpiarTextoDrive(ext);
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
-    const nuevoNombre = `Traspaso_${Date.now()}.${ext}`;
+    // Limpieza de datos para evitar caracteres no permitidos en Drive
+    let baseNombre = `Traspaso_${Date.now()}`;
+    const maxLong = 255 - ext.length - 1;
+    if (baseNombre.length > maxLong) baseNombre = baseNombre.substring(0, maxLong);
+    let nuevoNombre = `${baseNombre}.${ext}`;
+    if (nuevoNombre.length > 255) nuevoNombre = nuevoNombre.substring(0, 255);
     file.setName(nuevoNombre);
     const parents = file.getParents();
     let enCarpeta = false;
