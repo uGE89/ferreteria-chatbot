@@ -507,8 +507,7 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
  */
 function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte, total, faltantes, fileUrl, sessionId, imagenes) {
   try {
-    const idMatch = /[-\w]{25,}/.exec(fileUrl);
-    const fileId = idMatch ? idMatch[0] : fileUrl;
+    const fileId = obtenerFileId(fileUrl);
     const file = DriveApp.getFileById(fileId);
     const ext = file.getName().split('.').pop();
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
@@ -544,8 +543,7 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
  */
 function registrarTraspaso(userId, fileUrl, comentario, sessionId, imagenes) {
   try {
-    const idMatch = /[-\w]{25,}/.exec(fileUrl);
-    const fileId = idMatch ? idMatch[0] : fileUrl;
+    const fileId = obtenerFileId(fileUrl);
     const file = DriveApp.getFileById(fileId);
     const ext = file.getName().split('.').pop();
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
