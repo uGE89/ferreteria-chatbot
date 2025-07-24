@@ -576,6 +576,8 @@ function registrarTraspaso(userId, fileUrl, comentario, sessionId, imagenes) {
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
     const nuevoNombre = `Traspaso_${Date.now()}.${ext}`;
     file.setName(nuevoNombre);
+    // Se comparte el archivo para que cualquiera con el enlace pueda verlo
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     const parents = file.getParents();
     let enCarpeta = false;
     while (parents.hasNext()) {
