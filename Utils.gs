@@ -76,3 +76,17 @@ function obtenerFileId(fileUrl) {
   throw new Error('No se pudo determinar el ID del archivo.');
 }
 
+/**
+ * Parsea un monto validando que sea numérico.
+ * @param {string|number} valor - Valor a convertir.
+ * @param {string} campo - Nombre del campo para reportar errores.
+ * @returns {number} Monto convertido.
+ */
+function parseMontoSeguro(valor, campo) {
+  const limpio = parseFloat(String(valor).replace(',', '').trim());
+  if (isNaN(limpio)) {
+    throw new Error(`El campo "${campo}" contiene un valor no numérico.`);
+  }
+  return limpio;
+}
+
