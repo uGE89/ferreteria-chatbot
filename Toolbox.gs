@@ -13,6 +13,26 @@ const PUNTOS_CONTEO = 5;
 const PUNTOS_ARQUEO = 10;
 
 /**
+ * Convierte el parámetro de imágenes en un arreglo de URLs.
+ * @param {Array<string>|string} imagenes - Uno o varios enlaces.
+ * @returns {Array<string>} Arreglo de URLs.
+ * @throws {Error} Si el parámetro no tiene un formato válido.
+ */
+function parsearImagenes(imagenes) {
+  if (imagenes === undefined || imagenes === null) {
+    return [];
+  }
+  if (Array.isArray(imagenes)) {
+    return imagenes.map(i => String(i).trim()).filter(u => u !== '');
+  }
+  if (typeof imagenes === 'string') {
+    const url = imagenes.trim();
+    return url ? [url] : [];
+  }
+  throw new Error('El parámetro de imágenes debe ser un arreglo o una cadena.');
+}
+
+/**
  * Registra un mensaje del usuario en la hoja 'Mensajes'.
  * @param {string} tipo - Tipo de mensaje (Problema, Sugerencia, Tarea, etc.).
  * @param {string} userId - ID del usuario remitente.
@@ -76,10 +96,12 @@ function registrarMensaje(tipo, userId, asunto, detalle, sessionId, puntos, imag
  */
 function registrarProblema(userId, asunto, detalle, sessionId, imagenes) {
   try {
-    registrarMensaje('Problema', userId, asunto, detalle, sessionId, PUNTOS_PROBLEMA, imagenes);
+    const urls = parsearImagenes(imagenes);
+    registrarMensaje('Problema', userId, asunto, detalle, sessionId, PUNTOS_PROBLEMA, urls);
     return `Listo, registré tu problema: "${asunto}". Gracias.`;
   } catch (e) {
     Logging.logError('Toolbox', 'registrarProblema', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
+    if (e.message.includes('parámetro de imágenes')) return `Error: ${e.message}`;
     throw new Error(`Error al registrar problema: ${e.message}`);
   }
 }
@@ -95,28 +117,12 @@ function registrarProblema(userId, asunto, detalle, sessionId, imagenes) {
  */
 function registrarSugerencia(userId, asunto, detalle, sessionId, imagenes) {
   try {
-    let urls = [];
-    if (Array.isArray(imagenes)) {
-      urls = imagenes;
-    } else if (typeof imagenes === 'string' && imagenes.trim() !== '') {
-      urls = [imagenes.trim()];
-    } else if (imagenes !== undefined && imagenes !== null) {
-      return 'Error: el parámetro de imágenes debe ser un arreglo o una cadena con la URL.';
-    }
-
+    const urls = parsearImagenes(imagenes);
     registrarMensaje('Sugerencia', userId, asunto, detalle, sessionId, PUNTOS_SUGERENCIA, urls);
     return `Listo, registré tu sugerencia: "${asunto}". Gracias.`;
   } catch (e) {
-    const resumenImagenes = Array.isArray(imagenes)
-      ? imagenes.slice(0, 3).join(',').substring(0, 100)
-      : '';
-    Logging.logError(
-      'Toolbox',
-      'registrarSugerencia',
-      e.message,
-      e.stack,
-      JSON.stringify({ userId, asunto, detalle, sessionId, imagenes: resumenImagenes })
-    );
+    Logging.logError('Toolbox', 'registrarSugerencia', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
+    if (e.message.includes('parámetro de imágenes')) return `Error: ${e.message}`;
     throw new Error(`Error al registrar sugerencia: ${e.message}`);
   }
 }
@@ -621,7 +627,8 @@ function registrarTraspaso(userId, fileUrl, comentario, sessionId, imagenes) {
     const asunto = 'Solicitud de traspaso';
     const detalle = `Comentario: ${comentario}\nArchivo: ${fileUrl}`;
     const imagenesTotales = [file.getUrl()];
-    if (Array.isArray(imagenes)) imagenesTotales.push(...imagenes);
+    const extras = parsearImagenes(imagenes);
+    imagenesTotales.push(...extras);
     try {
       registrarMensaje('Traspaso', userId, asunto, detalle, sessionId, 0, imagenesTotales);
     } catch (e) {
