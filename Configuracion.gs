@@ -18,6 +18,7 @@ const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 const ID_HOJA_PUENTE = '1nj2UfUPK5xQg6QI68j9ArLss-ptrlaN3PY8NMOr_Jhg';
 // Carpeta de Drive donde se almacenan las imágenes subidas.
 const FOLDER_IMAGENES = '1bGeMwmGdXOYrnUs0Pr7FcXhtRY9iaY_M';
+const UMBRAL_DIFERENCIA_ARQUEO = 100; // Alerta si la diferencia supera este monto
 
 // ===============================================================
 // ==== CENTRALIZACIÓN DE NOMBRES DE HOJAS ====
