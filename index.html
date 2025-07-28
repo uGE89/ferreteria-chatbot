@@ -917,7 +917,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 perfilActual?.UsuarioID || 'N/A'
                             );
                         };
-                        img.src = data.url;
+                        const viewUrl = `https://drive.google.com/uc?export=view&id=${data.id}`;
+                        img.src = viewUrl;
                     }
                     if (data.resumen) {
                         addMessage(data.resumen, 'ai');

@@ -474,10 +474,10 @@ function ejecutarHerramienta(functionName, functionArgs, userId, sessionId) {
 }
 
 /**
- * Sube una imagen en base64 a Drive y devuelve su URL pública.
+ * Sube una imagen en base64 a Drive y devuelve el ID y la URL del archivo.
  * @param {string} base64 - Cadena de la imagen codificada en base64.
  * @param {string} nombre - Nombre del archivo a guardar.
- * @returns {{url: string, resumen: string}} URL y resumen de la imagen.
+ * @returns {{id: string, url: string, resumen: string}} Datos de la imagen.
 */
 function subirImagen(base64, nombre, herramientaActiva) {
   const nombreJpg = nombre.replace(/\.\w+$/, '') + '.jpg';
@@ -489,8 +489,7 @@ function subirImagen(base64, nombre, herramientaActiva) {
   const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  const url =
-    'https://drive.google.com/uc?export=view&id=' + file.getId();
+  const driveUrl = file.getUrl();
   let resumen = '';
   switch (herramientaActiva) {
     case 'registrarProblema':
@@ -528,7 +527,7 @@ function subirImagen(base64, nombre, herramientaActiva) {
       }
     }
   }
-  return { id: file.getId(), url: url, resumen: resumen, datos: datos };
+  return { id: file.getId(), url: driveUrl, resumen: resumen, datos: datos };
 }
 
 // --- LÓGICA DE CALENDARIO DE CONTEO Y REGISTRO DE CONTEOS ---

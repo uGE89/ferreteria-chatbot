@@ -562,7 +562,7 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
  * @param {string} transporte - Transporte utilizado.
  * @param {string} total - Monto total de la factura.
  * @param {string} faltantes - Productos faltantes o diferencias.
- * @param {string} fileUrl - Enlace o ID del archivo subido.
+ * @param {string} fileUrl - ID o enlace del archivo subido.
  * @param {string} sessionId - ID de la sesión actual.
  * @param {Array<string>} [imagenes] - Otras imágenes relacionadas.
  * @returns {string} Mensaje de confirmación.
@@ -632,8 +632,9 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
     if (!enCarpeta) folder.addFile(file);
 
     const asunto = `Factura ${proveedor} ${sucursal}`;
-    const detalle = `Fecha: ${fecha}\nProveedor: ${proveedor}\nTransporte: ${transporte}\nTotal: ${totalFormateado}\nFaltantes: ${faltantes}\nArchivo: ${fileUrl}`;
-    const imagenesTotales = [file.getUrl()];
+    const finalUrl = file.getUrl();
+    const detalle = `Fecha: ${fecha}\nProveedor: ${proveedor}\nTransporte: ${transporte}\nTotal: ${totalFormateado}\nFaltantes: ${faltantes}\nArchivo: ${finalUrl}`;
+    const imagenesTotales = [finalUrl];
     if (Array.isArray(imagenes)) imagenesTotales.push(...imagenes);
     registrarMensaje('Recepción Compra', userId, asunto, detalle, sessionId, 0, imagenesTotales);
     return 'Recepción de compra registrada.';
@@ -646,7 +647,7 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
 /**
  * Registra una solicitud de traspaso enviada por un usuario.
  * @param {string} userId - ID del usuario que envía la captura.
- * @param {string} fileUrl - Enlace o ID de la imagen subida.
+ * @param {string} fileUrl - ID o enlace de la imagen subida.
  * @param {string} comentario - Comentario del usuario.
  * @param {string} sessionId - ID de la sesión.
  * @param {Array<string>} [imagenes] - Otras imágenes relacionadas.
@@ -766,8 +767,9 @@ function registrarTraspaso(userId, fileUrl, comentario, sessionId, imagenes) {
     }
 
     const asunto = 'Solicitud de traspaso';
-    const detalle = `Comentario: ${comentario}\nArchivo: ${fileUrl}`;
-    const imagenesTotales = [file.getUrl()];
+    const finalUrl = file.getUrl();
+    const detalle = `Comentario: ${comentario}\nArchivo: ${finalUrl}`;
+    const imagenesTotales = [finalUrl];
     const extras = parsearImagenes(imagenes);
     imagenesTotales.push(...extras);
     try {
