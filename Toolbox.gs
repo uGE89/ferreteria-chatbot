@@ -28,7 +28,7 @@ function registrarMensaje(tipo, userId, asunto, detalle, sessionId, puntos, imag
   const userName = userProfile ? userProfile.Nombre : 'Desconocido';
   const messageId = generarId('MSG');
 
-  appendRowToSheet(SHEET_NAMES.MENSAJES, {
+  const guardado = appendRowToSheet(SHEET_NAMES.MENSAJES, {
     ID_Mensaje: messageId,
     FechaHora: getFormattedTimestamp(),
     UsuarioRemitenteID: userId,
@@ -49,6 +49,16 @@ function registrarMensaje(tipo, userId, asunto, detalle, sessionId, puntos, imag
       ? imagenes.join(',')
       : ''
   });
+  if (!guardado) {
+    Logging.logError(
+      'Toolbox',
+      'registrarMensaje',
+      'No se pudo escribir en la hoja Mensajes.',
+      '',
+      JSON.stringify({ tipo, userId, asunto, sessionId })
+    );
+    throw new Error('No se pudo registrar el mensaje.');
+  }
 
   appendRowToSheet(SHEET_NAMES.MENSAJE_COLABORADOR, {
     ColaboradorID: userId,
@@ -99,7 +109,7 @@ function registrarSugerencia(userId, asunto, detalle, sessionId, imagenes) {
     return `Listo, registré tu sugerencia: "${asunto}". Gracias.`;
   } catch (e) {
     Logging.logError('Toolbox', 'registrarSugerencia', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
-    throw new Error(`Error al registrar sugerencia: ${e.message}`);
+    throw new Error('No se pudo registrar tu sugerencia. Por favor intentá nuevamente.');
   }
 }
 
