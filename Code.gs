@@ -509,12 +509,13 @@ function subirImagen(base64, nombre, herramientaActiva) {
     datos = analizarFacturaOpenAI(base64);
     if (!datos || !datos.proveedor) {
       const coincidencia =
-        resumen.match(/factura de\s+([\wÁÉÍÓÚÜÑáéíóúüñ ]+)/i) ||
-        resumen.match(/(Ferre\w+)/i);
+        resumen.match(/llamada ['"«»]?([\wÁÉÍÓÚÜÑáéíóúüñ0-9.-]+)/i) ||
+        resumen.match(/factura de.*['"«»]([\wÁÉÍÓÚÜÑáéíóúüñ0-9.-]+)['"«»]/i) ||
+        resumen.match(/(Ferre[\wÁÉÍÓÚÜÑáéíóúüñ0-9.-]+)/i);
       if (coincidencia) {
-        const nombreProveedor = coincidencia[1]
-          ? coincidencia[1].trim()
-          : coincidencia[0].trim();
+        const nombreProveedor = (coincidencia[1] || coincidencia[0])
+          .replace(/['"«»]/g, '')
+          .trim();
         datos = datos || {};
         datos.proveedor = nombreProveedor;
         Logging.logError(
