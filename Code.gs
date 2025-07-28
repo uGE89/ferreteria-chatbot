@@ -490,7 +490,20 @@ function subirImagen(base64, nombre, herramientaActiva) {
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   const url = file.getUrl();
-  const resumen = analizarImagenOpenAI(base64);
+  let resumen = '';
+  switch (herramientaActiva) {
+    case 'registrarProblema':
+      resumen = analizarImagenProblemaOpenAI(base64);
+      break;
+    case 'registrarSugerencia':
+      resumen = analizarImagenSugerenciaOpenAI(base64);
+      break;
+    case 'registrarTraspaso':
+      resumen = analizarImagenTraspasoOpenAI(base64);
+      break;
+    default:
+      resumen = analizarImagenOpenAI(base64);
+  }
   let datos = null;
   if (herramientaActiva === 'registrarRecepcionCompra') {
     datos = analizarFacturaOpenAI(base64);

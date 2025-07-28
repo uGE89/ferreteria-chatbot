@@ -209,3 +209,75 @@ function analizarFacturaOpenAI(base64) {
     return null;
   }
 }
+
+function analizarImagenProblemaOpenAI(base64) {
+  try {
+    const requestPayload = {
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Resumí brevemente el problema ilustrado en la imagen.' },
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } }
+          ]
+        }
+      ],
+      max_tokens: 60
+    };
+    const respuesta = enviarSolicitudOpenAI(requestPayload, 'vision-problema');
+    if (respuesta.error) return '';
+    return respuesta.choices?.[0]?.message?.content || '';
+  } catch (e) {
+    Logging.logError('OpenAI', 'analizarImagenProblemaOpenAI', e.message, e.stack);
+    return '';
+  }
+}
+
+function analizarImagenSugerenciaOpenAI(base64) {
+  try {
+    const requestPayload = {
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Explicá en una frase la sugerencia presentada en la imagen.' },
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } }
+          ]
+        }
+      ],
+      max_tokens: 60
+    };
+    const respuesta = enviarSolicitudOpenAI(requestPayload, 'vision-sugerencia');
+    if (respuesta.error) return '';
+    return respuesta.choices?.[0]?.message?.content || '';
+  } catch (e) {
+    Logging.logError('OpenAI', 'analizarImagenSugerenciaOpenAI', e.message, e.stack);
+    return '';
+  }
+}
+
+function analizarImagenTraspasoOpenAI(base64) {
+  try {
+    const requestPayload = {
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Resumí los datos más importantes del traspaso que se ven en la imagen.' },
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } }
+          ]
+        }
+      ],
+      max_tokens: 60
+    };
+    const respuesta = enviarSolicitudOpenAI(requestPayload, 'vision-traspaso');
+    if (respuesta.error) return '';
+    return respuesta.choices?.[0]?.message?.content || '';
+  } catch (e) {
+    Logging.logError('OpenAI', 'analizarImagenTraspasoOpenAI', e.message, e.stack);
+    return '';
+  }
+}
