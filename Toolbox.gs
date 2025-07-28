@@ -476,12 +476,42 @@ function registrarArqueoCaja(userId, saldoSistema, contado, transferencia, tarje
     const userName = userProfile ? userProfile.Nombre : 'Desconocido';
     const conteoId = generarId('ARQ');
 
-    const montoSistema = parseMontoSeguro(saldoSistema, 'saldoSistema');
-    const montoContado = parseMontoSeguro(contado, 'contado');
-    const montoTransferencia = parseMontoSeguro(transferencia, 'transferencia');
-    const montoTarjeta = parseMontoSeguro(tarjeta, 'tarjeta');
+  const montoSistema = parseMontoSeguro(saldoSistema, 'saldoSistema');
+  const montoContado = parseMontoSeguro(contado, 'contado');
+  const montoTransferencia = parseMontoSeguro(transferencia, 'transferencia');
+  const montoTarjeta = parseMontoSeguro(tarjeta, 'tarjeta');
 
-    diferencia = montoSistema - montoContado - montoTransferencia - montoTarjeta;
+  if (montoSistema < 0) {
+    throw new Error('El campo "saldoSistema" no puede ser negativo.');
+  }
+  if (montoContado < 0) {
+    throw new Error('El campo "contado" no puede ser negativo.');
+  }
+  if (montoTransferencia < 0) {
+    throw new Error('El campo "transferencia" no puede ser negativo.');
+  }
+  if (montoTarjeta < 0) {
+    throw new Error('El campo "tarjeta" no puede ser negativo.');
+  }
+
+  diferencia = montoSistema - montoContado - montoTransferencia - montoTarjeta;
+
+  if (diferencia !== 0 && Math.abs(diferencia) > UMBRAL_DIFERENCIA_ARQUEO) {
+    Logging.logError(
+      'Toolbox',
+      'registrarArqueoCaja',
+      `Diferencia mayor a ${UMBRAL_DIFERENCIA_ARQUEO}: ${diferencia}`,
+      '',
+      JSON.stringify({
+        userId,
+        saldoSistema: montoSistema,
+        contado: montoContado,
+        transferencia: montoTransferencia,
+        tarjeta: montoTarjeta,
+        razon
+      })
+    );
+  }
 
     if (diferencia !== 0 && (!razon || razon.trim() === '')) {
       throw new Error('Se requiere una justificación si la diferencia no es cero.');
