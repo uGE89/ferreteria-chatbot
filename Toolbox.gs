@@ -98,7 +98,16 @@ function registrarSugerencia(userId, asunto, detalle, sessionId, imagenes) {
     registrarMensaje('Sugerencia', userId, asunto, detalle, sessionId, PUNTOS_SUGERENCIA, imagenes);
     return `Listo, registré tu sugerencia: "${asunto}". Gracias.`;
   } catch (e) {
-    Logging.logError('Toolbox', 'registrarSugerencia', e.message, e.stack, JSON.stringify({ userId, asunto, detalle, sessionId }));
+    const resumenImagenes = Array.isArray(imagenes)
+      ? imagenes.slice(0, 3).join(',').substring(0, 100)
+      : '';
+    Logging.logError(
+      'Toolbox',
+      'registrarSugerencia',
+      e.message,
+      e.stack,
+      JSON.stringify({ userId, asunto, detalle, sessionId, imagenes: resumenImagenes })
+    );
     throw new Error(`Error al registrar sugerencia: ${e.message}`);
   }
 }
