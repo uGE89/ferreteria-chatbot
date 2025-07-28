@@ -921,6 +921,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         addMessage(data.resumen, 'ai');
                         getAIResponse({ texto: data.resumen });
                     }
+                    if (data.datos) {
+                        const extraido = JSON.stringify(data.datos);
+                        addMessage(extraido, 'ai');
+                        getAIResponse({ texto: extraido });
+                    }
                 })
                 .withFailureHandler(err => {
                     hideUploadIndicator();
@@ -934,7 +939,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         perfilActual?.UsuarioID || 'N/A'
                     );
                 })
-                .subirImagen(base64, file.name);
+                .subirImagen(base64, file.name, quickStarterEnUso?.nombreFuncion);
         });
 
         imageUpload.value = '';
