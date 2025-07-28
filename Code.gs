@@ -489,7 +489,8 @@ function subirImagen(base64, nombre, herramientaActiva) {
   const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  const url = file.getUrl();
+  const url =
+    'https://drive.google.com/uc?export=view&id=' + file.getId();
   let resumen = '';
   switch (herramientaActiva) {
     case 'registrarProblema':
