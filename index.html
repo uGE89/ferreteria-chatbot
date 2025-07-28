@@ -281,7 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let perfilActual = null;
     let adminState = { items: [], filters: { tipo: 'Todos', fecha: '' } };
     let herramientaPendiente = null;
-    let imagenesPendientes = [];
     let quickStarterEnUso = null;
     let intentosFallidos = {};
     const MAX_INTENTOS_HERRAMIENTA = 3;
@@ -373,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function iniciarSesion() {
+    btnLogin.addEventListener('click', () => {
         const id = inputID.value.trim().toUpperCase();
         const pin = inputPIN.value.trim();
         if (!id || !pin) {
@@ -391,14 +390,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginMsg.textContent = '';
             })
             .cargarDatosIniciales(id, pin);
-    }
-
-    btnLogin.addEventListener('click', iniciarSesion);
-    inputID.addEventListener('keydown', e => {
-        if (e.key === 'Enter') iniciarSesion();
-    });
-    inputPIN.addEventListener('keydown', e => {
-        if (e.key === 'Enter') iniciarSesion();
     });
 
     function procesarDatosIniciales(datos) {
@@ -807,12 +798,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (imagenesPendientes.length > 0) {
-                if (!functionArgs.imagenes) functionArgs.imagenes = [];
-                functionArgs.imagenes = functionArgs.imagenes.concat(imagenesPendientes);
-                imagenesPendientes = [];
-            }
-
             if (desdeQS) {
                 herramientaPendiente = {
                     id: toolCall.id,
@@ -913,11 +898,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         compressImage(file, base64 => {
-            const activeTool = quickStarterEnUso?.nombreFuncion || herramientaPendiente?.name || '';
             window.google.script.run
                 .withSuccessHandler(data => {
                     hideUploadIndicator();
-                    console.log('Imagen guardada en Drive:', data.id, data.url);
+                    console.log('Imagen guardada en el servidor en:', data.url);
                     if (imageBubble) {
                         const img = imageBubble.querySelector('img');
                         img.onerror = () => {
@@ -933,17 +917,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         };
                         img.src = data.url;
                     }
-                    imagenesPendientes.push(data.url);
-                    if (data.datos) {
-                        if (data.datos.fecha) document.getElementById('qs-fecha')?.value = data.datos.fecha;
-                        if (data.datos.total) document.getElementById('qs-total')?.value = data.datos.total;
-                        if (data.datos.proveedor) document.getElementById('qs-proveedor')?.value = data.datos.proveedor;
-                    }
                     if (data.resumen) {
                         addMessage(data.resumen, 'ai');
-                        const payload = { texto: data.resumen };
-                        if (data.datos) payload.datosFactura = data.datos;
-                        getAIResponse(payload);
+                        getAIResponse({ texto: data.resumen });
                     }
                 })
                 .withFailureHandler(err => {
@@ -958,7 +934,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         perfilActual?.UsuarioID || 'N/A'
                     );
                 })
-                .subirImagen(base64, file.name, activeTool);
+                .subirImagen(base64, file.name);
         });
 
         imageUpload.value = '';
