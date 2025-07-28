@@ -507,6 +507,25 @@ function subirImagen(base64, nombre, herramientaActiva) {
   let datos = null;
   if (herramientaActiva === 'registrarRecepcionCompra') {
     datos = analizarFacturaOpenAI(base64);
+    if (!datos || !datos.proveedor) {
+      const coincidencia =
+        resumen.match(/factura de\s+([\wÁÉÍÓÚÜÑáéíóúüñ ]+)/i) ||
+        resumen.match(/(Ferre\w+)/i);
+      if (coincidencia) {
+        const nombreProveedor = coincidencia[1]
+          ? coincidencia[1].trim()
+          : coincidencia[0].trim();
+        datos = datos || {};
+        datos.proveedor = nombreProveedor;
+        Logging.logError(
+          'Code',
+          'subirImagen',
+          'Proveedor detectado por respaldo',
+          '',
+          nombreProveedor
+        );
+      }
+    }
   }
   return { id: file.getId(), url: url, resumen: resumen, datos: datos };
 }
