@@ -45,9 +45,7 @@ hoja *Mensajes* separadas por comas. Podés enviar un arreglo de URLs o una cade
 Si subís varias imágenes antes de que la IA llame a una herramienta, todas se
 enviarán juntas como parte del registro.
 
-**Nota:** la interfaz solo funciona correctamente cuando se accede mediante el
-despliegue web de Apps Script. Si abrís `index.html` de forma local,
-`google.script.run` no existe y algunas funciones quedan inoperativas.
+**Nota:** la interfaz se puede abrir de forma local si se ejecuta un servidor que emule las funciones del backend y se define la variable `OFFLINE_SERVER_URL` en `index.html`.
 
 ## Acciones rápidas en el chat
 
@@ -90,6 +88,24 @@ funciones invocadas deben existir en `Toolbox.gs`.
 5. Configura `FOLDER_IMAGENES` en `Configuracion.gs` con el ID de la carpeta de Drive donde se subirán las imágenes.
 6. Desde el editor de Apps Script selecciona **Deploy > New deployment** y elige "Web app" para publicar la aplicación. `doGet()` sirve la interfaz `index.html`.
 7. Ejecuta `instalarTriggerLimpiezaSesiones` para programar la limpieza de sesiones.
+## Servidor local
+
+Para probar la interfaz sin Apps Script necesitás un servidor que exponga las funciones del backend. Un ejemplo con Node.js y Express es:
+
+```js
+const express = require("express");
+const app = express();
+app.use(express.json());
+app.post("/", (req, res) => {
+  const { funcion, parametros } = req.body;
+  console.log(funcion, parametros);
+  res.json({ ok: true });
+});
+app.listen(3000, () => console.log("Servidor en http://localhost:3000"));
+```
+
+Definí `OFFLINE_SERVER_URL` en `index.html` con la URL de este servidor antes de incluir `offline-runner.js`.
+ 
 
 ## Ejecución de la suite de pruebas
 
