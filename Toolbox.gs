@@ -547,7 +547,29 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
       ? String(total)
       : totalNumero.toFixed(2);
     const fileId = obtenerFileId(fileUrl);
-    const file = DriveApp.getFileById(fileId);
+    let file;
+    try {
+      file = DriveApp.getFileById(fileId);
+    } catch (e) {
+      Logging.logError(
+        'Toolbox',
+        'registrarRecepcionCompra',
+        `No se encontró el archivo: ${e.message}`,
+        e.stack,
+        JSON.stringify({ fileId })
+      );
+      throw new Error('No se encontró el archivo proporcionado.');
+    }
+    if (!file) {
+      Logging.logError(
+        'Toolbox',
+        'registrarRecepcionCompra',
+        'No se obtuvo el archivo tras getFileById',
+        '',
+        JSON.stringify({ fileId })
+      );
+      throw new Error('No se pudo obtener el archivo.');
+    }
     const ext = file.getName().split('.').pop();
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
     // Limpieza de datos para evitar caracteres no permitidos en Drive
@@ -597,26 +619,115 @@ function registrarRecepcionCompra(userId, fecha, sucursal, proveedor, transporte
 function registrarTraspaso(userId, fileUrl, comentario, sessionId, imagenes) {
   try {
     const fileId = obtenerFileId(fileUrl);
-    const file = DriveApp.getFileById(fileId);
+    let file;
+    try {
+      file = DriveApp.getFileById(fileId);
+    } catch (e) {
+      Logging.logError(
+        'Toolbox',
+        'registrarTraspaso',
+        `No se encontró el archivo: ${e.message}`,
+        e.stack,
+        JSON.stringify({ fileId })
+      );
+      throw new Error('No se encontró el archivo proporcionado.');
+    }
+    if (!file) {
+      Logging.logError(
+        'Toolbox',
+        'registrarTraspaso',
+        'No se obtuvo el archivo tras getFileById',
+        '',
+        JSON.stringify({ fileId })
+      );
+      throw new Error('No se pudo obtener el archivo.');
+    }
     const nombreOriginal = file.getName();
     const ext = nombreOriginal.split('.').pop();
     const folder = DriveApp.getFolderById(FOLDER_IMAGENES);
     const nuevoNombre = `Traspaso_${Date.now()}.${ext}`;
-    file.setName(nuevoNombre);
-    // Se comparte el archivo para que cualquiera con el enlace pueda verlo
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    const parents = file.getParents();
-    let enCarpeta = false;
-    while (parents.hasNext()) {
-      const p = parents.next();
-      if (p.getId() === folder.getId()) {
-        enCarpeta = true;
-      } else {
-        p.removeFile(file);
-      }
+
+    try {
+      file.setName(nuevoNombre);
+    } catch (e) {
+      Logging.logError(
+        'Toolbox',
+        'registrarTraspaso',
+        `Fallo al renombrar el archivo: ${e.message}`,
+        e.stack,
+        JSON.stringify({ fileId, nuevoNombre })
+      );
+      throw new Error('Error al renombrar el archivo.');
     }
-    // Solo se agrega a la carpeta si aún no es hijo de ella
-    if (!enCarpeta) folder.addFile(file);
+
+    try {
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (e) {
+      try {
+        file.setName(nombreOriginal);
+      } catch (revertError) {
+        Logging.logError(
+          'Toolbox',
+          'registrarTraspaso',
+          `No se pudo revertir el nombre tras fallo de permisos: ${revertError.message}`,
+          revertError.stack,
+          JSON.stringify({ fileId })
+        );
+      }
+      Logging.logError(
+        'Toolbox',
+        'registrarTraspaso',
+        `Fallo al establecer permisos: ${e.message}`,
+        e.stack,
+        JSON.stringify({ fileId })
+      );
+      throw new Error('Error al establecer permisos.');
+    }
+
+    try {
+      const parents = file.getParents();
+      let enCarpeta = false;
+      while (parents.hasNext()) {
+        const p = parents.next();
+        if (p.getId() === folder.getId()) {
+          enCarpeta = true;
+        } else {
+          p.removeFile(file);
+        }
+      }
+      if (!enCarpeta) folder.addFile(file);
+    } catch (e) {
+      try {
+        file.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.OWNER);
+      } catch (revertPermError) {
+        Logging.logError(
+          'Toolbox',
+          'registrarTraspaso',
+          `No se pudo revertir permisos tras fallo al mover: ${revertPermError.message}`,
+          revertPermError.stack,
+          JSON.stringify({ fileId })
+        );
+      }
+      try {
+        file.setName(nombreOriginal);
+      } catch (revertNameError) {
+        Logging.logError(
+          'Toolbox',
+          'registrarTraspaso',
+          `No se pudo revertir el nombre tras fallo al mover: ${revertNameError.message}`,
+          revertNameError.stack,
+          JSON.stringify({ fileId })
+        );
+      }
+      Logging.logError(
+        'Toolbox',
+        'registrarTraspaso',
+        `Fallo al mover el archivo a la carpeta: ${e.message}`,
+        e.stack,
+        JSON.stringify({ fileId, folderId: folder.getId() })
+      );
+      throw new Error('Error al mover el archivo.');
+    }
 
     const asunto = 'Solicitud de traspaso';
     const detalle = `Comentario: ${comentario}\nArchivo: ${fileUrl}`;
@@ -1236,3 +1347,4 @@ function obtenerRankingPuntos() {
     return [];
   }
 }
+
