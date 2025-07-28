@@ -90,12 +90,21 @@ function registrarProblema(userId, asunto, detalle, sessionId, imagenes) {
  * @param {string} asunto - Título breve de la sugerencia.
  * @param {string} detalle - Descripción detallada de la sugerencia.
  * @param {string} sessionId - ID de la sesión.
- * @param {Array<string>} [imagenes] - URLs de imágenes adjuntas.
+ * @param {Array<string>|string} [imagenes] - URLs de imágenes adjuntas.
  * @returns {string} Mensaje de confirmación.
  */
 function registrarSugerencia(userId, asunto, detalle, sessionId, imagenes) {
   try {
-    registrarMensaje('Sugerencia', userId, asunto, detalle, sessionId, PUNTOS_SUGERENCIA, imagenes);
+    let urls = [];
+    if (Array.isArray(imagenes)) {
+      urls = imagenes;
+    } else if (typeof imagenes === 'string' && imagenes.trim() !== '') {
+      urls = [imagenes.trim()];
+    } else if (imagenes !== undefined && imagenes !== null) {
+      return 'Error: el parámetro de imágenes debe ser un arreglo o una cadena con la URL.';
+    }
+
+    registrarMensaje('Sugerencia', userId, asunto, detalle, sessionId, PUNTOS_SUGERENCIA, urls);
     return `Listo, registré tu sugerencia: "${asunto}". Gracias.`;
   } catch (e) {
     const resumenImagenes = Array.isArray(imagenes)

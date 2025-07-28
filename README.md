@@ -41,7 +41,7 @@ aplicación.
 
 Al registrar un problema, sugerencia u otra herramienta que admita archivos,
 las URLs de las capturas se almacenan en la columna **DireccionImagenes** de la
-hoja *Mensajes* separadas por comas.
+hoja *Mensajes* separadas por comas. Podés enviar un arreglo de URLs o una cadena con una sola URL.
 Si subís varias imágenes antes de que la IA llame a una herramienta, todas se
 enviarán juntas como parte del registro.
 
@@ -73,6 +73,7 @@ por ejemplo `marcarMensajeAprobado(id)` o `fijarMensaje(id)`.
 | registrarEgresoCaja     | Registrar un gasto de caja                  | Sí             |
 | arqueoCaja              | Realizar un arqueo de caja                  | Sí             |
 | generarResumenAdmin     | Generar un resumen para administrador       | Sí             |
+Al usar `registrarSugerencia` podés pasar un arreglo de URLs o una sola cadena con la URL de la imagen. Si se envía otro tipo la función responde con un mensaje de error.
 
 Para añadir una nueva herramienta editá la constante `HERRAMIENTAS_AI`
 en `Configuracion.gs`. Definí un objeto con todos los campos mencionados
