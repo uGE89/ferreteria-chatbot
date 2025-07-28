@@ -293,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let ultimoComentario = {};
     let qsModalData = {};
     let qsHerramientaPendiente = null;
+    let ultimoFileUrl = null;
 
     // --- INICIO: CONFIGURACIÓN DE FIREBASE ---
     // La API key se obtiene de la propiedad de secuencia de comandos
@@ -598,6 +599,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let args;
             try {
                 args = JSON.parse(toolCall.function.arguments);
+                if ((nombre === 'registrarRecepcionCompra' || nombre === 'registrarTraspaso') && !args.fileUrl) {
+                    args.fileUrl = ultimoFileUrl;
+                }
             } catch (e) {
                 showCustomAlert('La respuesta de la IA fue inválida.', 'error');
                 qsMessageInput.disabled = false;
@@ -666,6 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 getAIResponseQS(nextPayload);
             })
             .ejecutarHerramienta(pending.name, pending.args, userId, sessionId);
+        ultimoFileUrl = null;
     }
 
     function iniciarQuickStarter(funcion, pantalla) {
@@ -783,6 +788,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let functionArgs;
             try {
                 functionArgs = JSON.parse(toolCall.function.arguments);
+                if ((functionName === 'registrarRecepcionCompra' || functionName === 'registrarTraspaso') && !functionArgs.fileUrl) {
+                    functionArgs.fileUrl = ultimoFileUrl;
+                }
             } catch (e) {
                 showCustomAlert('La respuesta de la IA fue inválida.', 'error');
                 google.script.run.Logging.logError(
@@ -855,6 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         getAIResponse(payloadForNextStep);
                     })
                     .ejecutarHerramienta(functionName, functionArgs, userId, sessionId);
+                ultimoFileUrl = null;
             }
         } else {
             messageInput.disabled = false;
@@ -904,6 +913,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .withSuccessHandler(data => {
                     hideUploadIndicator();
                     console.log('Imagen guardada en el servidor en:', data.url);
+                    ultimoFileUrl = data.url;
                     if (imageBubble) {
                         const img = imageBubble.querySelector('img');
                         img.onerror = () => {
@@ -985,6 +995,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 getAIResponse(nextPayload);
             })
             .ejecutarHerramienta(pending.name, pending.args, userId, sessionId);
+        ultimoFileUrl = null;
     });
 
     chatForm.addEventListener('submit', (e) => {
@@ -1033,6 +1044,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     getAIResponse({ texto: null, tool_response });
                 })
                 .ejecutarHerramienta(pending.name, pending.args, userId, sessionId);
+            ultimoFileUrl = null;
         } else if (herramientaPendiente && negativePattern.test(userInput)) {
             const pending = herramientaPendiente;
             herramientaPendiente = null;
