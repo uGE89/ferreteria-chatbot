@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    btnLogin.addEventListener('click', () => {
+    function iniciarSesion() {
         const id = inputID.value.trim().toUpperCase();
         const pin = inputPIN.value.trim();
         if (!id || !pin) {
@@ -391,6 +391,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginMsg.textContent = '';
             })
             .cargarDatosIniciales(id, pin);
+    }
+
+    btnLogin.addEventListener('click', iniciarSesion);
+    inputID.addEventListener('keydown', e => {
+        if (e.key === 'Enter') iniciarSesion();
+    });
+    inputPIN.addEventListener('keydown', e => {
+        if (e.key === 'Enter') iniciarSesion();
     });
 
     function procesarDatosIniciales(datos) {
