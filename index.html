@@ -295,8 +295,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let qsHerramientaPendiente = null;
 
     // --- INICIO: CONFIGURACIÓN DE FIREBASE ---
+    // La API key se obtiene de la propiedad de secuencia de comandos
     const firebaseConfig = {
-        apiKey: "AIzaSyCRAoAaoTt1jem-oG1OtYiVAj9M_JwQi8g",
+        apiKey: "<?= firebaseApiKey ?>",
         authDomain: "gestor-tareas-ferreteria.firebaseapp.com",
         databaseURL: "https://gestor-tareas-ferreteria-default-rtdb.firebaseio.com",
         projectId: "gestor-tareas-ferreteria",

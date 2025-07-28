@@ -16,6 +16,8 @@
  */
 function doGet() {
   const htmlOutput = HtmlService.createTemplateFromFile('index');
+  htmlOutput.firebaseApiKey = PropertiesService.getScriptProperties()
+    .getProperty('FIREBASE_API_KEY');
   return htmlOutput.evaluate()
     .setTitle('Plataforma Conversacional Interna')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
