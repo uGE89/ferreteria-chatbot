@@ -887,7 +887,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const reader = new FileReader();
         reader.onload = e => {
             localUrl = e.target.result;
-            imageBubble = addImageMessage(localUrl, 'user');
+            const ctx = contextoImagen[quickStarterEnUso?.nombreFuncion] || '';
+            imageBubble = addImageMessage(localUrl, 'user', ctx);
         };
         reader.readAsDataURL(file);
 
@@ -920,12 +921,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (data.resumen) {
                         addMessage(data.resumen, 'ai');
-                        getAIResponse({ texto: data.resumen });
+                        getAIResponse({ texto: data.resumen, tool_name: quickStarterEnUso?.nombreFuncion });
                     }
                     if (data.datos) {
                         const extraido = JSON.stringify(data.datos);
                         addMessage(extraido, 'ai');
-                        getAIResponse({ texto: extraido });
+                        getAIResponse({ texto: extraido, tool_name: quickStarterEnUso?.nombreFuncion });
                     }
                 })
                 .withFailureHandler(err => {
@@ -1061,6 +1062,13 @@ document.addEventListener('DOMContentLoaded', () => {
             arqueoCaja: 'calculate',
             generarResumenAdmin: 'analytics',
             default: 'play_circle'
+        };
+
+        const contextoImagen = {
+            registrarProblema: 'Evidencia del problema',
+            registrarSugerencia: 'Imagen de sugerencia',
+            registrarRecepcionCompra: 'Factura o recibo',
+            registrarTraspaso: 'Captura de traspaso'
         };
 
         starters.forEach(starter => {
