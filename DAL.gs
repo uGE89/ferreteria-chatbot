@@ -106,7 +106,8 @@ function updateRowInSheet(sheetName, keyColumn, keyValue, updatedData) {
   const values = dataRange.getValues();
 
   for (let i = 1; i < values.length; i++) {
-if (String(values[i][keyColumnIndex]) === String(keyValue)) {      const row = values[i];
+    if (String(values[i][keyColumnIndex]) === String(keyValue)) {
+      const row = values[i];
       for (const prop in updatedData) {
         const headerIndex = headers.indexOf(prop);
         if (headerIndex !== -1) {
