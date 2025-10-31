@@ -294,6 +294,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let qsModalData = {};
     let qsHerramientaPendiente = null;
     let ultimoFileUrl = null;
+    const contextoImagen = {
+        registrarProblema: 'Evidencia del problema',
+        registrarSugerencia: 'Imagen de sugerencia',
+        registrarRecepcionCompra: 'Factura o recibo',
+        registrarTraspaso: 'Captura de traspaso'
+    };
+    const chatsSinPermiso = new Set();
 
     // --- INICIO: CONFIGURACIÓN DE FIREBASE ---
     // La API key se obtiene de la propiedad de secuencia de comandos
@@ -346,6 +353,28 @@ document.addEventListener('DOMContentLoaded', () => {
         google.script.run
             .withSuccessHandler(list => { usuariosActivos = Array.isArray(list) ? list : []; })
             .obtenerUsuariosActivos();
+    }
+
+    function manejarErrorChatFirebase(error, itemId, accion = 'lectura') {
+        if (!error) return;
+        const mensajeBase = error.code === 'PERMISSION_DENIED'
+            ? `No tienes permiso para la ${accion} del chat seleccionado.`
+            : (error.message || 'Error desconocido al comunicarse con el chat.');
+        console.warn(`[Firebase] ${mensajeBase}`, error);
+        if (error.code === 'PERMISSION_DENIED' && !chatsSinPermiso.has(itemId)) {
+            chatsSinPermiso.add(itemId);
+            showCustomAlert(mensajeBase, 'error');
+        }
+        if (window.google?.script?.run?.Logging?.logError) {
+            window.google.script.run.Logging.logError(
+                'Frontend',
+                'FirebaseChat',
+                mensajeBase,
+                error.stack || '',
+                String(itemId || 'sin-id'),
+                perfilActual?.UsuarioID || 'N/A'
+            );
+        }
     }
 
     // --- Lógica de Login e Inicialización ---
@@ -1077,13 +1106,6 @@ document.addEventListener('DOMContentLoaded', () => {
             default: 'play_circle'
         };
 
-        const contextoImagen = {
-            registrarProblema: 'Evidencia del problema',
-            registrarSugerencia: 'Imagen de sugerencia',
-            registrarRecepcionCompra: 'Factura o recibo',
-            registrarTraspaso: 'Captura de traspaso'
-        };
-
         starters.forEach(starter => {
             const button = document.createElement('button');
             button.className = "w-full text-left bg-slate-800 hover:bg-slate-700 text-slate-200 p-3 rounded-lg flex items-center transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500";
@@ -1412,19 +1434,24 @@ document.addEventListener('DOMContentLoaded', () => {
             div.innerHTML = `<strong>${data.usuario}:</strong> ${data.mensaje} <span class="text-xs text-slate-400 ml-2">${fecha.toLocaleString('es-NI')}</span>`;
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-        });
+        }, error => manejarErrorChatFirebase(error, itemId, 'suscripción'));
     }
 
     function enviarMensajeChat() {
         const texto = chatInput.value.trim();
         if (!texto || !chatRef) return;
+        chatInput.value = '';
         chatRef.push({
             usuario: perfilActual.Nombre,
             userId: perfilActual.UsuarioID,
             mensaje: texto,
             timestamp: Date.now()
+        }, error => {
+            if (error) {
+                chatInput.value = texto;
+                manejarErrorChatFirebase(error, currentChatItem || 'modal', 'envío');
+            }
         });
-        chatInput.value = '';
     }
 
     function cerrarChatModal() {
@@ -1451,13 +1478,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (previewSection) previewSection.classList.add('hidden');
             const card = commentsSection.parentElement;
             if (card) card.classList.remove('nuevo-comentario');
-            database.ref('chats/' + itemId).limitToLast(1).once('value').then(s => {
-                const data = s.val();
-                if (data) {
-                    const ultimo = Math.max(...Object.values(data).map(m => m.timestamp));
-                    ultimoComentario[itemId] = ultimo;
-                }
-            });
+            database.ref('chats/' + itemId).limitToLast(1).once('value')
+                .then(s => {
+                    const data = s.val();
+                    if (data) {
+                        const ultimo = Math.max(...Object.values(data).map(m => m.timestamp));
+                        ultimoComentario[itemId] = ultimo;
+                    }
+                })
+                .catch(error => manejarErrorChatFirebase(error, itemId, 'lectura'));
         } else {
             commentsSection.innerHTML = '';
             if (previewSection) previewSection.classList.remove('hidden');
@@ -1491,6 +1520,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     container.innerHTML = '<p class="text-slate-400 text-sm">Sin comentarios.</p>';
                 }
                 ultimoComentario[itemId] = ultimo;
+            })
+            .catch(error => {
+                container.innerHTML = '<p class="text-slate-400 text-sm">No fue posible cargar los comentarios.</p>';
+                manejarErrorChatFirebase(error, itemId, 'lectura');
             });
     }
 
@@ -1516,7 +1549,7 @@ document.addEventListener('DOMContentLoaded', () => {
             div.innerHTML = `<strong>${data.usuario}:</strong> ${data.mensaje} <span class="text-xs text-slate-400 ml-2">${fecha.toLocaleString('es-NI')}</span>`;
             messagesDiv.appendChild(div);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        });
+        }, error => manejarErrorChatFirebase(error, itemId, 'suscripción'));
         btnEl.addEventListener('click', () => enviarMensajeChatTarjeta(itemId, inputEl));
         inputEl.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
@@ -1530,13 +1563,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const texto = inputEl.value.trim();
         const ref = chatRefs[itemId];
         if (!texto || !ref) return;
+        inputEl.value = '';
         ref.push({
             usuario: perfilActual.Nombre,
             userId: perfilActual.UsuarioID,
             mensaje: texto,
             timestamp: Date.now()
+        }, error => {
+            if (error) {
+                inputEl.value = texto;
+                manejarErrorChatFirebase(error, itemId, 'envío');
+            }
         });
-        inputEl.value = '';
     }
 
     function suscribirNuevoComentario(itemId) {
@@ -1557,7 +1595,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ultimoComentario[itemId] = ts;
                 if (card) card.classList.add('nuevo-comentario');
             }
-        });
+        }, error => manejarErrorChatFirebase(error, itemId, 'suscripción'));
     }
 
     // --- Lógica de Autocompletar con @ ---
