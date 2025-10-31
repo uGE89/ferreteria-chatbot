@@ -1,3 +1,4 @@
+
 /**
  * Proyecto: PlataformaConversacional - Backend en Google Apps Script
  * Archivo: Usuarios.gs
@@ -97,4 +98,3 @@ const USUARIOS = [
     Insignias: ''
   }
 ];
-
