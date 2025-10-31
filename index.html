@@ -1446,11 +1446,9 @@ document.addEventListener('DOMContentLoaded', () => {
             userId: perfilActual.UsuarioID,
             mensaje: texto,
             timestamp: Date.now()
-        }, error => {
-            if (error) {
-                chatInput.value = texto;
-                manejarErrorChatFirebase(error, currentChatItem || 'modal', 'envío');
-            }
+        }).catch(error => {
+            chatInput.value = texto;
+            manejarErrorChatFirebase(error, currentChatItem || 'modal', 'envío');
         });
     }
 
@@ -1569,11 +1567,9 @@ document.addEventListener('DOMContentLoaded', () => {
             userId: perfilActual.UsuarioID,
             mensaje: texto,
             timestamp: Date.now()
-        }, error => {
-            if (error) {
-                inputEl.value = texto;
-                manejarErrorChatFirebase(error, itemId, 'envío');
-            }
+        }).catch(error => {
+            inputEl.value = texto;
+            manejarErrorChatFirebase(error, itemId, 'envío');
         });
     }
 
